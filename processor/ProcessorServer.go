@@ -1,4 +1,4 @@
-package queue
+package processor
 
 import (
 	"net/http"
@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"sync"
+	"crypto/tls"
+	"time"
 	class "github.com/matehaxor03/holistic_db_client/class"
 )
 
@@ -14,7 +16,7 @@ type ProcessorServer struct {
 	Start   func() ([]error)
 }
 
-func NewProcessorServer(port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*QueueServer, []error) {
+func NewProcessorServer(port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
 	var errors []error
 	wait_groups := make(map[string]sync.WaitGroup)
 	//var this_holisic_queue_server *HolisticQueueServer
@@ -159,6 +161,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 				if message_type_errors != nil {
 					w.Write([]byte("[queue] does not exist error"))
 				} else {
+					/*
 					queue, ok := queues[*message_type]
 					if ok {
 						queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
@@ -180,7 +183,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 					} else {
 						fmt.Println(fmt.Sprintf("[queue] not supported please implement: %s", *message_type))
 						w.Write([]byte(fmt.Sprintf("[queue] not supported please implement: %s", *message_type)))
-					}
+					}*/
 				}
 			}
 		} else {
@@ -198,13 +201,9 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 				errors = append(errors, err)
 			}
 
-			for _, table_name := range *table_names {
-				processors["Create_" + table_name].Start()
-				processors["Read_" + table_name].Start()
-				processors["Update_" + table_name].Start()
-				processors["Delete_" + table_name].Start()
+			for key, value := range processors {
+				value.Start()
 			}
-			processors["Get_Tables"].Start()
 
 			if len(errors) > 0 {
 				return errors
@@ -217,14 +216,41 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 
 	for _, table_name := range *table_names {
-		processors["Create_" + table_name] = NewProcessor(domain_name, queue_port, "Create_" + table_name)
-		processors["Read_" + table_name] = NewProcessor(domain_name, queue_port, "Read_" + table_name)
-		processors["Update_" + table_name] = NewProcessor(domain_name, queue_port, "Update_" + table_name)
-		processors["Delete_" + table_name] = NewProcessor(domain_name, queue_port, "Delete_" + table_name)
+		create_processor, create_processor_errors := NewProcessor(*domain_name, queue_port, "Create_" + table_name)
+		if create_processor_errors != nil {
+			errors = append(errors, create_processor_errors...)
+		} else if create_processor != nil {
+			processors["Create_" + table_name] = create_processor
+		}
+
+		read_processor, read_processor_errors := NewProcessor(*domain_name, queue_port, "Read_" + table_name)
+		if read_processor_errors != nil {
+			errors = append(errors, read_processor_errors...)
+		} else if read_processor != nil {
+			processors["Read_" + table_name] = read_processor
+		}
+
+		update_processor, update_processor_errors := NewProcessor(*domain_name, queue_port, "Update_" + table_name)
+		if update_processor_errors != nil {
+			errors = append(errors, update_processor_errors...)
+		} else if update_processor != nil {
+			processors["Update_" + table_name] = update_processor
+		}
+
+		delete_processor, delete_processor_errors := NewProcessor(*domain_name, queue_port, "Delete_" + table_name)
+		if delete_processor_errors != nil {
+			errors = append(errors, delete_processor_errors...)
+		} else if delete_processor != nil {
+			processors["Delete_" + table_name] = delete_processor
+		}
 	}
 
-	processors["Get_Tables"] = NewProcessor(domain_name, queue_port, "Get_Tables")
-
+	get_tables_processor, get_tables_processor_errors := NewProcessor(*domain_name, queue_port, "Get_Tables")
+	if get_tables_processor_errors != nil {
+		errors = append(errors, get_tables_processor_errors...)
+	} else if get_tables_processor != nil {
+		processors["Get_Tables"] = get_tables_processor
+	}
 
 	validate_errors := validate()
 	if validate_errors != nil {

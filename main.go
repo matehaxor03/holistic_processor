@@ -1,7 +1,7 @@
 package main
 
 import (
-	processor "github.com/matehaxor03/holistic_queue/processor"
+	processor "github.com/matehaxor03/holistic_processor/processor"
 	"os"
 	"fmt"
 )
