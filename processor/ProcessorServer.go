@@ -6,9 +6,9 @@ import (
 	"strings"
 	"encoding/json"
 	"io/ioutil"
-	"sync"
-	"crypto/tls"
-	"time"
+	//"sync"
+	//"crypto/tls"
+	//"time"
 	class "github.com/matehaxor03/holistic_db_client/class"
 )
 
@@ -18,36 +18,16 @@ type ProcessorServer struct {
 
 func NewProcessorServer(port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
 	var errors []error
-	wait_groups := make(map[string]sync.WaitGroup)
+	//wait_groups := make(map[string]sync.WaitGroup)
 	//var this_holisic_queue_server *HolisticQueueServer
 	
-	db_hostname, db_port_number, db_name, read_db_username, _, migration_details_errors := class.GetCredentialDetails("holistic_read")
-	if migration_details_errors != nil {
-		errors = append(errors, migration_details_errors...)
+	database, database_errors := class.GetDatabase("holistic_read")
+	if database_errors != nil {
+		errors = append(errors, database_errors...)
 	}
 
 	if len(errors) > 0 {
 		return nil, errors
-	}
-
-	host, host_errors := class.NewHost(db_hostname, db_port_number)
-	client, client_errors := class.NewClient(host, &read_db_username, nil)
-
-	if host_errors != nil {
-		errors = append(errors, host_errors...)
-	}
-
-	if client_errors != nil {
-		errors = append(errors, client_errors...)
-	}
-
-	if len(errors) > 0 {
-		return nil, errors
-	}
-
-	database, use_database_errors := client.UseDatabaseByName(db_name)
-	if use_database_errors != nil {
-		return nil, use_database_errors
 	}
 	
 	processors := make(map[string](*Processor))
@@ -56,6 +36,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return nil, table_names_errors
 	}
 
+	/*
 	transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -63,7 +44,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	http_client := http.Client{
 		Timeout: 120 * time.Second,
 		Transport: transport_config,
-	}
+	}*/
 
 	domain_name, domain_name_errors := class.NewDomainName(&queue_domain_name)
 	if domain_name_errors != nil {
@@ -95,6 +76,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return class.CloneString(key)
 	}
 
+	/*
 	getQueuePort := func() *string {
 		port, _ := data.M("[queue_port]").GetString("value")
 		return class.CloneString(port)
@@ -102,9 +84,9 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 	getQueueDomainName := func() *class.DomainName {
 		return class.CloneDomainName(data.M("[queue_domain_name]").GetObject("value").(*class.DomainName))
-	}
+	}*/
 
-	queue_url := fmt.Sprintf("https://%s:%s/", *(getQueueDomainName().GetDomainName()), *getQueuePort())
+	//queue_url := fmt.Sprintf("https://%s:%s/", *(getQueueDomainName().GetDomainName()), *getQueuePort())
 
 
 	validate := func() []error {
@@ -155,8 +137,8 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 				fmt.Println(json_payload.Keys())
 				fmt.Println(string(body_payload))
 
-				message_type, message_type_errors := json_payload.GetString("[queue]")
-				trace_id, _ := json_payload.GetString("[trace_id]")
+				_, message_type_errors := json_payload.GetString("[queue]")
+				//trace_id, _ := json_payload.GetString("[trace_id]")
 
 				if message_type_errors != nil {
 					w.Write([]byte("[queue] does not exist error"))
@@ -201,7 +183,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 				errors = append(errors, err)
 			}
 
-			for key, value := range processors {
+			for _, value := range processors {
 				value.Start()
 			}
 
@@ -245,11 +227,11 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 	}
 
-	get_tables_processor, get_tables_processor_errors := NewProcessor(*domain_name, queue_port, "Get_Tables")
+	get_tables_processor, get_tables_processor_errors := NewProcessor(*domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)
 	} else if get_tables_processor != nil {
-		processors["Get_Tables"] = get_tables_processor
+		processors["GetTableNames"] = get_tables_processor
 	}
 
 	validate_errors := validate()

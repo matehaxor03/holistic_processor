@@ -75,16 +75,42 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 					if string(response_body_payload) == "{}" {
 						//todo: go to sleep permantly
 					} else {
-						/*response_queue, _ := response_json_payload.GetString("[queue]")
-						response_queue_mode, _ := response_json_payload.GetString("[queue_mode]")
-						if response_queue == "Get_Tables" {
+						response_queue, _ := response_json_payload.GetString("[queue]")
+						trace_id, _ := response_json_payload.GetString("[trace_id]")
 
+						result := class.Map{}
+						result.SetString("[trace_id]", trace_id)
+						result.SetString("[queue]", response_queue)
+						complete_queue_mode := "complete"
+						result.SetString("[queue_mode]", &complete_queue_mode)
+
+						if *response_queue == "GetTableNames" {
+							table_names, table_name_errors := read_database.GetTableNames()
+							result.SetArray("data", class.NewArrayOfStrings(table_names))
+							result.SetErrors("errors", table_name_errors)
 						} else {
 
 						}
+
+						callback_json_bytes := []byte(result.ToJSONString())
+						callback_json_reader := bytes.NewReader(callback_json_bytes)
+						callback_request, callback_request_error := http.NewRequest(http.MethodPost, queue_url, callback_json_reader)
+
+						if callback_request_error != nil {
+							//todo: go to sleep permantly
+							// continue
+						}
+
+						_, http_callback_response_error := http_client.Do(callback_request)
+						if http_callback_response_error != nil {
+							//todo: go to sleep permantly
+							// continue
+						}
+
+
 						//dowork
 						//go sleep for short time
-						*/
+						
 					}
 				}
 			}(queue_url, queue)
