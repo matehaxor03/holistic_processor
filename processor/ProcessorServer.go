@@ -176,16 +176,19 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	x := ProcessorServer{
 		Start: func() []error {
 			var errors []error
-			http.HandleFunc("/", processRequest)
 
+			fmt.Println(len(processors))
+			for _, value := range processors {
+				value.Start()
+			}
+
+			http.HandleFunc("/", processRequest)
 			err := http.ListenAndServeTLS(":" + *(getPort()), *(getServerCrtPath()), *(getServerKeyPath()), nil)
 			if err != nil {
 				errors = append(errors, err)
 			}
 
-			for _, value := range processors {
-				value.Start()
-			}
+			
 
 			if len(errors) > 0 {
 				return errors
