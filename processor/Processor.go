@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"time"
-	"encoding/json"
+	//"encoding/json"
 	class "github.com/matehaxor03/holistic_db_client/class"
 )
 
@@ -80,7 +80,7 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 						// continue
 					}
 
-					response_json_payload := class.Map{}
+					//response_json_payload := class.Map{}
 					response_body_payload, response_body_payload_error := ioutil.ReadAll(http_response.Body)
 
 					if response_body_payload_error != nil {
@@ -91,13 +91,24 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 						// continue
 					}
 
-					json.Unmarshal([]byte(response_body_payload), &response_json_payload)
+
+
+
+
+					//json.Unmarshal([]byte(response_body_payload), &response_json_payload)
 					fmt.Println(string(response_body_payload))
 
 					if string(response_body_payload) == "{}" {
 						fmt.Println("no data to process")
 						time.Sleep(10 * time.Second) 
 					} else {
+						response_json_payload, response_json_payload_errors := class.ParseJSON(string(response_body_payload))
+						if response_json_payload_errors != nil {
+							fmt.Println(response_json_payload_errors)
+							time.Sleep(10 * time.Second) 
+							continue
+						}
+
 						response_queue, _ := response_json_payload.GetString("[queue]")
 						trace_id, _ := response_json_payload.GetString("[trace_id]")
 

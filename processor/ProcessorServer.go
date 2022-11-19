@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"fmt"
 	"strings"
-	"encoding/json"
+	//"encoding/json"
 	"io/ioutil"
 	//"sync"
 	//"crypto/tls"
@@ -127,45 +127,48 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 	processRequest := func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == "POST" || req.Method == "PATCH" || req.Method == "PUT" {
-			json_payload := class.Map{}
 			body_payload, body_payload_error := ioutil.ReadAll(req.Body);
 			if body_payload_error != nil {
 				w.Write([]byte(body_payload_error.Error()))
 			} else {
-				json.Unmarshal([]byte(body_payload), &json_payload)
-				
-				fmt.Println(json_payload.Keys())
-				fmt.Println(string(body_payload))
-
-				_, message_type_errors := json_payload.GetString("[queue]")
-				//trace_id, _ := json_payload.GetString("[trace_id]")
-
-				if message_type_errors != nil {
-					w.Write([]byte("[queue] does not exist error"))
+				json_payload, json_payload_errors := class.ParseJSON(string(body_payload))
+				if json_payload_errors != nil {
+					w.Write([]byte(fmt.Sprintf("%s", json_payload_errors)))
 				} else {
-					/*
-					queue, ok := queues[*message_type]
-					if ok {
-						queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
-						if queue_mode_errors != nil {
-							w.Write([]byte("[queue_mode] does not exist error"))
-						} else {
-							if *queue_mode == "PushBack" {
-								var wg sync.WaitGroup
-								wg.Add(1)
-								wait_groups[*trace_id] = wg
-								queue.PushBack(&json_payload)
-								wg.Wait()
-								w.Write([]byte("ok"))
-							} else {
-								fmt.Println(fmt.Sprintf("[queue_mode] not supported please implement: %s", *queue_mode))
-								w.Write([]byte(fmt.Sprintf("[queue_mode] not supported please implement: %s", *queue_mode)))
-							}
-						}
+					fmt.Println(json_payload.Keys())
+					fmt.Println(string(body_payload))
+
+					_, message_type_errors := json_payload.GetString("[queue]")
+					//trace_id, _ := json_payload.GetString("[trace_id]")
+
+					if message_type_errors != nil {
+						w.Write([]byte("[queue] does not exist error"))
 					} else {
-						fmt.Println(fmt.Sprintf("[queue] not supported please implement: %s", *message_type))
-						w.Write([]byte(fmt.Sprintf("[queue] not supported please implement: %s", *message_type)))
-					}*/
+						w.Write([]byte("to do process message"))
+						/*
+						queue, ok := queues[*message_type]
+						if ok {
+							queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
+							if queue_mode_errors != nil {
+								w.Write([]byte("[queue_mode] does not exist error"))
+							} else {
+								if *queue_mode == "PushBack" {
+									var wg sync.WaitGroup
+									wg.Add(1)
+									wait_groups[*trace_id] = wg
+									queue.PushBack(&json_payload)
+									wg.Wait()
+									w.Write([]byte("ok"))
+								} else {
+									fmt.Println(fmt.Sprintf("[queue_mode] not supported please implement: %s", *queue_mode))
+									w.Write([]byte(fmt.Sprintf("[queue_mode] not supported please implement: %s", *queue_mode)))
+								}
+							}
+						} else {
+							fmt.Println(fmt.Sprintf("[queue] not supported please implement: %s", *message_type))
+							w.Write([]byte(fmt.Sprintf("[queue] not supported please implement: %s", *message_type)))
+						}*/
+					}
 				}
 			}
 		} else {
