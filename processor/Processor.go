@@ -47,12 +47,11 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 			wg.Done()
 		},
 		Start: func() {
-			
+			fmt.Println("starting processor " + queue)
 			go func(queue_url string, queue string) {
-				fmt.Println("starting processor " + queue)
-				time.Sleep(10 * time.Second) 
 				fmt.Println("started processor " + queue)
 				for {
+					time.Sleep(1 * time.Nanosecond) 
 					request_payload := class.Map{}
 					request_payload.SetString("[queue]", &queue)
 					queue_mode := "GetAndRemoveFront"
