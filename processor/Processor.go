@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"time"
+	"sync"
 	//"encoding/json"
 	class "github.com/matehaxor03/holistic_db_client/class"
 )
@@ -15,10 +16,13 @@ import (
 
 type Processor struct {
 	Start func()
+	WakeUp func()
 }
 
 func NewProcessor(domain_name class.DomainName, port string, queue string) (*Processor, []error) {
 	var errors []error
+	var wg sync.WaitGroup
+
 	queue_url := fmt.Sprintf("https://%s:%s/", *(domain_name.GetDomainName()), port)
 	transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -39,6 +43,9 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 	}
 
 	x := Processor{
+		WakeUp: func() {
+			wg.Done()
+		},
 		Start: func() {
 			
 			go func(queue_url string, queue string) {
@@ -91,16 +98,13 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 						// continue
 					}
 
-
-
-
-
-					//json.Unmarshal([]byte(response_body_payload), &response_json_payload)
 					fmt.Println(string(response_body_payload))
 
 					if string(response_body_payload) == "{}" {
 						fmt.Println("no data to process")
-						time.Sleep(10 * time.Second) 
+						wg.Add(1)
+						wg.Wait()
+						//time.Sleep(10 * time.Second) 
 					} else {
 						response_json_payload, response_json_payload_errors := class.ParseJSON(string(response_body_payload))
 						if response_json_payload_errors != nil {

@@ -126,6 +126,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	processRequest := func(w http.ResponseWriter, req *http.Request) {
+		var errors []error
 		if req.Method == "POST" || req.Method == "PATCH" || req.Method == "PUT" {
 			body_payload, body_payload_error := ioutil.ReadAll(req.Body);
 			if body_payload_error != nil {
@@ -138,13 +139,40 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 					fmt.Println(json_payload.Keys())
 					fmt.Println(string(body_payload))
 
-					_, message_type_errors := json_payload.GetString("[queue]")
+					queue, queue_errors := json_payload.GetString("[queue]")
+					if queue_errors != nil {
+						w.Write([]byte(fmt.Sprintf("%s", queue_errors)))
+						return
+					}
+					
+					processor, ok := processors[*queue]
+					if !ok {
+						w.Write([]byte(fmt.Sprintf("prcoessor: %s does not exist", *queue)))
+						return
+					}
 					//trace_id, _ := json_payload.GetString("[trace_id]")
 
-					if message_type_errors != nil {
-						w.Write([]byte("[queue] does not exist error"))
+					queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
+
+					if queue_mode_errors != nil {
+						w.Write([]byte(fmt.Sprintf("%s", queue_mode_errors)))
+						return
+					}
+
+					if *queue_mode == "WakeUp" {
+						processor.WakeUp()
+						json_payload.SetErrors("errors", &errors)
+						json_payload_as_string, json_payload_as_string_errors := json_payload.ToJSONString()
+						if json_payload_as_string_errors != nil {
+							errors = append(errors, json_payload_as_string_errors...)
+							w.Write([]byte(fmt.Sprintf("{\"errors\":\"%s\"}", errors)))
+						} else {
+							w.Write([]byte(*json_payload_as_string))
+						}
 					} else {
-						w.Write([]byte("to do process message"))
+						w.Write([]byte(fmt.Sprintf("[queue_mode] is not supported: %s", *queue_mode)))
+					}
+				
 						/*
 						queue, ok := queues[*message_type]
 						if ok {
@@ -168,7 +196,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 							fmt.Println(fmt.Sprintf("[queue] not supported please implement: %s", *message_type))
 							w.Write([]byte(fmt.Sprintf("[queue] not supported please implement: %s", *message_type)))
 						}*/
-					}
+					
 				}
 			}
 		} else {
