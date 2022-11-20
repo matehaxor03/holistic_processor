@@ -127,13 +127,13 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 							
 							if table_name_errors != nil {
 								fmt.Println(table_name_errors)
-								result.SetErrors("errors", &table_name_errors)
+								result.SetErrors("[errors]", &table_name_errors)
 								var table_names_temp []string
 								result.SetArray("data", class.NewArrayOfStrings(&table_names_temp))
 							} else {
 								var temp []error
 								result.SetArray("data", class.NewArrayOfStrings(table_names))
-								result.SetErrors("errors", &temp)
+								result.SetErrors("[errors]", &temp)
 							}
 						} else {
 							fmt.Println("not supported yet" + *response_queue)

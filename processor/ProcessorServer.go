@@ -161,7 +161,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 					if *queue_mode == "WakeUp" {
 						processor.WakeUp()
-						json_payload.SetErrors("errors", &errors)
+						json_payload.SetErrors("[errors]", &errors)
 						json_payload_as_string, json_payload_as_string_errors := json_payload.ToJSONString()
 						if json_payload_as_string_errors != nil {
 							errors = append(errors, json_payload_as_string_errors...)
