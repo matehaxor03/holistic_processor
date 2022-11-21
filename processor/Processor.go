@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"time"
 	"sync"
+	"strings"
 	//"encoding/json"
 	class "github.com/matehaxor03/holistic_db_client/class"
 )
@@ -52,6 +53,7 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 				fmt.Println("started processor " + queue)
 				for {
 					time.Sleep(1 * time.Nanosecond) 
+					var errors []error
 					request_payload := class.Map{}
 					request_payload.SetString("[queue]", &queue)
 					queue_mode := "GetAndRemoveFront"
@@ -127,12 +129,46 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 							if table_name_errors != nil {
 								fmt.Println(table_name_errors)
 								result.SetErrors("[errors]", &table_name_errors)
-								var table_names_temp []string
-								result.SetArray("data", class.NewArrayOfStrings(&table_names_temp))
+								result.SetNil("data")
 							} else {
-								var temp []error
-								result.SetArray("data", class.NewArrayOfStrings(table_names))
-								result.SetErrors("[errors]", &temp)
+								array, array_errors := class.ToArray(table_names)
+								if array_errors != nil {
+									errors = append(errors, array_errors...)
+									result.SetErrors("[errors]", &errors)
+									result.SetNil("data")
+								} else {
+									result.SetErrors("[errors]", &errors)
+									result.SetArray("data", array)
+								}
+							}
+						} else if strings.HasPrefix(*response_queue, "Read_") {
+							_, unsafe_table_name, _ := strings.Cut(*response_queue, "_")
+							
+							table, table_errors := read_database.GetTable(unsafe_table_name)
+							if table_errors != nil {
+								errors = append(errors, table_errors...)
+							}
+
+							if len(errors) > 0 {
+								result.SetNil("data")
+								result.SetErrors("[errors]", &errors)
+							} else {
+								records, records_errors := table.Select(class.Map{}, nil, nil)
+								if records_errors != nil {
+									errors = append(errors, records_errors...)
+									result.SetNil("data")
+									result.SetErrors("[errors]", &errors)
+								} else {
+									array, array_errors := class.ToArray(records)
+									if array_errors != nil {
+										errors = append(errors, array_errors...)
+										result.SetErrors("[errors]", &errors)
+										result.SetNil("data")
+									} else {
+										result.SetErrors("[errors]", &errors)
+										result.SetArray("data", array)
+									}
+								}
 							}
 						} else {
 							fmt.Println("not supported yet" + *response_queue)
