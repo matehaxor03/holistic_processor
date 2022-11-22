@@ -43,6 +43,16 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 		return nil, errors
 	}
 
+	use_database_errors := read_database.UseDatabase() 
+	if use_database_errors != nil {
+		errors = append(errors, use_database_errors...)
+	}
+
+	if len(errors) > 0 {
+		return nil, errors
+	}
+
+
 	x := Processor{
 		WakeUp: func() {
 			wg.Done()
@@ -143,6 +153,9 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 							}
 						} else if strings.HasPrefix(*response_queue, "Read_") {
 							_, unsafe_table_name, _ := strings.Cut(*response_queue, "_")
+
+							hi, _ := read_database.ToJSONString()
+							fmt.Println(*hi)
 							
 							table, table_errors := read_database.GetTable(unsafe_table_name)
 							if table_errors != nil {
