@@ -259,6 +259,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		} else if delete_processor != nil {
 			processors["Delete_" + table_name] = delete_processor
 		}
+
+		get_schema_processor, get_schema_processor_errors := NewProcessor(*domain_name, queue_port, "GetSchema_" + table_name)
+		if get_schema_processor_errors != nil {
+			errors = append(errors, get_schema_processor_errors...)
+		} else if get_schema_processor != nil {
+			processors["GetSchema_" + table_name] = get_schema_processor
+		}
 	}
 
 	get_tables_processor, get_tables_processor_errors := NewProcessor(*domain_name, queue_port, "GetTableNames")

@@ -133,7 +133,10 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 						complete_queue_mode := "complete"
 						result.SetString("[queue_mode]", &complete_queue_mode)
 
+						fmt.Println("processing " + *response_queue)
+
 						if *response_queue == "GetTableNames" {
+							fmt.Println("getting tablenanes")
 							table_names, table_name_errors := read_database.GetTableNames()
 							
 							if table_name_errors != nil {
@@ -151,11 +154,34 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 									result.SetArray("data", array)
 								}
 							}
-						} else if strings.HasPrefix(*response_queue, "Read_") {
+ 						} else if strings.HasPrefix(*response_queue, "GetSchema_") {
+							fmt.Println("getting schema for " + *response_queue)
 							_, unsafe_table_name, _ := strings.Cut(*response_queue, "_")
-
-							hi, _ := read_database.ToJSONString()
-							fmt.Println(*hi)
+							
+							table, table_errors := read_database.GetTable(unsafe_table_name)
+							if table_errors != nil {
+								errors = append(errors, table_errors...)
+								result.SetNil("data")
+								result.SetErrors("[errors]", &errors)
+							} else if table != nil {
+								schema, schema_errors := table.GetSchema()
+								if schema_errors != nil {
+									errors = append(errors, schema_errors...)
+									result.SetNil("data")
+									result.SetErrors("[errors]", &errors)
+								} else {
+									result.SetErrors("[errors]", &errors)
+									result.SetMap("data", schema)
+								}
+							} else {
+								errors = append(errors, fmt.Errorf("table is nil"))
+								result.SetNil("data")
+								result.SetErrors("[errors]", &errors)
+							}
+							
+						} else if strings.HasPrefix(*response_queue, "Read_") {
+							fmt.Println("reading table for " + *response_queue)
+							_, unsafe_table_name, _ := strings.Cut(*response_queue, "_")
 							
 							table, table_errors := read_database.GetTable(unsafe_table_name)
 							if table_errors != nil {
