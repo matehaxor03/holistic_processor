@@ -1,7 +1,6 @@
 package processor
 
 import (
-	//"sync"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,7 +9,7 @@ import (
 	"time"
 	"sync"
 	"strings"
-	//"encoding/json"
+	"crypto/rand"
 	class "github.com/matehaxor03/holistic_db_client/class"
 )
 
@@ -22,6 +21,8 @@ type Processor struct {
 
 func NewProcessor(domain_name class.DomainName, port string, queue string) (*Processor, []error) {
 	var errors []error
+	var messageCountLock sync.Mutex
+	var messageCount uint64
 	var wg sync.WaitGroup
 
 	queue_url := fmt.Sprintf("https://%s:%s/", *(domain_name.GetDomainName()), port)
@@ -52,6 +53,19 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 		return nil, errors
 	}
 
+	incrementMessageCount := func() uint64 {
+		messageCountLock.Lock()
+		defer messageCountLock.Unlock()
+		messageCount++
+		return messageCount
+	}
+
+	generate_guid := func() string {
+		byte_array := make([]byte, 16)
+		rand.Read(byte_array)
+		guid := fmt.Sprintf("%X-%X-%X-%X-%X", byte_array[0:4], byte_array[4:6], byte_array[6:8], byte_array[8:10], byte_array[10:])
+		return guid
+	}
 
 	x := Processor{
 		WakeUp: func() {
@@ -64,8 +78,10 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 				for {
 					time.Sleep(1 * time.Nanosecond) 
 					var errors []error
+					trace_id := fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
 					request_payload := class.Map{}
 					request_payload.SetString("[queue]", &queue)
+					request_payload.SetString("[trace_id]", &trace_id)
 					queue_mode := "GetAndRemoveFront"
 					request_payload.SetString("[queue_mode]", &queue_mode)
 					request_payload_as_string, request_payload_as_string_errors := request_payload.ToJSONString()
@@ -178,7 +194,7 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 								result.SetNil("data")
 								result.SetErrors("[errors]", &errors)
 							}
-							
+
 						} else if strings.HasPrefix(*response_queue, "Read_") {
 							fmt.Println("reading table for " + *response_queue)
 							_, unsafe_table_name, _ := strings.Cut(*response_queue, "_")
