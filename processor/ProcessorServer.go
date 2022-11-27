@@ -54,11 +54,15 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 	//todo: add filters to fields
 	data := class.Map{
-		"[port]": class.Map{"value": class.CloneString(&port), "mandatory": true},
-		"[server_crt_path]": class.Map{"value": class.CloneString(&server_crt_path), "mandatory": true},
-		"[server_key_path]": class.Map{"value": class.CloneString(&server_key_path), "mandatory": true},
-		"[queue_port]": class.Map{"value": class.CloneString(&queue_port), "mandatory": true},
-		"[queue_domain_name]": class.Map{"value": class.CloneDomainName(domain_name), "mandatory": true},
+		"[port]": class.Map{"value": &port, "mandatory": true},
+		"[server_crt_path]": class.Map{"value": &server_crt_path, "mandatory": true},
+		"[server_key_path]": class.Map{"value": &server_key_path, "mandatory": true},
+		"[queue_port]": class.Map{"value": &queue_port, "mandatory": true},
+		"[queue_domain_name]": class.Map{"value": domain_name, "mandatory": true},
+	}
+
+	getData := func() *class.Map {
+		return &data
 	}
 
 	getPort := func() (string, []error) {
@@ -114,7 +118,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 
 	validate := func() []error {
-		return class.ValidateData(data, "ProcessorServer")
+		return class.ValidateData(getData(), "ProcessorServer")
 	}
 
 	/*
