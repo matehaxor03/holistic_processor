@@ -32,8 +32,12 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 
 
 	//var wg sync.WaitGroup
+	domain_name_value, domain_name_value_errors := domain_name.GetDomainName()
+	if domain_name_value_errors != nil {
+		return nil, domain_name_value_errors
+	}
 
-	queue_url := fmt.Sprintf("https://%s:%s/", *(domain_name.GetDomainName()), port)
+	queue_url := fmt.Sprintf("https://%s:%s/", domain_name_value, port)
 	transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
