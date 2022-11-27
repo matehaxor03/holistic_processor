@@ -23,7 +23,15 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 	var errors []error
 	var messageCountLock sync.Mutex
 	var messageCount uint64
-	var wg sync.WaitGroup
+	
+	retry_lock := &sync.Mutex{}
+	retry_condition := sync.NewCond(retry_lock)
+
+
+	wakeup_lock := &sync.Mutex{}
+
+
+	//var wg sync.WaitGroup
 
 	queue_url := fmt.Sprintf("https://%s:%s/", *(domain_name.GetDomainName()), port)
 	transport_config := &http.Transport{
@@ -69,7 +77,10 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 
 	x := Processor{
 		WakeUp: func() {
-			wg.Done()
+			//wg.Done()
+			wakeup_lock.Lock()
+			defer wakeup_lock.Unlock()
+			(*retry_condition).Signal()
 		},
 		Start: func() {
 			fmt.Println("starting processor " + queue)
@@ -125,31 +136,45 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 						// continue
 					}
 
-					fmt.Println(string(response_body_payload))
-
 					if string(response_body_payload) == "{}" {
 						fmt.Println("no data to process")
-						wg.Add(1)
-						wg.Wait()
+						//wg.Add(1)
+						retry_lock.Lock()
+						(*retry_condition).Wait()
+						retry_lock.Unlock()
+						//wg.Wait()
 						//time.Sleep(10 * time.Second) 
 					} else {
+						fmt.Println("processing " + string(response_body_payload))
 						response_json_payload, response_json_payload_errors := class.ParseJSON(string(response_body_payload))
 						if response_json_payload_errors != nil {
 							fmt.Println(response_json_payload_errors)
 							time.Sleep(10 * time.Second) 
 							continue
 						}
+						
+						//response_json_payload_string_after, _ := response_json_payload.ToJSONString()
+						//fmt.Println(*response_json_payload_string_after)
 
-						response_queue, _ := response_json_payload.GetString("[queue]")
-						trace_id, _ := response_json_payload.GetString("[trace_id]")
+						response_queue, response_queue_errors := response_json_payload.GetString("[queue]")
+						if response_queue_errors != nil {
+							fmt.Println(response_queue_errors)
+						} else if response_queue == nil {
+							fmt.Println("response_queue is nil")
+						}
+
+						message_trace_id, message_trace_id_errors := response_json_payload.GetString("[trace_id]")
+						if message_trace_id_errors != nil {
+							fmt.Println(message_trace_id_errors) 
+						} else if message_trace_id == nil {
+							fmt.Println("message_trace_id is nil")
+						}
 
 						result := class.Map{}
-						result.SetString("[trace_id]", trace_id)
+						result.SetString("[trace_id]", message_trace_id)
 						result.SetString("[queue]", response_queue)
 						complete_queue_mode := "complete"
 						result.SetString("[queue_mode]", &complete_queue_mode)
-
-						fmt.Println("processing " + *response_queue)
 
 						if *response_queue == "GetTableNames" {
 							fmt.Println("getting tablenanes")
@@ -249,7 +274,7 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 							// continue
 						}
 
-						_, http_callback_response_error := http_client.Do(callback_request)
+						http_callback_response, http_callback_response_error := http_client.Do(callback_request)
 						if http_callback_response_error != nil {
 							fmt.Println(http_callback_response_error)
 							time.Sleep(10 * time.Second) 
@@ -257,6 +282,19 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 							//todo: go to sleep permantly
 							// continue
 						}
+
+
+						callback_response_body_payload, callback_response_body_payload_error := ioutil.ReadAll(http_callback_response.Body)
+
+						if callback_response_body_payload_error != nil {
+							fmt.Println(callback_response_body_payload_error)
+							time.Sleep(10 * time.Second) 
+							continue
+							//todo: go to sleep permantly
+							// continue
+						}
+
+						fmt.Println("callback response: " +  string(callback_response_body_payload))
 
 
 						//dowork
@@ -267,6 +305,17 @@ func NewProcessor(domain_name class.DomainName, port string, queue string) (*Pro
 			}(queue_url, queue)
 		},
 	}
+
+	if len(errors) > 0 {
+		return nil, errors
+	}
+	
+	heart_beat := func() {
+		for range time.Tick(time.Second * 30) {
+			x.WakeUp()
+		}
+	}
+	go heart_beat()
 
 	return &x, nil
 }
