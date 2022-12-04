@@ -19,7 +19,7 @@ func main() {
 	}
 
 	if len(errors) > 0 {
-		fmt.Println(errors)
+		fmt.Println(fmt.Sprintf("%s", errors))
 		os.Exit(1)
 	}
 	

@@ -18,23 +18,36 @@ type ProcessorServer struct {
 
 func NewProcessorServer(port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
 	var errors []error
+	struct_type := "processor.ProcessorServer"
 	//wait_groups := make(map[string]sync.WaitGroup)
 	//var this_holisic_queue_server *HolisticQueueServer
-	
-	database, database_errors := class.GetDatabase("holistic_read")
-	if database_errors != nil {
-		errors = append(errors, database_errors...)
+	client_manager, client_manager_errors := class.NewClientManager()
+	if client_manager_errors != nil {
+		return nil, client_manager_errors
 	}
 
-	if len(errors) > 0 {
-		return nil, errors
+	test_read_client, test_read_client_errors := client_manager.GetClient("holistic_db_config:127.0.0.1:3306:holistic:holistic_read")
+	if test_read_client_errors != nil {
+		return nil, test_read_client_errors
+	}
+	
+	test_read_database, test_read_database_errors := test_read_client.GetDatabase()
+	if test_read_database_errors != nil {
+		return nil, test_read_database_errors
 	}
 	
 	processors := make(map[string](*Processor))
-	table_names, table_names_errors := database.GetTableNames()
+	table_names, table_names_errors := test_read_database.GetTableNames()
 	if table_names_errors != nil {
 		return nil, table_names_errors
 	}
+
+	domain_name, domain_name_errors := class.NewDomainName(queue_domain_name)
+	if domain_name_errors != nil {
+		return nil, domain_name_errors
+	}
+
+	
 
 	/*
 	transport_config := &http.Transport{
@@ -46,19 +59,28 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		Transport: transport_config,
 	}*/
 
-	domain_name, domain_name_errors := class.NewDomainName(queue_domain_name)
-	if domain_name_errors != nil {
-		errors = append(errors, domain_name_errors...)
-	}
+	
+	
 
 
 	//todo: add filters to fields
 	data := class.Map{
-		"[port]": class.Map{"value": &port, "mandatory": true},
-		"[server_crt_path]": class.Map{"value": &server_crt_path, "mandatory": true},
-		"[server_key_path]": class.Map{"value": &server_key_path, "mandatory": true},
-		"[queue_port]": class.Map{"value": &queue_port, "mandatory": true},
-		"[queue_domain_name]": class.Map{"value": domain_name, "mandatory": true},
+		"[fields]": class.Map{},
+		"[schema]": class.Map{},
+		"[system_fields]": class.Map{
+			"[port]":&port,
+			"[server_crt_path]":&server_crt_path,
+			"[server_key_path]":&server_key_path,
+			"[queue_port]":&queue_port,
+			"[queue_domain_name]":domain_name,	
+		},
+		"[system_schema]":class.Map{
+			"[port]": class.Map{"type":"string","mandatory": true},
+			"[server_crt_path]": class.Map{"type":"string","mandatory": true},
+			"[server_key_path]": class.Map{"type":"string", "mandatory": true},
+			"[queue_port]": class.Map{"type":"string", "mandatory": true},
+			"[queue_domain_name]": class.Map{"type":"*class.DomainName", "mandatory": true},
+		},
 	}
 
 	getData := func() *class.Map {
@@ -66,42 +88,27 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	getPort := func() (string, []error) {
-		temp_port_map, temp_port_map_errors := data.GetMap("[port]")
-		if temp_port_map_errors != nil {
-			return "", temp_port_map_errors
+		temp_value, temp_value_errors := class.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[port]", "string")
+		if temp_value_errors != nil {
+			return "",temp_value_errors
 		}
-
-		temp_port, temp_port_errors := temp_port_map.GetString("value")
-		if temp_port_errors != nil {
-			return "", temp_port_errors
-		}
-		return *temp_port, nil
+		return temp_value.(string), nil
 	}
 
 	getServerCrtPath := func() (string, []error) {
-		x_map, x_map_errors := data.GetMap("[server_crt_path]")
-		if x_map_errors != nil {
-			return "", x_map_errors
+		temp_value, temp_value_errors := class.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_crt_path]", "string")
+		if temp_value_errors != nil {
+			return "",temp_value_errors
 		}
-
-		temp_x, temp_x_errors := x_map.GetString("value")
-		if temp_x_errors != nil {
-			return "", temp_x_errors
-		}
-		return *temp_x, nil
+		return temp_value.(string), nil
 	}
 
 	getServerKeyPath := func() (string, []error) {
-		x_map, x_map_errors := data.GetMap("[server_key_path]")
-		if x_map_errors != nil {
-			return "", x_map_errors
+		temp_value, temp_value_errors := class.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_key_path]", "string")
+		if temp_value_errors != nil {
+			return "",temp_value_errors
 		}
-
-		temp_x, temp_x_errors := x_map.GetString("value")
-		if temp_x_errors != nil {
-			return "", temp_x_errors
-		}
-		return *temp_x, nil
+		return temp_value.(string), nil
 	}
 
 	/*
@@ -274,35 +281,35 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 
 	for _, table_name := range *table_names {
-		create_processor, create_processor_errors := NewProcessor(*domain_name, queue_port, "Create_" + table_name)
+		create_processor, create_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Create_" + table_name)
 		if create_processor_errors != nil {
 			errors = append(errors, create_processor_errors...)
 		} else if create_processor != nil {
 			processors["Create_" + table_name] = create_processor
 		}
 
-		read_processor, read_processor_errors := NewProcessor(*domain_name, queue_port, "Read_" + table_name)
+		read_processor, read_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Read_" + table_name)
 		if read_processor_errors != nil {
 			errors = append(errors, read_processor_errors...)
 		} else if read_processor != nil {
 			processors["Read_" + table_name] = read_processor
 		}
 
-		update_processor, update_processor_errors := NewProcessor(*domain_name, queue_port, "Update_" + table_name)
+		update_processor, update_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Update_" + table_name)
 		if update_processor_errors != nil {
 			errors = append(errors, update_processor_errors...)
 		} else if update_processor != nil {
 			processors["Update_" + table_name] = update_processor
 		}
 
-		delete_processor, delete_processor_errors := NewProcessor(*domain_name, queue_port, "Delete_" + table_name)
+		delete_processor, delete_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Delete_" + table_name)
 		if delete_processor_errors != nil {
 			errors = append(errors, delete_processor_errors...)
 		} else if delete_processor != nil {
 			processors["Delete_" + table_name] = delete_processor
 		}
 
-		get_schema_processor, get_schema_processor_errors := NewProcessor(*domain_name, queue_port, "GetSchema_" + table_name)
+		get_schema_processor, get_schema_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetSchema_" + table_name)
 		if get_schema_processor_errors != nil {
 			errors = append(errors, get_schema_processor_errors...)
 		} else if get_schema_processor != nil {
@@ -310,7 +317,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 	}
 
-	get_tables_processor, get_tables_processor_errors := NewProcessor(*domain_name, queue_port, "GetTableNames")
+	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)
 	} else if get_tables_processor != nil {
