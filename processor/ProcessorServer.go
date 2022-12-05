@@ -197,12 +197,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 					if *queue_mode == "WakeUp" {
 						processor.WakeUp()
 						json_payload.SetErrors("[errors]", &errors)
-						json_payload_as_string, json_payload_as_string_errors := json_payload.ToJSONString()
+						var json_payload_builder strings.Builder
+						json_payload_as_string_errors := json_payload.ToJSONString(&json_payload_builder)
 						if json_payload_as_string_errors != nil {
 							errors = append(errors, json_payload_as_string_errors...)
 							w.Write([]byte(fmt.Sprintf("{\"errors\":\"%s\"}", errors)))
 						} else {
-							w.Write([]byte(*json_payload_as_string))
+							w.Write([]byte(json_payload_builder.String()))
 						}
 					} else {
 						w.Write([]byte(fmt.Sprintf("[queue_mode] is not supported: %s", *queue_mode)))

@@ -94,7 +94,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 					request_payload.SetString("[trace_id]", &trace_id)
 					queue_mode := "GetAndRemoveFront"
 					request_payload.SetString("[queue_mode]", &queue_mode)
-					request_payload_as_string, request_payload_as_string_errors := request_payload.ToJSONString()
+					var json_payload_builder strings.Builder
+					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
 
 					if request_payload_as_string_errors != nil {
 						fmt.Println(request_payload_as_string_errors)
@@ -102,7 +103,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						continue
 					}
 
-					request_json_bytes := []byte(*request_payload_as_string)
+					request_json_bytes := []byte(json_payload_builder.String())
 					request_json_reader := bytes.NewReader(request_json_bytes)
 
 					request, request_error := http.NewRequest(http.MethodPost, queue_url, request_json_reader)
@@ -294,14 +295,15 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							fmt.Println("not supported yet" + *response_queue)
 						}
 
-						callback_payload_as_string, callback_payload_as_string_errors := result.ToJSONString()
+						var json_payload_builder strings.Builder
+						callback_payload_as_string_errors := result.ToJSONString(&json_payload_builder)
 						if callback_payload_as_string_errors != nil {
 							fmt.Println(callback_payload_as_string_errors)
 							time.Sleep(10 * time.Second) 
 							continue
 						}
 
-						callback_json_bytes := []byte(*callback_payload_as_string)
+						callback_json_bytes := []byte(json_payload_builder.String())
 						callback_json_reader := bytes.NewReader(callback_json_bytes)
 						callback_request, callback_request_error := http.NewRequest(http.MethodPost, queue_url, callback_json_reader)
 
