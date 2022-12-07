@@ -10,6 +10,7 @@ import (
 	//"crypto/tls"
 	//"time"
 	class "github.com/matehaxor03/holistic_db_client/class"
+	json "github.com/matehaxor03/holistic_json/json"
 )
 
 type ProcessorServer struct {
@@ -64,26 +65,26 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 
 	//todo: add filters to fields
-	data := class.Map{
-		"[fields]": class.Map{},
-		"[schema]": class.Map{},
-		"[system_fields]": class.Map{
+	data := json.Map{
+		"[fields]": json.Map{},
+		"[schema]": json.Map{},
+		"[system_fields]": json.Map{
 			"[port]":&port,
 			"[server_crt_path]":&server_crt_path,
 			"[server_key_path]":&server_key_path,
 			"[queue_port]":&queue_port,
 			"[queue_domain_name]":domain_name,	
 		},
-		"[system_schema]":class.Map{
-			"[port]": class.Map{"type":"string","mandatory": true},
-			"[server_crt_path]": class.Map{"type":"string","mandatory": true},
-			"[server_key_path]": class.Map{"type":"string", "mandatory": true},
-			"[queue_port]": class.Map{"type":"string", "mandatory": true},
-			"[queue_domain_name]": class.Map{"type":"*class.DomainName", "mandatory": true},
+		"[system_schema]":json.Map{
+			"[port]": json.Map{"type":"string"},
+			"[server_crt_path]": json.Map{"type":"string"},
+			"[server_key_path]": json.Map{"type":"string"},
+			"[queue_port]": json.Map{"type":"string"},
+			"[queue_domain_name]": json.Map{"type":"class.DomainName"},
 		},
 	}
 
-	getData := func() *class.Map {
+	getData := func() *json.Map {
 		return &data
 	}
 
@@ -167,7 +168,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			if body_payload_error != nil {
 				w.Write([]byte(body_payload_error.Error()))
 			} else {
-				json_payload, json_payload_errors := class.ParseJSON(string(body_payload))
+				json_payload, json_payload_errors := json.ParseJSON(string(body_payload))
 				if json_payload_errors != nil {
 					w.Write([]byte(fmt.Sprintf("%s", json_payload_errors)))
 				} else {

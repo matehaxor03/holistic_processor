@@ -11,6 +11,7 @@ import (
 	"strings"
 	"crypto/rand"
 	class "github.com/matehaxor03/holistic_db_client/class"
+	json "github.com/matehaxor03/holistic_json/json"
 )
 
 
@@ -89,7 +90,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 					time.Sleep(1 * time.Nanosecond) 
 					var errors []error
 					trace_id := fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
-					request_payload := class.Map{}
+					request_payload := json.Map{}
 					request_payload.SetString("[queue]", &queue)
 					request_payload.SetString("[trace_id]", &trace_id)
 					queue_mode := "GetAndRemoveFront"
@@ -125,7 +126,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						// continue
 					}
 
-					//response_json_payload := class.Map{}
+					//response_json_payload := json.Map{}
 					response_body_payload, response_body_payload_error := ioutil.ReadAll(http_response.Body)
 
 					if response_body_payload_error != nil {
@@ -152,7 +153,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 
 
 
-						response_json_payload, response_json_payload_errors := class.ParseJSON(string(response_body_payload))
+						response_json_payload, response_json_payload_errors := json.ParseJSON(string(response_body_payload))
 						if response_json_payload_errors != nil {
 							fmt.Println(response_json_payload_errors)
 							time.Sleep(10 * time.Second) 
@@ -176,7 +177,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							fmt.Println("message_trace_id is nil")
 						}
 
-						result := class.Map{}
+						result := json.Map{}
 						result.SetString("[trace_id]", message_trace_id)
 						result.SetString("[queue]", response_queue)
 						complete_queue_mode := "complete"
@@ -201,7 +202,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 										result.SetErrors("[errors]", &table_name_errors)
 										result.SetNil("data")
 									} else {
-										array, array_errors := class.ToArray(table_names)
+										array, array_errors := json.ToArray(table_names)
 										if array_errors != nil {
 											errors = append(errors, array_errors...)
 											result.SetErrors("[errors]", &errors)
@@ -272,20 +273,30 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 										result.SetNil("data")
 										result.SetErrors("[errors]", &errors)
 									} else {
-										records, records_errors := table.ReadRecords(class.Map{}, nil, nil)
+										records, records_errors := table.ReadRecords(json.Map{}, nil, nil)
 										if records_errors != nil {
 											errors = append(errors, records_errors...)
 											result.SetNil("data")
 											result.SetErrors("[errors]", &errors)
 										} else {
-											array, array_errors := class.ToArray(records)
+											var array_errors []error
+											array := json.Array{}
+											for _, record := range *records {
+												fields_for_record, fields_for_record_error := record.GetFields()
+												if fields_for_record_error != nil {
+													records_errors = append(records_errors, fields_for_record_error...)
+												} else {
+													array = append(array, *fields_for_record)
+												}		
+											}
+
 											if array_errors != nil {
 												errors = append(errors, array_errors...)
 												result.SetErrors("[errors]", &errors)
 												result.SetNil("data")
 											} else {
 												result.SetErrors("[errors]", &errors)
-												result.SetArray("data", array)
+												result.SetArray("data", &array)
 											}
 										}
 									}
