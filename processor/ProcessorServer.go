@@ -9,6 +9,7 @@ import (
 	//"sync"
 	//"crypto/tls"
 	//"time"
+	common "github.com/matehaxor03/holistic_common/common"
 	class "github.com/matehaxor03/holistic_db_client/class"
 	json "github.com/matehaxor03/holistic_json/json"
 )
@@ -175,31 +176,47 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 					fmt.Println(json_payload.Keys())
 					fmt.Println(string(body_payload))
 
-					queue, queue_errors := json_payload.GetString("[queue]")
-					if queue_errors != nil {
-						w.Write([]byte(fmt.Sprintf("%s", queue_errors)))
+					keys := json_payload.Keys()
+					if len(keys) != 1 {
+						errors = append(errors, fmt.Errorf("keys is not equal to one"))
+						w.Write([]byte(fmt.Sprintf("%s", errors)))
 						return
 					}
+
+					queue := keys[0]
 					
-					processor, ok := processors[*queue]
+					processor, ok := processors[queue]
 					if !ok {
-						w.Write([]byte(fmt.Sprintf("prcoessor: %s does not exist", *queue)))
+						w.Write([]byte(fmt.Sprintf("prcoessor: %s does not exist", queue)))
+						return
+					}
+
+					json_payload_inner, json_payload_inner_errors := json_payload.GetMap(queue)
+					if json_payload_inner_errors != nil {
+						w.Write([]byte(fmt.Sprintf("%s", json_payload_inner_errors)))
+						return
+					} else if json_payload_inner != nil {
+						w.Write([]byte(fmt.Sprintf("json payload inner is nil")))
 						return
 					}
 					//trace_id, _ := json_payload.GetString("[trace_id]")
 
-					queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
+					queue_mode, queue_mode_errors := json_payload_inner.GetString("[queue_mode]")
 
 					if queue_mode_errors != nil {
 						w.Write([]byte(fmt.Sprintf("%s", queue_mode_errors)))
+						return
+					} else if common.IsNil(queue_mode) {
+						w.Write([]byte(fmt.Sprintf("quue mode  is nil")))
 						return
 					}
 
 					if *queue_mode == "WakeUp" {
 						processor.WakeUp()
-						json_payload.SetErrors("[errors]", &errors)
+						response := json.Map{}
+						response.SetErrors("[errors]", &errors)
 						var json_payload_builder strings.Builder
-						json_payload_as_string_errors := json_payload.ToJSONString(&json_payload_builder)
+						json_payload_as_string_errors := response.ToJSONString(&json_payload_builder)
 						if json_payload_as_string_errors != nil {
 							errors = append(errors, json_payload_as_string_errors...)
 							w.Write([]byte(fmt.Sprintf("{\"errors\":\"%s\"}", errors)))
@@ -208,32 +225,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 						}
 					} else {
 						w.Write([]byte(fmt.Sprintf("[queue_mode] is not supported: %s", *queue_mode)))
-					}
-				
-						/*
-						queue, ok := queues[*message_type]
-						if ok {
-							queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
-							if queue_mode_errors != nil {
-								w.Write([]byte("[queue_mode] does not exist error"))
-							} else {
-								if *queue_mode == "PushBack" {
-									var wg sync.WaitGroup
-									wg.Add(1)
-									wait_groups[*trace_id] = wg
-									queue.PushBack(&json_payload)
-									wg.Wait()
-									w.Write([]byte("ok"))
-								} else {
-									fmt.Println(fmt.Sprintf("[queue_mode] not supported please implement: %s", *queue_mode))
-									w.Write([]byte(fmt.Sprintf("[queue_mode] not supported please implement: %s", *queue_mode)))
-								}
-							}
-						} else {
-							fmt.Println(fmt.Sprintf("[queue] not supported please implement: %s", *message_type))
-							w.Write([]byte(fmt.Sprintf("[queue] not supported please implement: %s", *message_type)))
-						}*/
-					
+					}				
 				}
 			}
 		} else {

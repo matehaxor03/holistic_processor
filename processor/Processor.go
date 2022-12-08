@@ -10,6 +10,7 @@ import (
 	"sync"
 	"strings"
 	"crypto/rand"
+	common "github.com/matehaxor03/holistic_common/common"
 	class "github.com/matehaxor03/holistic_db_client/class"
 	json "github.com/matehaxor03/holistic_json/json"
 )
@@ -90,11 +91,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 					time.Sleep(1 * time.Nanosecond) 
 					var errors []error
 					trace_id := fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
-					request_payload := json.Map{}
-					request_payload.SetString("[queue]", &queue)
-					request_payload.SetString("[trace_id]", &trace_id)
-					queue_mode := "GetAndRemoveFront"
-					request_payload.SetString("[queue_mode]", &queue_mode)
+					request_payload := json.Map{queue: json.Map{"[trace_id]":trace_id, "queue_mode":"GetAndRemoveFront"}}
 					var json_payload_builder strings.Builder
 					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
 
@@ -163,14 +160,23 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						//response_json_payload_string_after, _ := response_json_payload.ToJSONString()
 						//fmt.Println(*response_json_payload_string_after)
 
-						response_queue, response_queue_errors := response_json_payload.GetString("[queue]")
-						if response_queue_errors != nil {
-							fmt.Println(response_queue_errors)
-						} else if response_queue == nil {
-							fmt.Println("response_queue is nil")
+						keys := response_json_payload.Keys()
+						if len(keys) != 1 {
+							fmt.Println("keys length is not 1")
+							continue
 						}
 
-						message_trace_id, message_trace_id_errors := response_json_payload.GetString("[trace_id]")
+						response_queue := keys[0]
+						json_payload_inner, json_payload_inner_errors := response_json_payload.GetMap(response_queue)
+						if json_payload_inner_errors != nil {
+							fmt.Println(json_payload_inner_errors) 
+							continue
+						} else if common.IsNil(json_payload_inner) {
+							fmt.Println("payload body is nil") 
+							continue
+						}
+
+						message_trace_id, message_trace_id_errors := json_payload_inner.GetString("[trace_id]")
 						if message_trace_id_errors != nil {
 							fmt.Println(message_trace_id_errors) 
 						} else if message_trace_id == nil {
@@ -178,91 +184,90 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						}
 
 						result := json.Map{}
-						result.SetString("[trace_id]", message_trace_id)
-						result.SetString("[queue]", response_queue)
-						complete_queue_mode := "complete"
-						result.SetString("[queue_mode]", &complete_queue_mode)
+						response_queue_result := json.Map{"[trace_id]":*message_trace_id, "[queue_mode]":"complete"}
+						result.SetObject(response_queue, response_queue_result)
+						
 
-						if *response_queue == "GetTableNames" {
+						if response_queue == "GetTableNames" {
 							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
-								result.SetNil("data")
-								result.SetErrors("[errors]", &errors)
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &errors)
 							} else {
 								temp_read_database, temp_read_database_errors := temp_client.GetDatabase()
 								if temp_read_database_errors != nil {
-									result.SetNil("data")
-									result.SetErrors("[errors]", &errors)
+									response_queue_result.SetNil("data")
+									response_queue_result.SetErrors("[errors]", &errors)
 								} else {
 									fmt.Println("getting tablenanes")
 									table_names, table_name_errors := temp_read_database.GetTableNames()
 									
 									if table_name_errors != nil {
 										fmt.Println(table_name_errors)
-										result.SetErrors("[errors]", &table_name_errors)
-										result.SetNil("data")
+										response_queue_result.SetErrors("[errors]", &table_name_errors)
+										response_queue_result.SetNil("data")
 									} else {
 										array, array_errors := json.ToArray(table_names)
 										if array_errors != nil {
 											errors = append(errors, array_errors...)
-											result.SetErrors("[errors]", &errors)
-											result.SetNil("data")
+											response_queue_result.SetErrors("[errors]", &errors)
+											response_queue_result.SetNil("data")
 										} else {
-											result.SetErrors("[errors]", &errors)
-											result.SetArray("data", array)
+											response_queue_result.SetErrors("[errors]", &errors)
+											response_queue_result.SetArray("data", array)
 										}
 									}
 								}
 							}
- 						} else if strings.HasPrefix(*response_queue, "GetSchema_") {
+ 						} else if strings.HasPrefix(response_queue, "GetSchema_") {
 							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
-								result.SetNil("data")
-								result.SetErrors("[errors]", &errors)
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &errors)
 							} else {
 								temp_read_database, temp_read_database_errors := temp_client.GetDatabase()
 								if temp_read_database_errors != nil {
-									result.SetNil("data")
-									result.SetErrors("[errors]", &errors)
+									response_queue_result.SetNil("data")
+									response_queue_result.SetErrors("[errors]", &errors)
 								} else {
-									fmt.Println("getting schema for " + *response_queue)
-									_, unsafe_table_name, _ := strings.Cut(*response_queue, "_")
+									fmt.Println("getting schema for " + response_queue)
+									_, unsafe_table_name, _ := strings.Cut(response_queue, "_")
 									
 									table, table_errors := temp_read_database.GetTable(unsafe_table_name)
 									if table_errors != nil {
 										errors = append(errors, table_errors...)
-										result.SetNil("data")
-										result.SetErrors("[errors]", &errors)
+										response_queue_result.SetNil("data")
+										response_queue_result.SetErrors("[errors]", &errors)
 									} else if table != nil {
 										schema, schema_errors := table.GetSchema()
 										if schema_errors != nil {
 											errors = append(errors, schema_errors...)
-											result.SetNil("data")
-											result.SetErrors("[errors]", &errors)
+											response_queue_result.SetNil("data")
+											response_queue_result.SetErrors("[errors]", &errors)
 										} else {
-											result.SetErrors("[errors]", &errors)
-											result.SetMap("data", schema)
+											response_queue_result.SetErrors("[errors]", &errors)
+											response_queue_result.SetMap("data", schema)
 										}
 									} else {
 										errors = append(errors, fmt.Errorf("table is nil"))
-										result.SetNil("data")
-										result.SetErrors("[errors]", &errors)
+										response_queue_result.SetNil("data")
+										response_queue_result.SetErrors("[errors]", &errors)
 									}
 								}
 							}
-						} else if strings.HasPrefix(*response_queue, "Read_") {	
+						} else if strings.HasPrefix(response_queue, "Read_") {	
 							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
-								result.SetNil("data")
-								result.SetErrors("[errors]", &errors)
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &errors)
 							} else {
 								temp_read_database, temp_read_database_errors := temp_client.GetDatabase()
 								if temp_read_database_errors != nil {
-									result.SetNil("data")
-									result.SetErrors("[errors]", &errors)
+									response_queue_result.SetNil("data")
+									response_queue_result.SetErrors("[errors]", &errors)
 								} else {
-									fmt.Println("reading table for " + *response_queue)
-									_, unsafe_table_name, _ := strings.Cut(*response_queue, "_")
+									fmt.Println("reading table for " + response_queue)
+									_, unsafe_table_name, _ := strings.Cut(response_queue, "_")
 									
 									table, table_errors := temp_read_database.GetTable(unsafe_table_name)
 									if table_errors != nil {
@@ -270,14 +275,14 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 									}
 
 									if len(errors) > 0 {
-										result.SetNil("data")
-										result.SetErrors("[errors]", &errors)
+										response_queue_result.SetNil("data")
+										response_queue_result.SetErrors("[errors]", &errors)
 									} else {
 										records, records_errors := table.ReadRecords(json.Map{}, nil, nil)
 										if records_errors != nil {
 											errors = append(errors, records_errors...)
-											result.SetNil("data")
-											result.SetErrors("[errors]", &errors)
+											response_queue_result.SetNil("data")
+											response_queue_result.SetErrors("[errors]", &errors)
 										} else {
 											var array_errors []error
 											array := json.Array{}
@@ -292,18 +297,18 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 
 											if array_errors != nil {
 												errors = append(errors, array_errors...)
-												result.SetErrors("[errors]", &errors)
-												result.SetNil("data")
+												response_queue_result.SetErrors("[errors]", &errors)
+												response_queue_result.SetNil("data")
 											} else {
-												result.SetErrors("[errors]", &errors)
-												result.SetArray("data", &array)
+												response_queue_result.SetErrors("[errors]", &errors)
+												response_queue_result.SetArray("data", &array)
 											}
 										}
 									}
 								}
 							}
 						} else {
-							fmt.Println("not supported yet" + *response_queue)
+							fmt.Println("not supported yet" + response_queue)
 						}
 
 						var json_payload_builder strings.Builder
