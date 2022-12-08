@@ -140,6 +140,51 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return this_holisic_queue_server
 	}*/
 
+	write_response := func(w http.ResponseWriter, result json.Map, write_response_errors []error) {
+		keys := result.Keys()
+		
+		if len(keys) != 1 {
+			write_response_errors = append(write_response_errors, fmt.Errorf("number of root keys is incorrect"))
+		}
+		
+		if len(write_response_errors) > 0 {
+			inner_map_found := false
+			if len(keys) == 1 {
+				inner_map, inner_map_errors := result.GetMap(keys[0])
+				if inner_map_errors != nil {
+					write_response_errors = append(write_response_errors, inner_map_errors...)
+				} 
+				
+				if inner_map == nil {
+					write_response_errors = append(write_response_errors, fmt.Errorf("inner map is nil"))
+					inner_map_found = false
+				} else {
+					inner_map_found = true
+				}
+			}
+
+			if inner_map_found {
+				(result[keys[0]].(json.Map))["data"] = nil
+				(result[keys[0]].(json.Map))["[errors]"] = write_response_errors
+			} else {
+				result["unknown"] = json.Map{"data":nil, "[errors]":write_response_errors}
+			}
+		}
+
+		var json_payload_builder strings.Builder
+		result_as_string_errors := result.ToJSONString(&json_payload_builder)
+		if result_as_string_errors != nil {
+			write_response_errors = append(write_response_errors, result_as_string_errors...)
+		}
+		
+		w.Header().Set("Content-Type", "application/json")
+		if result_as_string_errors == nil {
+			w.Write([]byte(json_payload_builder.String()))
+		} else {
+			w.Write([]byte(fmt.Sprintf("{\"unknown\":{\"[errors]\":\"%s\", \"data\":null}}", strings.ReplaceAll(fmt.Sprintf("%s", result_as_string_errors), "\"", "\\\""))))
+		}
+	}
+
 	formatRequest := func(r *http.Request) string {
 		var request []string
 	
@@ -167,71 +212,106 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		if req.Method == "POST" || req.Method == "PATCH" || req.Method == "PUT" {
 			body_payload, body_payload_error := ioutil.ReadAll(req.Body);
 			if body_payload_error != nil {
-				w.Write([]byte(body_payload_error.Error()))
-			} else {
-				json_payload, json_payload_errors := json.ParseJSON(string(body_payload))
-				if json_payload_errors != nil {
-					fmt.Println(json_payload_errors)
-					w.Write([]byte(fmt.Sprintf("%s", json_payload_errors)))
-				} else {
-					fmt.Println(json_payload.Keys())
-					fmt.Println(string(body_payload))
+				errors = append(errors, body_payload_error)
+			} 
 
-					keys := json_payload.Keys()
-					if len(keys) != 1 {
-						errors = append(errors, fmt.Errorf("keys is not equal to one"))
-						w.Write([]byte(fmt.Sprintf("%s", errors)))
-						return
-					}
+			if len(errors) > 0 {
+				write_response(w, json.Map{}, errors)
+				return
+			}
+			
+			json_payload, json_payload_errors := json.ParseJSON(string(body_payload))
+			if json_payload_errors != nil {
+				errors = append(errors, json_payload_errors...)
+			} 
 
-					queue := keys[0]
-					
-					processor, ok := processors[queue]
-					if !ok {
-						w.Write([]byte(fmt.Sprintf("prcoessor: %s does not exist", queue)))
-						return
-					}
+			if len(errors) > 0 {
+				write_response(w, json.Map{}, errors)
+				return
+			}
+		
+			fmt.Println(json_payload.Keys())
+			fmt.Println(string(body_payload))
 
-					json_payload_inner, json_payload_inner_errors := json_payload.GetMap(queue)
-					if json_payload_inner_errors != nil {
-						w.Write([]byte(fmt.Sprintf("%s", json_payload_inner_errors)))
-						return
-					} else if json_payload_inner == nil {
-						w.Write([]byte(fmt.Sprintf("json payload inner is nil")))
-						return
-					}
+			keys := json_payload.Keys()
+			if len(keys) != 1 {
+				errors = append(errors, fmt.Errorf("keys is not equal to one"))
+			}
+
+			if len(errors) > 0 {
+				write_response(w, json.Map{}, errors)
+				return
+			}
+
+			queue := keys[0]
+			processor, ok := processors[queue]
+			if !ok {
+				errors = append(errors, fmt.Errorf("prcoessor: %s does not exist", queue))
+			}
+
+			if len(errors) > 0 {
+				write_response(w, json.Map{}, errors)
+				return
+			}
+
+			result := json.Map{queue: json.Map{}}
+
+			json_payload_inner, json_payload_inner_errors := json_payload.GetMap(queue)
+			if json_payload_inner_errors != nil {
+				errors = append(errors, json_payload_inner_errors...)
+			} 
+			
+			
+			if json_payload_inner == nil {
+				errors = append(errors, fmt.Errorf("json payload inner is nil"))
+			}
+
+			if len(errors) > 0 {
+				write_response(w, json.Map{}, errors)
+				return
+			}
 					//trace_id, _ := json_payload.GetString("[trace_id]")
 
-					queue_mode, queue_mode_errors := json_payload_inner.GetString("[queue_mode]")
+			queue_mode, queue_mode_errors := json_payload_inner.GetString("[queue_mode]")
 
-					if queue_mode_errors != nil {
-						w.Write([]byte(fmt.Sprintf("%s", queue_mode_errors)))
-						return
-					} else if common.IsNil(queue_mode) {
-						fmt.Println("quue mode  is nil")
-						w.Write([]byte(fmt.Sprintf("quue mode  is nil")))
-						return
-					}
-
-					if *queue_mode == "WakeUp" {
-						processor.WakeUp()
-						response := json.Map{}
-						response.SetErrors("[errors]", &errors)
-						var json_payload_builder strings.Builder
-						json_payload_as_string_errors := response.ToJSONString(&json_payload_builder)
-						if json_payload_as_string_errors != nil {
-							fmt.Println(json_payload_as_string_errors)
-							errors = append(errors, json_payload_as_string_errors...)
-							w.Write([]byte(fmt.Sprintf("{\"errors\":\"%s\"}", json_payload_as_string_errors)))
-						} else {
-							fmt.Println(json_payload_builder.String())
-							w.Write([]byte(json_payload_builder.String()))
-						}
-					} else {
-						w.Write([]byte(fmt.Sprintf("[queue_mode] is not supported: %s", *queue_mode)))
-					}				
-				}
+			if queue_mode_errors != nil {
+				errors = append(errors, queue_mode_errors...)
+			} 
+			
+			if common.IsNil(queue_mode) {
+				errors = append(errors, fmt.Errorf("[queue_mode] is nil"))
 			}
+
+			if !(common.IsNil(queue_mode)) {
+				(result[queue].(json.Map))["[queue_mode]"] = *queue_mode
+			}
+
+			trace_id, trace_id_errors := json_payload_inner.GetString("[trace_id]")
+
+			if trace_id_errors != nil {
+				errors = append(errors, trace_id_errors...)
+			} 
+			
+			if common.IsNil(trace_id) {
+				errors = append(errors, fmt.Errorf("[trace_id]  is nil"))
+			}
+
+			if !(common.IsNil(trace_id)) {
+				(result[queue].(json.Map))["[trace_id]"] = *trace_id
+			}
+			
+			if len(errors) > 0 {
+				write_response(w, result, errors)
+				return
+			}
+
+			if *queue_mode == "WakeUp" {
+				processor.WakeUp()
+			} else {
+				errors = append(errors, fmt.Errorf("[queue_mode] is not supported: %s",  *queue_mode))
+			}
+
+			write_response(w, result, errors)
 		} else {
 			w.Write([]byte(formatRequest(req)))
 		}

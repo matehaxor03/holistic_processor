@@ -101,6 +101,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						continue
 					}
 
+					fmt.Println(json_payload_builder.String())
+
 					request_json_bytes := []byte(json_payload_builder.String())
 					request_json_reader := bytes.NewReader(request_json_bytes)
 
@@ -134,6 +136,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						// continue
 					}
 
+					/*
 					if string(response_body_payload) == "{}" {
 						fmt.Println("no data to process")
 						//wg.Add(1)
@@ -143,11 +146,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						//wg.Wait()
 						//time.Sleep(10 * time.Second) 
 					} else {
+						*/
 						fmt.Println("processing " + string(response_body_payload))
-
-
-
-
 
 
 						response_json_payload, response_json_payload_errors := json.ParseJSON(string(response_body_payload))
@@ -179,15 +179,25 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						message_trace_id, message_trace_id_errors := json_payload_inner.GetString("[trace_id]")
 						if message_trace_id_errors != nil {
 							fmt.Println(message_trace_id_errors) 
+							continue
 						} else if message_trace_id == nil {
 							fmt.Println("message_trace_id is nil")
+							continue
 						}
+
+						fmt.Println(string(response_body_payload))
 
 						result := json.Map{}
 						response_queue_result := json.Map{"[trace_id]":*message_trace_id, "[queue_mode]":"complete"}
 						result.SetMap(response_queue, &response_queue_result)
-						
-						if response_queue == "GetTableNames" {
+
+						fmt.Println("processing processing " + response_queue)
+
+						if response_queue == "empty" {
+							retry_lock.Lock()
+							(*retry_condition).Wait()
+							retry_lock.Unlock()
+						} else if response_queue == "GetTableNames" {
 							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
 								response_queue_result.SetNil("data")
@@ -310,17 +320,21 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							fmt.Println("not supported yet" + response_queue)
 						}
 
-						var json_payload_builder strings.Builder
-						callback_payload_as_string_errors := result.ToJSONString(&json_payload_builder)
+						if response_queue == "empty" {
+							continue
+						}
+
+						var json_payload_callback_builder strings.Builder
+						callback_payload_as_string_errors := result.ToJSONString(&json_payload_callback_builder)
 						if callback_payload_as_string_errors != nil {
 							fmt.Println(callback_payload_as_string_errors)
 							time.Sleep(10 * time.Second) 
 							continue
 						}
 
+						fmt.Println(json_payload_callback_builder.String())
 
-						fmt.Println(json_payload_builder.String())
-						callback_json_bytes := []byte(json_payload_builder.String())
+						callback_json_bytes := []byte(json_payload_callback_builder.String())
 						callback_json_reader := bytes.NewReader(callback_json_bytes)
 						callback_request, callback_request_error := http.NewRequest(http.MethodPost, queue_url, callback_json_reader)
 
@@ -360,7 +374,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						//go sleep for short time
 						
 					}
-				}
+				
 			}(queue_url, queue)
 		},
 	}
