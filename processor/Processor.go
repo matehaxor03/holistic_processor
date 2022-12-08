@@ -91,7 +91,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 					time.Sleep(1 * time.Nanosecond) 
 					var errors []error
 					trace_id := fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
-					request_payload := json.Map{queue: json.Map{"[trace_id]":trace_id, "queue_mode":"GetAndRemoveFront"}}
+					request_payload := json.Map{queue: json.Map{"[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}}
 					var json_payload_builder strings.Builder
 					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
 
@@ -185,9 +185,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 
 						result := json.Map{}
 						response_queue_result := json.Map{"[trace_id]":*message_trace_id, "[queue_mode]":"complete"}
-						result.SetObject(response_queue, response_queue_result)
+						result.SetMap(response_queue, &response_queue_result)
 						
-
 						if response_queue == "GetTableNames" {
 							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
@@ -319,6 +318,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
+
+						fmt.Println(json_payload_builder.String())
 						callback_json_bytes := []byte(json_payload_builder.String())
 						callback_json_reader := bytes.NewReader(callback_json_bytes)
 						callback_request, callback_request_error := http.NewRequest(http.MethodPost, queue_url, callback_json_reader)

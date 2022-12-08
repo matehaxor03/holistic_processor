@@ -171,6 +171,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			} else {
 				json_payload, json_payload_errors := json.ParseJSON(string(body_payload))
 				if json_payload_errors != nil {
+					fmt.Println(json_payload_errors)
 					w.Write([]byte(fmt.Sprintf("%s", json_payload_errors)))
 				} else {
 					fmt.Println(json_payload.Keys())
@@ -195,7 +196,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 					if json_payload_inner_errors != nil {
 						w.Write([]byte(fmt.Sprintf("%s", json_payload_inner_errors)))
 						return
-					} else if json_payload_inner != nil {
+					} else if json_payload_inner == nil {
 						w.Write([]byte(fmt.Sprintf("json payload inner is nil")))
 						return
 					}
@@ -207,6 +208,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 						w.Write([]byte(fmt.Sprintf("%s", queue_mode_errors)))
 						return
 					} else if common.IsNil(queue_mode) {
+						fmt.Println("quue mode  is nil")
 						w.Write([]byte(fmt.Sprintf("quue mode  is nil")))
 						return
 					}
@@ -218,9 +220,11 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 						var json_payload_builder strings.Builder
 						json_payload_as_string_errors := response.ToJSONString(&json_payload_builder)
 						if json_payload_as_string_errors != nil {
+							fmt.Println(json_payload_as_string_errors)
 							errors = append(errors, json_payload_as_string_errors...)
-							w.Write([]byte(fmt.Sprintf("{\"errors\":\"%s\"}", errors)))
+							w.Write([]byte(fmt.Sprintf("{\"errors\":\"%s\"}", json_payload_as_string_errors)))
 						} else {
+							fmt.Println(json_payload_builder.String())
 							w.Write([]byte(json_payload_builder.String()))
 						}
 					} else {
