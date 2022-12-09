@@ -28,10 +28,13 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 	
 	retry_lock := &sync.Mutex{}
 	retry_condition := sync.NewCond(retry_lock)
-
-
 	wakeup_lock := &sync.Mutex{}
 
+	processor_callback, processor_callback_errors := NewProcessorCallback(domain_name, port)
+	if processor_callback_errors != nil {
+		return nil, processor_callback_errors
+	}
+	processor_callback.Start()
 
 	//var wg sync.WaitGroup
 	domain_name_value, domain_name_value_errors := domain_name.GetDomainName()
@@ -324,6 +327,10 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
+						processor_callback.PushBack(&result)
+						processor_callback.WakeUp()
+
+							/*
 						var json_payload_callback_builder strings.Builder
 						callback_payload_as_string_errors := result.ToJSONString(&json_payload_callback_builder)
 						if callback_payload_as_string_errors != nil {
@@ -332,6 +339,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
+						
+					
 						fmt.Println(json_payload_callback_builder.String())
 
 						callback_json_bytes := []byte(json_payload_callback_builder.String())
@@ -368,7 +377,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						}
 
 						fmt.Println("callback response: " +  string(callback_response_body_payload))
-
+						*/
 
 						//dowork
 						//go sleep for short time
@@ -384,7 +393,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 	}
 	
 	heart_beat := func() {
-		for range time.Tick(time.Second * 15) {
+		for range time.Tick(time.Second * 60) {
 			x.WakeUp()
 		}
 	}
