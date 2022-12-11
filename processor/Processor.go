@@ -18,14 +18,30 @@ import (
 
 type Processor struct {
 	Start func()
+	GetProcessor func() *Processor
+	GetClientRead func() *class.Client
+	GetQueue func() string
 	WakeUp func()
 }
 
 func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainName, port string, queue string) (*Processor, []error) {
+	var this_processor *Processor
 	var errors []error
 	var messageCountLock sync.Mutex
 	var messageCount uint64
 	
+	setProcessor := func(processor *Processor) {
+		this_processor = processor
+	}
+
+	getProcessor := func() *Processor {
+		return this_processor
+	}
+
+	getQueue := func() string {
+		return queue
+	}
+
 	retry_lock := &sync.Mutex{}
 	retry_condition := sync.NewCond(retry_lock)
 	wakeup_lock := &sync.Mutex{}
@@ -81,10 +97,18 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 
 	x := Processor{
 		WakeUp: func() {
-			//wg.Done()
 			wakeup_lock.Lock()
 			defer wakeup_lock.Unlock()
 			(*retry_condition).Signal()
+		},
+		GetQueue: func() string {
+			return getQueue()
+		},
+		GetClientRead: func() *class.Client {
+			return read_database_client
+		},
+		GetProcessor: func() *Processor {
+			return getProcessor()
 		},
 		Start: func() {
 			fmt.Println("starting processor " + queue)
@@ -188,7 +212,16 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							(*retry_condition).Wait()
 							retry_lock.Unlock()
 						} else if response_queue == "GetTableNames" {
-							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
+							table_name_errors := GetTableNames(getProcessor(), &response_queue_result)
+							if table_name_errors != nil {
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &errors)
+							} else {
+								var temp_errors []error
+								response_queue_result.SetErrors("[errors]", &temp_errors)
+							}
+							
+							/*temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &errors)
@@ -217,7 +250,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 										}
 									}
 								}
-							}
+							}*/
  						} else if strings.HasPrefix(response_queue, "GetSchema_") {
 							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
@@ -321,6 +354,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 			}(queue_url, queue)
 		},
 	}
+	setProcessor(&x)
+	
 
 	if len(errors) > 0 {
 		return nil, errors
