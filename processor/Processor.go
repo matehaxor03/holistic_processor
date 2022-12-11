@@ -139,17 +139,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						// continue
 					}
 
-					/*
-					if string(response_body_payload) == "{}" {
-						fmt.Println("no data to process")
-						//wg.Add(1)
-						retry_lock.Lock()
-						(*retry_condition).Wait()
-						retry_lock.Unlock()
-						//wg.Wait()
-						//time.Sleep(10 * time.Second) 
-					} else {
-						*/
+					
 						fmt.Println("processing " + string(response_body_payload))
 
 
@@ -159,9 +149,6 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							time.Sleep(10 * time.Second) 
 							continue
 						}
-						
-						//response_json_payload_string_after, _ := response_json_payload.ToJSONString()
-						//fmt.Println(*response_json_payload_string_after)
 
 						keys := response_json_payload.Keys()
 						if len(keys) != 1 {
@@ -329,59 +316,6 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 
 						processor_callback.PushBack(&result)
 						processor_callback.WakeUp()
-
-							/*
-						var json_payload_callback_builder strings.Builder
-						callback_payload_as_string_errors := result.ToJSONString(&json_payload_callback_builder)
-						if callback_payload_as_string_errors != nil {
-							fmt.Println(callback_payload_as_string_errors)
-							time.Sleep(10 * time.Second) 
-							continue
-						}
-
-						
-					
-						fmt.Println(json_payload_callback_builder.String())
-
-						callback_json_bytes := []byte(json_payload_callback_builder.String())
-						callback_json_reader := bytes.NewReader(callback_json_bytes)
-						callback_request, callback_request_error := http.NewRequest(http.MethodPost, queue_url, callback_json_reader)
-
-						if callback_request_error != nil {
-							fmt.Println(callback_request_error)
-							time.Sleep(10 * time.Second) 
-							continue
-
-							//todo: go to sleep permantly
-							// continue
-						}
-
-						http_callback_response, http_callback_response_error := http_client.Do(callback_request)
-						if http_callback_response_error != nil {
-							fmt.Println(http_callback_response_error)
-							time.Sleep(10 * time.Second) 
-							continue
-							//todo: go to sleep permantly
-							// continue
-						}
-
-
-						callback_response_body_payload, callback_response_body_payload_error := ioutil.ReadAll(http_callback_response.Body)
-
-						if callback_response_body_payload_error != nil {
-							fmt.Println(callback_response_body_payload_error)
-							time.Sleep(10 * time.Second) 
-							continue
-							//todo: go to sleep permantly
-							// continue
-						}
-
-						fmt.Println("callback response: " +  string(callback_response_body_payload))
-						*/
-
-						//dowork
-						//go sleep for short time
-						
 					}
 				
 			}(queue_url, queue)
