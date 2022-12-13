@@ -279,32 +279,32 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 
 	for _, table_name := range *table_names {
-		create_processor, create_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Create_" + table_name)
+		create_processor, create_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "CreateRecords_" + table_name)
 		if create_processor_errors != nil {
 			errors = append(errors, create_processor_errors...)
 		} else if create_processor != nil {
-			processors["Create_" + table_name] = create_processor
+			processors["CreateRecords_" + table_name] = create_processor
 		}
 
-		read_processor, read_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Read_" + table_name)
+		read_processor, read_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "ReadRecords_" + table_name)
 		if read_processor_errors != nil {
 			errors = append(errors, read_processor_errors...)
 		} else if read_processor != nil {
-			processors["Read_" + table_name] = read_processor
+			processors["ReadRecords_" + table_name] = read_processor
 		}
 
-		update_processor, update_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Update_" + table_name)
+		update_processor, update_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name)
 		if update_processor_errors != nil {
 			errors = append(errors, update_processor_errors...)
 		} else if update_processor != nil {
-			processors["Update_" + table_name] = update_processor
+			processors["UpdateRecords_" + table_name] = update_processor
 		}
 
-		delete_processor, delete_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Delete_" + table_name)
+		delete_processor, delete_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "DeleteRecords_" + table_name)
 		if delete_processor_errors != nil {
 			errors = append(errors, delete_processor_errors...)
 		} else if delete_processor != nil {
-			processors["Delete_" + table_name] = delete_processor
+			processors["DeleteRecords_" + table_name] = delete_processor
 		}
 
 		get_schema_processor, get_schema_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetSchema_" + table_name)

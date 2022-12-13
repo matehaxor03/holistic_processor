@@ -116,7 +116,6 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 				fmt.Println("started processor " + queue)
 				for {
 					time.Sleep(1 * time.Nanosecond) 
-					var errors []error
 					trace_id := fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
 					request_payload := json.Map{queue: json.Map{"[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}}
 					var json_payload_builder strings.Builder
@@ -215,7 +214,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							table_name_errors := commandGetTableNames(getProcessor(), response_json_payload, &response_queue_result)
 							if table_name_errors != nil {
 								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &errors)
+								response_queue_result.SetErrors("[errors]", &table_name_errors)
 							} else {
 								var temp_errors []error
 								response_queue_result.SetErrors("[errors]", &temp_errors)
@@ -225,12 +224,22 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							schema_errors := commandGetSchema(getProcessor(), response_json_payload, &response_queue_result)
 							if schema_errors != nil {
 								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &errors)
+								response_queue_result.SetErrors("[errors]", &schema_errors)
 							} else {
 								var temp_errors []error
 								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
-						} else if strings.HasPrefix(response_queue, "Read_") {	
+						} else if strings.HasPrefix(response_queue, "ReadRecords_") {	
+							record_errors := commandReadRecords(getProcessor(), response_json_payload, &response_queue_result)
+							if record_errors != nil {
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &record_errors)
+							} else {
+								var temp_errors []error
+								response_queue_result.SetErrors("[errors]", &temp_errors)
+							}
+
+							/*
 							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
 							if temp_client_errors != nil {
 								response_queue_result.SetNil("data")
@@ -282,6 +291,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 									}
 								}
 							}
+							*/
 						} else {
 							fmt.Println("not supported yet" + response_queue)
 						}
