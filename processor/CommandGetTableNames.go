@@ -4,7 +4,7 @@ import (
 	json "github.com/matehaxor03/holistic_json/json"
 )
 
-func GetTableNames(processor *Processor, response_queue_result *json.Map) []error {
+func commandGetTableNames(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	temp_client := processor.GetClientRead()
 	
 	temp_read_database, temp_read_database_errors := temp_client.GetDatabase()

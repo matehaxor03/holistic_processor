@@ -212,7 +212,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							(*retry_condition).Wait()
 							retry_lock.Unlock()
 						} else if response_queue == "GetTableNames" {
-							table_name_errors := GetTableNames(getProcessor(), &response_queue_result)
+							table_name_errors := commandGetTableNames(getProcessor(), response_json_payload, &response_queue_result)
 							if table_name_errors != nil {
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &errors)
