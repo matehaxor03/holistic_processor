@@ -29,7 +29,48 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		return errors
 	}
 
-	records, records_errors := table.ReadRecords(json.Map{}, nil, nil)
+	json_map_inner, json_map_inner_errors := request.GetMap(queue_name)
+	if json_map_inner_errors != nil {
+		return json_map_inner_errors
+	} else if common.IsNil(json_map_inner) {
+		errors = append(errors, fmt.Errorf("request payload %s is nil", unsafe_table_name))
+		return errors
+	}
+
+	minimal_fields := false
+	select_fields, select_fields_errors := json_map_inner.GetArray("[select_fields]")
+	if select_fields_errors != nil {
+		return select_fields_errors
+	} else if !common.IsNil(select_fields) {
+		for _, field := range *select_fields {
+			if field == "[minimal_fields]" {
+				minimal_fields = true
+			}
+		}
+	}
+
+	select_fields_actual := json.Array{}
+	if minimal_fields {
+		identity_fields, identity_fields_errors := table.GetIdentityColumns()
+		if identity_fields_errors != nil {
+			return identity_fields_errors
+		}
+
+		for _, identity_field := range *identity_fields {
+			select_fields_actual = append(select_fields_actual, identity_field)
+		}
+
+		non_identify_fields, non_identify_fields_errors := table.GetNonIdentityColumns()
+		if non_identify_fields_errors != nil {
+			return non_identify_fields_errors
+		}
+
+		if common.Contains(*non_identify_fields, "name") {
+			select_fields_actual = append(select_fields_actual, "name")
+		}
+	} 
+
+	records, records_errors := table.ReadRecords(json.Map{}, select_fields_actual, nil, nil)
 	if records_errors != nil {
 		return records_errors
 	} else if common.IsNil(records) {
