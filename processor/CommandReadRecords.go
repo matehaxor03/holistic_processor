@@ -43,7 +43,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		return select_fields_errors
 	} else if !common.IsNil(select_fields) {
 		for _, field := range *select_fields {
-			if field == "[minimal_fields]" {
+			if *(field.(*string)) == "[minimal_fields]" {
 				minimal_fields = true
 			}
 		}
