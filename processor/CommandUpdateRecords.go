@@ -9,11 +9,11 @@ import (
 
 func commandUpdateRecords(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	var errors []error
-	temp_client := processor.GetClientRead()
+	temp_write_client := processor.GetClientWrite()
 	
-	temp_read_database, temp_read_database_errors := temp_client.GetDatabase()
-	if temp_read_database_errors != nil {
-		return temp_read_database_errors
+	temp_write_database, temp_write_database_errors := temp_write_client.GetDatabase()
+	if temp_write_database_errors != nil {
+		return temp_write_database_errors
 	}
 
 	keys := request.Keys()
@@ -21,7 +21,7 @@ func commandUpdateRecords(processor *Processor, request *json.Map, response_queu
 	_, unsafe_table_name, _ := strings.Cut(queue_name, "_")
 	fmt.Println(unsafe_table_name)
 									
-	table, table_errors := temp_read_database.GetTable(unsafe_table_name)
+	table, table_errors := temp_write_database.GetTable(unsafe_table_name)
 	if table_errors != nil {
 		return table_errors
 	} else if common.IsNil(table) {

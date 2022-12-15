@@ -20,6 +20,7 @@ type Processor struct {
 	Start func()
 	GetProcessor func() *Processor
 	GetClientRead func() *class.Client
+	GetClientWrite func() *class.Client
 	GetQueue func() string
 	WakeUp func()
 }
@@ -79,6 +80,17 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		return nil, read_database_errors
 	}
 
+	write_database_connection_string := "holistic_db_config:127.0.0.1:3306:holistic:holistic_write"
+	write_database_client, write_database_client_errors := client_manager.GetClient(write_database_connection_string)
+	if write_database_client_errors != nil {
+		return nil, write_database_client_errors
+	}
+	
+	_, write_database_errors := write_database_client.GetDatabase()
+	if write_database_errors != nil {
+		return nil, write_database_errors
+	}
+
 	//todo test the connection string before starting
 
 	incrementMessageCount := func() uint64 {
@@ -106,6 +118,9 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		},
 		GetClientRead: func() *class.Client {
 			return read_database_client
+		},
+		GetClientWrite: func() *class.Client {
+			return write_database_client
 		},
 		GetProcessor: func() *Processor {
 			return getProcessor()
