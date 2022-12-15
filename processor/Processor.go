@@ -230,70 +230,27 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
 						} else if strings.HasPrefix(response_queue, "ReadRecords_") {	
-							record_errors := commandReadRecords(getProcessor(), response_json_payload, &response_queue_result)
-							if record_errors != nil {
+							read_records_errors := commandReadRecords(getProcessor(), response_json_payload, &response_queue_result)
+							if read_records_errors != nil {
 								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &record_errors)
+								response_queue_result.SetErrors("[errors]", &read_records_errors)
 							} else {
 								var temp_errors []error
 								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
-
-							/*
-							temp_client, temp_client_errors := client_manager.GetClient(read_database_connection_string)
-							if temp_client_errors != nil {
+						} else if strings.HasPrefix(response_queue, "UpdateRecords_") {	
+							update_record_errors := commandUpdateRecords(getProcessor(), response_json_payload, &response_queue_result)
+							if update_record_errors != nil {
 								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &errors)
+								response_queue_result.SetErrors("[errors]", &update_record_errors)
 							} else {
-								temp_read_database, temp_read_database_errors := temp_client.GetDatabase()
-								if temp_read_database_errors != nil {
-									response_queue_result.SetNil("data")
-									response_queue_result.SetErrors("[errors]", &errors)
-								} else {
-									fmt.Println("reading table for " + response_queue)
-									_, unsafe_table_name, _ := strings.Cut(response_queue, "_")
-									
-									table, table_errors := temp_read_database.GetTable(unsafe_table_name)
-									if table_errors != nil {
-										errors = append(errors, table_errors...)
-									}
-
-									if len(errors) > 0 {
-										response_queue_result.SetNil("data")
-										response_queue_result.SetErrors("[errors]", &errors)
-									} else {
-										records, records_errors := table.ReadRecords(json.Map{}, nil, nil)
-										if records_errors != nil {
-											errors = append(errors, records_errors...)
-											response_queue_result.SetNil("data")
-											response_queue_result.SetErrors("[errors]", &errors)
-										} else {
-											var array_errors []error
-											array := json.Array{}
-											for _, record := range *records {
-												fields_for_record, fields_for_record_error := record.GetFields()
-												if fields_for_record_error != nil {
-													records_errors = append(records_errors, fields_for_record_error...)
-												} else {
-													array = append(array, *fields_for_record)
-												}		
-											}
-
-											if array_errors != nil {
-												errors = append(errors, array_errors...)
-												response_queue_result.SetErrors("[errors]", &errors)
-												response_queue_result.SetNil("data")
-											} else {
-												response_queue_result.SetErrors("[errors]", &errors)
-												response_queue_result.SetArray("data", &array)
-											}
-										}
-									}
-								}
+								var temp_errors []error
+								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
-							*/
 						} else {
-							fmt.Println("not supported yet" + response_queue)
+							var temp_errors []error
+							temp_errors = append(temp_errors, fmt.Errorf("queue not supported %s", response_queue))
+							response_queue_result.SetErrors("[errors]", &temp_errors)
 						}
 
 						if response_queue == "empty" {
