@@ -49,6 +49,35 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		}
 	}
 
+	where_fields_actual := json.Map{}
+	where_fields, where_fields_errors := json_map_inner.GetMap("[where_fields]")
+	if where_fields_errors != nil {
+		return where_fields_errors
+	} else if !common.IsNil(where_fields) {
+		where_fields_actual = *where_fields
+	}
+
+	include_schema_actual := false
+	include_schema, include_schema_errors :=  json_map_inner.GetBool("[include_schema]")
+	if include_schema_errors != nil {
+		return include_schema_errors
+	} else if !common.IsNil(include_schema) {
+		include_schema_actual = *include_schema
+	}
+
+	table_schema_actual := json.Map{}
+	if include_schema_actual {
+		table_schema, table_schema_errors := table.GetSchema()
+		if table_schema_errors != nil {
+			return table_schema_errors
+		} else if common.IsNil(table_schema) {
+			errors = append(errors, fmt.Errorf("table schema %s is nil", unsafe_table_name))
+			return errors
+		} else {
+			table_schema_actual = *table_schema
+		}
+	}
+
 	select_fields_actual := json.Array{}
 	if minimal_fields {
 		identity_fields, identity_fields_errors := table.GetIdentityColumns()
@@ -70,7 +99,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		}
 	} 
 
-	records, records_errors := table.ReadRecords(json.Map{}, select_fields_actual, nil, nil)
+	records, records_errors := table.ReadRecords(where_fields_actual, select_fields_actual, nil, nil)
 	if records_errors != nil {
 		return records_errors
 	} else if common.IsNil(records) {
@@ -92,6 +121,11 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		return errors
 	} 
 	
-	response_queue_result.SetArray("data", &array)		
+	response_queue_result.SetArray("data", &array)	
+	
+	if include_schema_actual {
+		response_queue_result.SetMap("schema", &table_schema_actual)
+	}	
+
 	return nil
 }
