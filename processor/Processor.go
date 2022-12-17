@@ -18,10 +18,12 @@ import (
 
 type Processor struct {
 	Start func()
+	EmitCallback func(message *json.Map) 
 	GetProcessor func() *Processor
 	GetClientRead func() *class.Client
 	GetClientWrite func() *class.Client
 	GetQueue func() string
+	GenerateTraceId func() string
 	WakeUp func()
 }
 
@@ -29,6 +31,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 	var this_processor *Processor
 	var errors []error
 	var messageCountLock sync.Mutex
+	var callbackLock sync.Mutex
 	var messageCount uint64
 	
 	setProcessor := func(processor *Processor) {
@@ -50,8 +53,15 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 	processor_callback, processor_callback_errors := NewProcessorCallback(domain_name, port)
 	if processor_callback_errors != nil {
 		return nil, processor_callback_errors
+	} else if common.IsNil(processor_callback) {
+		errors = append(errors, fmt.Errorf("callback processor is nil"))
+		return nil, errors
 	}
 	processor_callback.Start()
+
+	getCallbackProcessor := func() *ProcessorCallback {
+		return processor_callback
+	}
 
 	//var wg sync.WaitGroup
 	domain_name_value, domain_name_value_errors := domain_name.GetDomainName()
@@ -107,6 +117,17 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		return guid
 	}
 
+	generate_trace_id := func() string {
+		return fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
+	}
+
+	emitCallback := func (message *json.Map) {
+		callbackLock.Lock()
+		defer callbackLock.Unlock()
+		c := getCallbackProcessor()
+		c.PushBack(message)
+	}
+
 	x := Processor{
 		WakeUp: func() {
 			wakeup_lock.Lock()
@@ -115,6 +136,9 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		},
 		GetQueue: func() string {
 			return getQueue()
+		},
+		GenerateTraceId: func() string {
+			return generate_trace_id()
 		},
 		GetClientRead: func() *class.Client {
 			return read_database_client
@@ -125,13 +149,16 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		GetProcessor: func() *Processor {
 			return getProcessor()
 		},
+		EmitCallback: func(message *json.Map) {
+			emitCallback(message)
+		},
 		Start: func() {
 			fmt.Println("starting processor " + queue)
 			go func(queue_url string, queue string) {
 				fmt.Println("started processor " + queue)
 				for {
 					time.Sleep(1 * time.Nanosecond) 
-					trace_id := fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
+					trace_id := generate_trace_id()
 					request_payload := json.Map{queue: json.Map{"[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}}
 					var json_payload_builder strings.Builder
 					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
@@ -142,7 +169,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						continue
 					}
 
-					fmt.Println(json_payload_builder.String())
+					//fmt.Println(json_payload_builder.String())
 
 					request_json_bytes := []byte(json_payload_builder.String())
 					request_json_reader := bytes.NewReader(request_json_bytes)
@@ -178,7 +205,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 					}
 
 					
-						fmt.Println("processing " + string(response_body_payload))
+						//fmt.Println("processing " + string(response_body_payload))
 
 
 						response_json_payload, response_json_payload_errors := json.ParseJSON(string(response_body_payload))
@@ -213,19 +240,33 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
-						fmt.Println(string(response_body_payload))
+						async, async_errors := json_payload_inner.GetBool("[async]")
+						if async_errors != nil {
+							fmt.Println(message_trace_id_errors) 
+							continue
+						} else if common.IsNil(async) {
+							fmt.Println("async is nil") 
+							continue
+						}
 
 						result := json.Map{}
-						response_queue_result := json.Map{"[trace_id]":*message_trace_id, "[queue_mode]":"complete"}
+						response_queue_result := json.Map{"[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
 						result.SetMap(response_queue, &response_queue_result)
-
-						fmt.Println("processing processing " + response_queue)
 
 						if response_queue == "empty" {
 							retry_lock.Lock()
 							(*retry_condition).Wait()
-							retry_lock.Unlock()
-						} else if response_queue == "GetTableNames" {
+							retry_lock.Unlock() 
+						}
+
+						if response_queue == "empty" {
+							continue
+						}
+
+						fmt.Println("processing processing " + response_queue)
+						fmt.Println(string(response_body_payload))
+
+						if response_queue == "GetTableNames" {
 							table_name_errors := commandGetTableNames(getProcessor(), response_json_payload, &response_queue_result)
 							if table_name_errors != nil {
 								response_queue_result.SetNil("data")
@@ -289,18 +330,24 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								var temp_errors []error
 								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
+						} else if strings.HasPrefix(response_queue, "Run_BuildBranchInstance") {	
+							create_record_errors := commandRunBuildBranchInstance(getProcessor(), response_json_payload, &response_queue_result)
+							if create_record_errors != nil {
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &create_record_errors)
+							} else {
+								var temp_errors []error
+								response_queue_result.SetErrors("[errors]", &temp_errors)
+							}
 						} else {
 							var temp_errors []error
 							temp_errors = append(temp_errors, fmt.Errorf("queue not supported %s", response_queue))
 							response_queue_result.SetErrors("[errors]", &temp_errors)
 						}
 
-						if response_queue == "empty" {
-							continue
+						if !json_payload_inner.IsBoolTrue("[async]") {
+							emitCallback(&result)
 						}
-
-						processor_callback.PushBack(&result)
-						processor_callback.WakeUp()
 					}
 				
 			}(queue_url, queue)

@@ -52,11 +52,17 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 		errors = append(errors, fmt.Errorf("created record %s is nil", unsafe_table_name))
 		return errors
 	} else {
-		new_record_fields, new_record_fields_errors :=  new_record.GetFields()
+		new_record_fields, new_record_fields_errors := new_record.GetFields()
 		if new_record_fields_errors != nil {
 			return new_record_fields_errors
 		} else {
 			response_queue_result.SetMap("data", new_record_fields)	
+
+			if queue_name == "CreateRecord_BuildBranchInstance" {
+				callback_inner := json.Map{"data":new_record_fields,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
+				callback_payload := json.Map{"Run_BuildBranchInstance":callback_inner}
+				processor.EmitCallback(&callback_payload)
+			}
 		}
 	}
 
