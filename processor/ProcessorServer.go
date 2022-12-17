@@ -286,6 +286,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			processors["CreateRecords_" + table_name] = create_processor
 		}
 
+		create_record_processor, create_record_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "CreateRecord_" + table_name)
+		if create_record_processor_errors != nil {
+			errors = append(errors, create_record_processor_errors...)
+		} else if create_record_processor != nil {
+			processors["CreateRecord_" + table_name] = create_record_processor
+		}
+
 		read_processor, read_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "ReadRecords_" + table_name)
 		if read_processor_errors != nil {
 			errors = append(errors, read_processor_errors...)
@@ -298,6 +305,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			errors = append(errors, update_processor_errors...)
 		} else if update_processor != nil {
 			processors["UpdateRecords_" + table_name] = update_processor
+		}
+
+		update_record_processor, update_record_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name)
+		if update_record_processor_errors != nil {
+			errors = append(errors, update_record_processor_errors...)
+		} else if update_record_processor != nil {
+			processors["UpdateRecord_" + table_name] = update_record_processor
 		}
 
 		delete_processor, delete_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "DeleteRecords_" + table_name)

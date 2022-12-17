@@ -254,7 +254,16 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
 						} else if strings.HasPrefix(response_queue, "UpdateRecords_") {	
-							update_record_errors := commandUpdateRecords(getProcessor(), response_json_payload, &response_queue_result)
+							update_records_errors := commandUpdateRecords(getProcessor(), response_json_payload, &response_queue_result)
+							if update_records_errors != nil {
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &update_records_errors)
+							} else {
+								var temp_errors []error
+								response_queue_result.SetErrors("[errors]", &temp_errors)
+							}
+						} else if strings.HasPrefix(response_queue, "UpdateRecord_") {	
+							update_record_errors := commandUpdateRecord(getProcessor(), response_json_payload, &response_queue_result)
 							if update_record_errors != nil {
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &update_record_errors)
@@ -271,7 +280,16 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								var temp_errors []error
 								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
-						}else {
+						} else if strings.HasPrefix(response_queue, "CreateRecord_") {	
+							create_record_errors := commandCreateRecord(getProcessor(), response_json_payload, &response_queue_result)
+							if create_record_errors != nil {
+								response_queue_result.SetNil("data")
+								response_queue_result.SetErrors("[errors]", &create_record_errors)
+							} else {
+								var temp_errors []error
+								response_queue_result.SetErrors("[errors]", &temp_errors)
+							}
+						} else {
 							var temp_errors []error
 							temp_errors = append(temp_errors, fmt.Errorf("queue not supported %s", response_queue))
 							response_queue_result.SetErrors("[errors]", &temp_errors)
