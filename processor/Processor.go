@@ -18,7 +18,8 @@ import (
 
 type Processor struct {
 	Start func()
-	EmitCallback func(message *json.Map) 
+	SendMessageToQueue func(message *json.Map) (*json.Map, []error)
+	SendMessageToQueueFireAndForget func(message *json.Map) 
 	GetProcessor func() *Processor
 	GetClientRead func() *class.Client
 	GetClientWrite func() *class.Client
@@ -121,11 +122,18 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		return fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
 	}
 
-	emitCallback := func (message *json.Map) {
+	sendMessageToQueueFireAndForget := func (message *json.Map) {
 		callbackLock.Lock()
 		defer callbackLock.Unlock()
 		c := getCallbackProcessor()
-		c.PushBack(message)
+		c.SendMessageToQueueFireAndForget(message)
+	}
+
+	sendMessageToQueue := func(message *json.Map) (*json.Map, []error) {
+		callbackLock.Lock()
+		defer callbackLock.Unlock()
+		c := getCallbackProcessor()
+		return c.SendMessageToQueue(message)
 	}
 
 	x := Processor{
@@ -149,8 +157,11 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		GetProcessor: func() *Processor {
 			return getProcessor()
 		},
-		EmitCallback: func(message *json.Map) {
-			emitCallback(message)
+		SendMessageToQueueFireAndForget: func(message *json.Map) {
+			sendMessageToQueueFireAndForget(message)
+		},
+		SendMessageToQueue: func(message *json.Map) (*json.Map, []error) {
+			return sendMessageToQueue(message)
 		},
 		Start: func() {
 			fmt.Println("starting processor " + queue)
@@ -346,7 +357,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						}
 
 						if !json_payload_inner.IsBoolTrue("[async]") {
-							emitCallback(&result)
+							sendMessageToQueueFireAndForget(&result)
 						}
 					}
 				
