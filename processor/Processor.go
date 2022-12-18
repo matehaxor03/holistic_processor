@@ -330,8 +330,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								var temp_errors []error
 								response_queue_result.SetErrors("[errors]", &temp_errors)
 							}
-						} else if strings.HasPrefix(response_queue, "Run_BuildBranchInstance") {	
-							create_record_errors := commandRunBuildBranchInstance(getProcessor(), response_json_payload, &response_queue_result)
+						} else if strings.HasPrefix(response_queue, "Run_StartBuildBranchInstance") {	
+							create_record_errors := commandRunStartBuildBranchInstance(getProcessor(), response_json_payload, &response_queue_result)
 							if create_record_errors != nil {
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &create_record_errors)

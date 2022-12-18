@@ -60,7 +60,7 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 
 			if queue_name == "CreateRecord_BuildBranchInstance" {
 				callback_inner := json.Map{"data":new_record_fields,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
-				callback_payload := json.Map{"Run_BuildBranchInstance":callback_inner}
+				callback_payload := json.Map{"Run_StartBuildBranchInstance":callback_inner}
 				processor.EmitCallback(&callback_payload)
 			}
 		}

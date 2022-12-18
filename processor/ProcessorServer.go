@@ -327,13 +327,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		} else if get_schema_processor != nil {
 			processors["GetSchema_" + table_name] = get_schema_processor
 		}
+	}
 
-		run_build_branch_instance_processor, run_build_branch_instance_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_BuildBranchInstance")
-		if run_build_branch_instance_processor_errors != nil {
-			errors = append(errors, run_build_branch_instance_processor_errors...)
-		} else if run_build_branch_instance_processor != nil {
-			processors["Run_BuildBranchInstance"] = run_build_branch_instance_processor
-		}
+	run_build_branch_instance_processor, run_build_branch_instance_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_StartBuildBranchInstance")
+	if run_build_branch_instance_processor_errors != nil {
+		errors = append(errors, run_build_branch_instance_processor_errors...)
+	} else if run_build_branch_instance_processor != nil {
+		processors["Run_StartBuildBranchInstance"] = run_build_branch_instance_processor
 	}
 
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")

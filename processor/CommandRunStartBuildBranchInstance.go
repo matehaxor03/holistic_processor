@@ -7,7 +7,7 @@ import (
 	//"strings"
 )
 
-func commandRunBuildBranchInstance(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	var errors []error
 
 	fmt.Println("!!!! running the build !!!!")
