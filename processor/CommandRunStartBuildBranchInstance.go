@@ -44,7 +44,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	} 
 
-	callback_inner := json.Map{"[trace_id]":processor.GenerateTraceId(), "[order_by]":json.Map{"order":"ascending"}}
+	callback_inner := json.Map{"[trace_id]":processor.GenerateTraceId(), "[order_by]":json.Array{json.Map{"order":"ascending"}}}
 	callback_payload := json.Map{"ReadRecords_BuildStep":callback_inner}
 	response, response_errors := processor.SendMessageToQueue(&callback_payload)
 	if response_errors != nil {
