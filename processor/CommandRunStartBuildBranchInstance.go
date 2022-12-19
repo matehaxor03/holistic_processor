@@ -133,6 +133,21 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		build_branch_instance_steps = append(build_branch_instance_steps, build_branch_instance_step)
 	}
 	
+
+	create_instance_steps_request := json.Map{"CreateRecords_BuildBranchInstanceStep":json.Map{"[trace_id]":processor.GenerateTraceId(), "data":build_branch_instance_steps}}
+	create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(&create_instance_steps_request)
+	if create_instance_steps_response_errors != nil {
+		errors = append(errors, create_instance_steps_response_errors...)
+	} else if common.IsNil(create_instance_steps_response) {
+		errors = append(errors, fmt.Errorf("create_instance_steps_response is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+
+	//todo run first step
  
 
 	
