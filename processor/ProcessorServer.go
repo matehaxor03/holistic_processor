@@ -314,12 +314,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			processors["UpdateRecord_" + table_name] = update_record_processor
 		}
 
+		/*
 		delete_processor, delete_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "DeleteRecords_" + table_name)
 		if delete_processor_errors != nil {
 			errors = append(errors, delete_processor_errors...)
 		} else if delete_processor != nil {
 			processors["DeleteRecords_" + table_name] = delete_processor
-		}
+		}*/
 
 		get_schema_processor, get_schema_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetSchema_" + table_name)
 		if get_schema_processor_errors != nil {

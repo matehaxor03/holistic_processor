@@ -145,3 +145,8 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 
 	return nil
 }
+
+func commandReadRecordsFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandReadRecords
+	return &funcValue
+}

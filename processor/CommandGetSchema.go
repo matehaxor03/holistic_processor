@@ -38,3 +38,8 @@ func commandGetSchema(processor *Processor, request *json.Map, response_queue_re
 		
 	return nil
 }
+
+func commandGetSchemaFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandGetSchema
+	return &funcValue
+}

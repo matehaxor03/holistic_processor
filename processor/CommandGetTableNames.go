@@ -27,3 +27,8 @@ func commandGetTableNames(processor *Processor, request *json.Map, response_queu
 		
 	return nil
 }
+
+func commandGetTableNamesFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandGetTableNames
+	return &funcValue
+}

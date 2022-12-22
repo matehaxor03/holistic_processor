@@ -56,3 +56,8 @@ func commandUpdateRecord(processor *Processor, request *json.Map, response_queue
 
 	return nil
 }
+
+func commandUpdateRecordFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandUpdateRecord
+	return &funcValue
+}

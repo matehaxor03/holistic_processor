@@ -72,3 +72,8 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 
 	return nil
 }
+
+func commandCreateRecordFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandCreateRecord
+	return &funcValue
+}

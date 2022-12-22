@@ -34,6 +34,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 	var messageCountLock sync.Mutex
 	var callbackLock sync.Mutex
 	var messageCount uint64
+	var processor_function *func(processor *Processor, request *json.Map, response *json.Map) []error
 	
 	setProcessor := func(processor *Processor) {
 		this_processor = processor
@@ -101,6 +102,28 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 	if write_database_errors != nil {
 		return nil, write_database_errors
 	}
+
+	if queue == "GetTableNames" {
+		processor_function = commandGetTableNamesFunc()
+	} else if strings.HasPrefix(queue, "GetSchema_") {
+		processor_function = commandGetSchemaFunc()
+	} else if strings.HasPrefix(queue, "ReadRecords_") {
+		processor_function = commandReadRecordsFunc()
+	} else if strings.HasPrefix(queue, "UpdateRecords_") {
+		processor_function = commandUpdateRecordsFunc()
+	} else if strings.HasPrefix(queue, "UpdateRecord_") {
+		processor_function = commandUpdateRecordFunc()
+	} else if strings.HasPrefix(queue, "CreateRecords_") {
+		processor_function = commandCreateRecordsFunc()
+	} else if strings.HasPrefix(queue, "CreateRecord_") {
+		processor_function = commandCreateRecordFunc()
+	} else if queue == "Run_StartBuildBranchInstance" {
+		processor_function = commandRunStartBuildBranchInstanceFunc()
+	} else {
+		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue))
+		return nil, errors
+	}
+
 
 	//todo test the connection string before starting
 
@@ -277,75 +300,12 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						fmt.Println("processing processing " + response_queue)
 						fmt.Println(string(response_body_payload))
 
-						if response_queue == "GetTableNames" {
-							table_name_errors := commandGetTableNames(getProcessor(), response_json_payload, &response_queue_result)
-							if table_name_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &table_name_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
-			
- 						} else if strings.HasPrefix(response_queue, "GetSchema_") {
-							schema_errors := commandGetSchema(getProcessor(), response_json_payload, &response_queue_result)
-							if schema_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &schema_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
-						} else if strings.HasPrefix(response_queue, "ReadRecords_") {	
-							read_records_errors := commandReadRecords(getProcessor(), response_json_payload, &response_queue_result)
-							if read_records_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &read_records_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
-						} else if strings.HasPrefix(response_queue, "UpdateRecords_") {	
-							update_records_errors := commandUpdateRecords(getProcessor(), response_json_payload, &response_queue_result)
-							if update_records_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &update_records_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
-						} else if strings.HasPrefix(response_queue, "UpdateRecord_") {	
-							update_record_errors := commandUpdateRecord(getProcessor(), response_json_payload, &response_queue_result)
-							if update_record_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &update_record_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
-						} else if strings.HasPrefix(response_queue, "CreateRecords_") {	
-							update_record_errors := commandCreateRecords(getProcessor(), response_json_payload, &response_queue_result)
-							if update_record_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &update_record_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
-						} else if strings.HasPrefix(response_queue, "CreateRecord_") {	
-							create_record_errors := commandCreateRecord(getProcessor(), response_json_payload, &response_queue_result)
-							if create_record_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &create_record_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
-						} else if strings.HasPrefix(response_queue, "Run_StartBuildBranchInstance") {	
-							create_record_errors := commandRunStartBuildBranchInstance(getProcessor(), response_json_payload, &response_queue_result)
-							if create_record_errors != nil {
-								response_queue_result.SetNil("data")
-								response_queue_result.SetErrors("[errors]", &create_record_errors)
-							} else {
-								response_queue_result.SetNil("[errors]")
-							}
+						processor_errors := (*processor_function)(getProcessor(), response_json_payload, &response_queue_result)
+						if processor_errors != nil {
+							response_queue_result.SetNil("data")
+							response_queue_result.SetErrors("[errors]", &processor_errors)
 						} else {
-							var temp_errors []error
-							temp_errors = append(temp_errors, fmt.Errorf("queue not supported %s", response_queue))
-							response_queue_result.SetErrors("[errors]", &temp_errors)
+							response_queue_result.SetNil("[errors]")
 						}
 
 						if !json_payload_inner.IsBoolTrue("[async]") {

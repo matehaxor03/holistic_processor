@@ -304,3 +304,8 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	
 	return nil
 }
+
+func commandRunStartBuildBranchInstanceFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandRunStartBuildBranchInstance
+	return &funcValue
+}
