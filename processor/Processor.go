@@ -283,8 +283,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &table_name_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 			
  						} else if strings.HasPrefix(response_queue, "GetSchema_") {
@@ -293,8 +292,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &schema_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 						} else if strings.HasPrefix(response_queue, "ReadRecords_") {	
 							read_records_errors := commandReadRecords(getProcessor(), response_json_payload, &response_queue_result)
@@ -302,8 +300,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &read_records_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 						} else if strings.HasPrefix(response_queue, "UpdateRecords_") {	
 							update_records_errors := commandUpdateRecords(getProcessor(), response_json_payload, &response_queue_result)
@@ -311,8 +308,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &update_records_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 						} else if strings.HasPrefix(response_queue, "UpdateRecord_") {	
 							update_record_errors := commandUpdateRecord(getProcessor(), response_json_payload, &response_queue_result)
@@ -320,8 +316,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &update_record_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 						} else if strings.HasPrefix(response_queue, "CreateRecords_") {	
 							update_record_errors := commandCreateRecords(getProcessor(), response_json_payload, &response_queue_result)
@@ -329,8 +324,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &update_record_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 						} else if strings.HasPrefix(response_queue, "CreateRecord_") {	
 							create_record_errors := commandCreateRecord(getProcessor(), response_json_payload, &response_queue_result)
@@ -338,8 +332,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &create_record_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 						} else if strings.HasPrefix(response_queue, "Run_StartBuildBranchInstance") {	
 							create_record_errors := commandRunStartBuildBranchInstance(getProcessor(), response_json_payload, &response_queue_result)
@@ -347,8 +340,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 								response_queue_result.SetNil("data")
 								response_queue_result.SetErrors("[errors]", &create_record_errors)
 							} else {
-								var temp_errors []error
-								response_queue_result.SetErrors("[errors]", &temp_errors)
+								response_queue_result.SetNil("[errors]")
 							}
 						} else {
 							var temp_errors []error
