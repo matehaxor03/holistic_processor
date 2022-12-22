@@ -57,14 +57,6 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		where_fields_actual = *where_fields
 	}
 
-	order_by_actual := json.Array{}
-	order_by_fields, order_by_fields_errors := json_map_inner.GetArray("[order_by]")
-	if order_by_fields_errors != nil {
-		return order_by_fields_errors
-	} else if !common.IsNil(order_by_fields) {
-		order_by_actual = *order_by_fields
-	}
-
 	include_schema_actual := false
 	include_schema, include_schema_errors :=  json_map_inner.GetBool("[include_schema]")
 	if include_schema_errors != nil {
@@ -107,7 +99,23 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		}
 	} 
 
-	records, records_errors := table.ReadRecords(where_fields_actual, select_fields_actual, order_by_actual, nil, nil)
+	order_by_actual := json.Array{}
+	order_by_fields, order_by_fields_errors := json_map_inner.GetArray("[order_by]")
+	if order_by_fields_errors != nil {
+		return order_by_fields_errors
+	} else if !common.IsNil(order_by_fields) {
+		order_by_actual = *order_by_fields
+	}
+
+	var limit_actual *uint64
+	limit_value, limit_value_errors := json_map_inner.GetUInt64("[limit]")
+	if limit_value_errors != nil {
+		return limit_value_errors
+	} else if !common.IsNil(limit_value) {
+		limit_actual = limit_value
+	}
+
+	records, records_errors := table.ReadRecords(where_fields_actual, select_fields_actual, order_by_actual, limit_actual, nil)
 	if records_errors != nil {
 		return records_errors
 	} else if common.IsNil(records) {
