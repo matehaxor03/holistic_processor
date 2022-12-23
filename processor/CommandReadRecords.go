@@ -57,6 +57,14 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		where_fields_actual = *where_fields
 	}
 
+	where_fields_logic_actual := json.Map{}
+	where_fields_logic, where_fields_logic_errors := json_map_inner.GetMap("[where_fields_logic]")
+	if where_fields_logic_errors != nil {
+		return where_fields_logic_errors
+	} else if !common.IsNil(where_fields_logic) {
+		where_fields_logic_actual = *where_fields_logic
+	}
+
 	include_schema_actual := false
 	include_schema, include_schema_errors :=  json_map_inner.GetBool("[include_schema]")
 	if include_schema_errors != nil {
@@ -115,7 +123,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		limit_actual = limit_value
 	}
 
-	records, records_errors := table.ReadRecords(where_fields_actual, select_fields_actual, order_by_actual, limit_actual, nil)
+	records, records_errors := table.ReadRecords(select_fields_actual, where_fields_actual, where_fields_logic_actual, order_by_actual, limit_actual, nil)
 	if records_errors != nil {
 		return records_errors
 	} else if common.IsNil(records) {

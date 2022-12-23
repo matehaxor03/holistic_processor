@@ -119,6 +119,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		processor_function = commandCreateRecordFunc()
 	} else if queue == "Run_StartBuildBranchInstance" {
 		processor_function = commandRunStartBuildBranchInstanceFunc()
+	} else if queue == "Run_NotStarted" {
+		processor_function = commandRunNotStartedFunc()
 	} else {
 		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue))
 		return nil, errors
@@ -304,6 +306,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						if processor_errors != nil {
 							response_queue_result.SetNil("data")
 							response_queue_result.SetErrors("[errors]", &processor_errors)
+							fmt.Println(processor_errors)
 						} else {
 							response_queue_result.SetNil("[errors]")
 						}

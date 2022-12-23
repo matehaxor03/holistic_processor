@@ -337,6 +337,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		processors["Run_StartBuildBranchInstance"] = run_build_branch_instance_processor
 	}
 
+	run_not_started_processor, run_not_started_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_NotStarted")
+	if run_not_started_processor_errors != nil {
+		errors = append(errors, run_not_started_processor_errors...)
+	} else if run_not_started_processor != nil {
+		processors["Run_NotStarted"] = run_not_started_processor
+	}
+
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)
