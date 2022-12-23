@@ -39,6 +39,13 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, fmt.Errorf("build_branch_instance_id is nil"))
 	}
 
+	build_branch_id, build_branch_id_errors := request_data.GetUInt64("build_branch_id")
+	if build_branch_id_errors != nil {
+		errors = append(errors, build_branch_id_errors...) 
+	} else if common.IsNil(build_branch_id) {
+		errors = append(errors, fmt.Errorf("build_branch_id is nil"))
+	}
+
 	if len(errors) > 0 {
 		return errors
 	} 
@@ -287,6 +294,142 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	if len(errors) > 0 {
 		return errors
 	}
+
+	
+	read_records_build_branch_request := json.Map{"ReadRecords_BuildBranch":json.Map{"[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_branch_id":*build_branch_id}, "[select_fields]": json.Array{"build_id", "branch_id"}, "[limit]":1}}
+	build_branch_records, build_branch_records_errors := processor.SendMessageToQueue(&read_records_build_branch_request)
+	if build_branch_records_errors != nil {
+		errors = append(errors, build_branch_records_errors...)
+	} else if  common.IsNil(build_branch_records) {
+		errors = append(errors, fmt.Errorf("build_branch_records is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	build_branch_records_map, build_branch_records_map_errors := build_branch_records.GetMap(build_branch_records.Keys()[0])
+	if build_branch_records_map_errors != nil {
+		errors = append(errors, build_branch_records_map_errors...)
+	} else if  common.IsNil(build_branch_records_map) {
+		errors = append(errors, fmt.Errorf("build_branch_records_map is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	build_branch_records_data_array, build_branch_records_data_array_errors := build_branch_records_map.GetArray("data")
+	if build_branch_records_data_array_errors != nil {
+		errors = append(errors, build_branch_records_data_array_errors...)
+	} else if  common.IsNil(build_branch_records_data_array) {
+		errors = append(errors, fmt.Errorf("build_branch_records_data_array is nil"))
+	} else if len(*build_branch_records_data_array) != 1 {
+		errors = append(errors, fmt.Errorf("build_branch_records_data_array did not have one result"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	var build_branch json.Map
+	build_branch_interface := (*build_branch_records_data_array)[0]
+	type_of_build_branch_interface := common.GetType(build_branch_interface)
+
+	if type_of_build_branch_interface == "json.Map" {
+		build_branch = build_branch_interface.(json.Map)
+	} else if type_of_build_branch_interface == "*json.Map" {
+		build_branch = *(build_branch_interface.(*json.Map))
+	} else {
+		errors = append(errors, fmt.Errorf("build_branch has invalid type"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	branch_id, branch_id_errors := build_branch.GetUInt64("branch_id")
+	if branch_id_errors != nil {
+		errors = append(errors, branch_id_errors...)
+	} else if  common.IsNil(build_branch_records_map) {
+		errors = append(errors, fmt.Errorf("branch_id is nil"))
+	}
+
+	_, build_id_errors := build_branch.GetUInt64("build_id")
+	if build_id_errors != nil {
+		errors = append(errors, build_id_errors...)
+	} else if  common.IsNil(build_branch_records_map) {
+		errors = append(errors, fmt.Errorf("build_id is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	read_records_branch_request := json.Map{"ReadRecords_Branch":json.Map{"[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"branch_id":*branch_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}}
+	read_records_branch_response, read_records_branch_response_errors := processor.SendMessageToQueue(&read_records_branch_request)
+	if read_records_branch_response_errors != nil {
+		errors = append(errors, read_records_branch_response_errors...)
+	} else if  common.IsNil(read_records_branch_response) {
+		errors = append(errors, fmt.Errorf("read_records_branch_response is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	branch_records_map, branch_records_map_errors := read_records_branch_response.GetMap(read_records_branch_response.Keys()[0])
+	if branch_records_map_errors != nil {
+		errors = append(errors, branch_records_map_errors...)
+	} else if  common.IsNil(branch_records_map) {
+		errors = append(errors, fmt.Errorf("branch_records_map is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	branch_records_data_array, branch_records_data_array_errors := branch_records_map.GetArray("data")
+	if branch_records_data_array_errors != nil {
+		errors = append(errors, branch_records_data_array_errors...)
+	} else if  common.IsNil(branch_records_data_array) {
+		errors = append(errors, fmt.Errorf("branch_records_data_array is nil"))
+	} else if len(*branch_records_data_array) != 1 {
+		errors = append(errors, fmt.Errorf("branch_records_data_array did not have one result"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	var branch json.Map
+	branch_interface := (*branch_records_data_array)[0]
+	type_of_branch_interface := common.GetType(branch_interface)
+
+	if type_of_branch_interface == "json.Map" {
+		branch = branch_interface.(json.Map)
+	} else if type_of_branch_interface == "*json.Map" {
+		branch = *(branch_interface.(*json.Map))
+	} else {
+		errors = append(errors, fmt.Errorf("branch has invalid type"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	branch_name, branch_name_errors := branch.GetString("name")
+	if branch_name_errors != nil {
+		errors = append(errors, branch_name_errors...)
+	} else if  common.IsNil(branch_name) {
+		errors = append(errors, fmt.Errorf("branch_name is nil"))
+	}
+
+
+	first_build_step.SetString("branch_name", branch_name)
+	
+
+
 
 	next_command := json.Map{*name_of_next_step:json.Map{"data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}}
 	_, message_errors := processor.SendMessageToQueue(&next_command)
