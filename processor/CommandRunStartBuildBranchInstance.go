@@ -693,10 +693,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-
-	//"repository_id"
-
-
 	first_build_step.SetString("domain_name", domain_name)
 	first_build_step.SetString("repository_account_name", repository_account_name)
 	first_build_step.SetString("repository_name", repository_name)
