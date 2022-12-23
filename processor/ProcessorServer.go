@@ -377,6 +377,20 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		processors["Run_CreateRepositoryFolder"] = run_create_repository_processor
 	}
 
+	run_create_branches_processor, run_create_branches_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateBranchesFolder")
+	if run_create_branches_processor_errors != nil {
+		errors = append(errors, run_create_branches_processor_errors...)
+	} else if run_create_branches_processor != nil {
+		processors["Run_CreateBranchesFolder"] = run_create_branches_processor
+	}
+
+	run_create_tags_processor, run_create_tags_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateTagsFolder")
+	if run_create_tags_processor_errors != nil {
+		errors = append(errors, run_create_tags_processor_errors...)
+	} else if run_create_tags_processor != nil {
+		processors["Run_CreateTagsFolder"] = run_create_tags_processor
+	}
+
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)
