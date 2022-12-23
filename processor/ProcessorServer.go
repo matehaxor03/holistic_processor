@@ -43,8 +43,6 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return nil, domain_name_errors
 	}
 
-	
-
 	/*
 	transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -356,6 +354,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		errors = append(errors, run_create_sources_processor_errors...)
 	} else if run_not_started_processor != nil {
 		processors["Run_CreateSourceFolder"] = run_create_sources_processor
+	}
+
+	run_create_domain_name_processor, run_create_domain_name_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateDomainNameFolder")
+	if run_create_domain_name_processor_errors != nil {
+		errors = append(errors, run_create_domain_name_processor_errors...)
+	} else if run_create_domain_name_processor != nil {
+		processors["Run_CreateDomainNameFolder"] = run_create_domain_name_processor
 	}
 
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
