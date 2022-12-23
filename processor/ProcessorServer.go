@@ -351,6 +351,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		processors["Run_Start"] = run_start_processor
 	}
 
+	run_create_sources_processor, run_create_sources_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateSourceFolder")
+	if run_create_sources_processor_errors != nil {
+		errors = append(errors, run_create_sources_processor_errors...)
+	} else if run_not_started_processor != nil {
+		processors["Run_CreateSourceFolder"] = run_create_sources_processor
+	}
+
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)
