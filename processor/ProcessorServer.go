@@ -363,6 +363,20 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		processors["Run_CreateDomainNameFolder"] = run_create_domain_name_processor
 	}
 
+	run_create_repository_account_processor, run_create_repository_account_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateRepositoryAccountFolder")
+	if run_create_repository_account_processor_errors != nil {
+		errors = append(errors, run_create_repository_account_processor_errors...)
+	} else if run_create_repository_account_processor != nil {
+		processors["Run_CreateRepositoryAccountFolder"] = run_create_repository_account_processor
+	}
+
+	run_create_repository_processor, run_create_repository_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateRepositoryFolder")
+	if run_create_repository_processor_errors != nil {
+		errors = append(errors, run_create_repository_processor_errors...)
+	} else if run_create_repository_processor != nil {
+		processors["Run_CreateRepositoryFolder"] = run_create_repository_processor
+	}
+
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)

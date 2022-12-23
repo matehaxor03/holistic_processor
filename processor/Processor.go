@@ -127,7 +127,11 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		processor_function = commandRunCreateSourceFolderFunc()
 	} else if queue == "Run_CreateDomainNameFolder" {
 		processor_function = commandRunCreateDomainNameFolderFunc()
-	} else {
+	} else if queue == "Run_CreateRepositoryAccountFolder" {
+		processor_function = commandRunCreateRepositoryAccountFolderFunc()
+	} else if queue == "Run_CreateRepositoryFolder" {
+		processor_function = commandRunCreateRepositoryFolderFunc()
+	}  else {
 		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue))
 		return nil, errors
 	}
