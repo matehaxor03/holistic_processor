@@ -405,6 +405,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		processors["Run_CloneBranchOrTagFolder"] = run_clone_branch_or_tag_processor
 	}
 
+	run_pull_latest_branch_or_tag_processor, run_pull_latest_branch_or_tag_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_PullLatestBranchOrTagFolder")
+	if run_pull_latest_branch_or_tag_processor_errors != nil {
+		errors = append(errors, run_pull_latest_branch_or_tag_processor_errors...)
+	} else if run_pull_latest_branch_or_tag_processor != nil {
+		processors["Run_PullLatestBranchOrTagFolder"] = run_pull_latest_branch_or_tag_processor
+	}
+
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)

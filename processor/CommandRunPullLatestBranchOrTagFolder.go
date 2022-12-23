@@ -3,12 +3,11 @@ package processor
 import (
 	json "github.com/matehaxor03/holistic_json/json"
 	common "github.com/matehaxor03/holistic_common/common"
-	"os"
     "path/filepath"
 	"fmt"
 )
 
-func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+func commandRunPullLatestBranchOrTagFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, errors := validateRunCommandHeaders(request)
 	if errors != nil {
 		return errors
@@ -31,15 +30,12 @@ func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, r
 
 	full_path_of_directory := filepath.Join(directory_parts...)
 
-	if _, stat_error := os.Stat("/" + full_path_of_directory); os.IsNotExist(stat_error) {
-		bashCommand := common.NewBashCommand()
-		command := fmt.Sprintf("git clone --branch %s git@%s:%s/%s.git %s", *branch_name, *domain_name, *repository_account_name, *repository_name, "/" + full_path_of_directory)
-		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
-		if bash_command_errors != nil {
-			errors = append(errors, bash_command_errors...)
-		} 
-	}
-	
+	bashCommand := common.NewBashCommand()
+	command := fmt.Sprintf("cd %s && git pull", "/" + full_path_of_directory)
+	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
+	if bash_command_errors != nil {
+		errors = append(errors, bash_command_errors...)
+	} 
 
 	if len(errors) > 0 {
 		return errors
@@ -53,7 +49,7 @@ func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, r
 	return nil
 }
 
-func commandRunCloneBranchOrTagFolderFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	funcValue := commandRunCloneBranchOrTagFolder
+func commandRunPullLatestBranchOrTagFolderFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandRunPullLatestBranchOrTagFolder
 	return &funcValue
 }
