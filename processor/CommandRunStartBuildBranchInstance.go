@@ -355,7 +355,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, fmt.Errorf("branch_id is nil"))
 	}
 
-	_, build_id_errors := build_branch.GetUInt64("build_id")
+	build_id, build_id_errors := build_branch.GetUInt64("build_id")
 	if build_id_errors != nil {
 		errors = append(errors, build_id_errors...)
 	} else if  common.IsNil(build_branch_records_map) {
@@ -392,7 +392,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	branch_records_data_array, branch_records_data_array_errors := branch_records_map.GetArray("data")
 	if branch_records_data_array_errors != nil {
 		errors = append(errors, branch_records_data_array_errors...)
-	} else if  common.IsNil(branch_records_data_array) {
+	} else if common.IsNil(branch_records_data_array) {
 		errors = append(errors, fmt.Errorf("branch_records_data_array is nil"))
 	} else if len(*branch_records_data_array) != 1 {
 		errors = append(errors, fmt.Errorf("branch_records_data_array did not have one result"))
@@ -425,12 +425,148 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, fmt.Errorf("branch_name is nil"))
 	}
 
+	read_records_build_request := json.Map{"ReadRecords_Build":json.Map{"[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_id":*build_id}, "[select_fields]": json.Array{"domain_name_id", "repository_account_id", "repository_id"}, "[limit]":1}}
+	read_records_build_response, read_records_build_response_errors := processor.SendMessageToQueue(&read_records_build_request)
+	if read_records_build_response_errors != nil {
+		errors = append(errors, read_records_build_response_errors...)
+	} else if  common.IsNil(read_records_branch_response) {
+		errors = append(errors, fmt.Errorf("read_records_build_response is nil"))
+	}
 
+	if len(errors) > 0 {
+		return errors
+	}
+
+	build_records_map, build_records_map_errors := read_records_build_response.GetMap(read_records_build_response.Keys()[0])
+	if build_records_map_errors != nil {
+		errors = append(errors, build_records_map_errors...)
+	} else if  common.IsNil(branch_records_map) {
+		errors = append(errors, fmt.Errorf("build_records_map is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	build_records_data_array, build_records_data_array_errors := build_records_map.GetArray("data")
+	if build_records_data_array_errors != nil {
+		errors = append(errors, build_records_data_array_errors...)
+	} else if  common.IsNil(build_records_data_array) {
+		errors = append(errors, fmt.Errorf("build_records_data_array is nil"))
+	} else if len(*build_records_data_array) != 1 {
+		errors = append(errors, fmt.Errorf("build_records_data_array did not have one result"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	var build json.Map
+	build_interface := (*build_records_data_array)[0]
+	type_of_build_interface := common.GetType(build_interface)
+
+	if type_of_build_interface == "json.Map" {
+		build = build_interface.(json.Map)
+	} else if type_of_build_interface == "*json.Map" {
+		build = *(build_interface.(*json.Map))
+	} else {
+		errors = append(errors, fmt.Errorf("build has invalid type"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	domain_name_id, domain_name_id_errors := build.GetUInt64("domain_name_id")
+	if domain_name_id_errors != nil {
+		errors = append(errors, domain_name_id_errors...)
+	} else if  common.IsNil(domain_name_id) {
+		errors = append(errors, fmt.Errorf("domain_name_id is nil"))
+	}
+
+	repository_account_id, repository_account_id_errors := build.GetUInt64("repository_account_id")
+	if repository_account_id_errors != nil {
+		errors = append(errors, repository_account_id_errors...)
+	} else if  common.IsNil(repository_account_id) {
+		errors = append(errors, fmt.Errorf("repository_account_id is nil"))
+	}
+
+	repository_id, repository_id_errors := build.GetUInt64("repository_id")
+	if repository_id_errors != nil {
+		errors = append(errors, repository_id_errors...)
+	} else if  common.IsNil(repository_id) {
+		errors = append(errors, fmt.Errorf("repository_id is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	read_records_domain_name_request := json.Map{"ReadRecords_DomainName":json.Map{"[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"domain_name_id":*domain_name_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}}
+	read_records_domain_name_response, read_records_domain_name_response_errors := processor.SendMessageToQueue(&read_records_domain_name_request)
+	if read_records_domain_name_response_errors != nil {
+		errors = append(errors, read_records_domain_name_response_errors...)
+	} else if  common.IsNil(read_records_domain_name_response) {
+		errors = append(errors, fmt.Errorf("read_records_domain_name_response is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	domain_name_records_map, domain_name_records_map_errors := read_records_domain_name_response.GetMap(read_records_domain_name_response.Keys()[0])
+	if domain_name_records_map_errors != nil {
+		errors = append(errors, domain_name_records_map_errors...)
+	} else if  common.IsNil(domain_name_records_map) {
+		errors = append(errors, fmt.Errorf("domain_name_records_map is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	domain_name_records_data_array, domain_name_records_data_array_errors := domain_name_records_map.GetArray("data")
+	if domain_name_records_data_array_errors != nil {
+		errors = append(errors, domain_name_records_data_array_errors...)
+	} else if  common.IsNil(domain_name_records_data_array) {
+		errors = append(errors, fmt.Errorf("domain_name_records_data_array is nil"))
+	} else if len(*domain_name_records_data_array) != 1 {
+		errors = append(errors, fmt.Errorf("domain_name_records_data_array did not have one result"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	var domain_name_map json.Map
+	domain_name_interface := (*domain_name_records_data_array)[0]
+	type_of_domain_name_interface := common.GetType(domain_name_interface)
+
+	if type_of_domain_name_interface == "json.Map" {
+		domain_name_map = domain_name_interface.(json.Map)
+	} else if type_of_domain_name_interface == "*json.Map" {
+		domain_name_map = *(domain_name_interface.(*json.Map))
+	} else {
+		errors = append(errors, fmt.Errorf("domain_name has invalid type"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	domain_name, domain_name_errors := domain_name_map.GetString("name")
+	if domain_name_errors != nil {
+		errors = append(errors, domain_name_errors...)
+	} else if  common.IsNil(domain_name) {
+		errors = append(errors, fmt.Errorf("domain_name is nil"))
+	}
+
+	//"repository_account_id", "repository_id"
+
+
+	first_build_step.SetString("domain_name", domain_name)
 	first_build_step.SetString("branch_name", branch_name)
 	
-
-
-
 	next_command := json.Map{*name_of_next_step:json.Map{"data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}}
 	_, message_errors := processor.SendMessageToQueue(&next_command)
 	if message_errors != nil {
