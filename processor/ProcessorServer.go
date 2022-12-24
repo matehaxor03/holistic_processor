@@ -440,6 +440,104 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		processors["Run_CreateInstanceFolder"] = run_create_instance_folder_processor
 	}
 
+	run_create_group_processor, run_create_group_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateGroup")
+	if run_create_group_processor_errors != nil {
+		errors = append(errors, run_create_group_processor_errors...)
+	} else if run_create_group_processor != nil {
+		processors["Run_CreateGroup"] = run_create_group_processor
+	}
+
+	run_create_user_processor, run_create_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateUser")
+	if run_create_user_processor_errors != nil {
+		errors = append(errors, run_create_user_processor_errors...)
+	} else if run_create_user_processor != nil {
+		processors["Run_CreateUser"] = run_create_user_processor
+	}
+
+	run_assign_group_to_user_processor, run_assign_group_to_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_AssignGroupToUser")
+	if run_assign_group_to_user_processor_errors != nil {
+		errors = append(errors, run_assign_group_to_user_processor_errors...)
+	} else if run_assign_group_to_user_processor != nil {
+		processors["Run_AssignGroupToUser"] = run_assign_group_to_user_processor
+	}
+
+	run_assign_group_to_instance_folder_processor, run_assign_group_to_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_AssignGroupToInstanceFolder")
+	if run_assign_group_to_instance_folder_processor_errors != nil {
+		errors = append(errors, run_assign_group_to_instance_folder_processor_errors...)
+	} else if run_assign_group_to_instance_folder_processor != nil {
+		processors["Run_AssignGroupToInstanceFolder"] = run_assign_group_to_instance_folder_processor
+	}
+
+	run_clean_processor, run_clean_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Clean")
+	if run_clean_processor_errors != nil {
+		errors = append(errors, run_clean_processor_errors...)
+	} else if run_clean_processor != nil {
+		processors["Run_Clean"] = run_clean_processor
+	}
+
+	run_lint_processor, run_lint_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Lint")
+	if run_lint_processor_errors != nil {
+		errors = append(errors, run_lint_processor_errors...)
+	} else if run_lint_processor != nil {
+		processors["Run_Lint"] = run_lint_processor
+	}
+
+	run_build_processor, run_build_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Build")
+	if run_build_processor_errors != nil {
+		errors = append(errors, run_build_processor_errors...)
+	} else if run_build_processor != nil {
+		processors["Run_Build"] = run_build_processor
+	}
+
+	run_unit_tests_processor, run_unit_tests_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_UnitTests")
+	if run_unit_tests_processor_errors != nil {
+		errors = append(errors, run_unit_tests_processor_errors...)
+	} else if run_unit_tests_processor != nil {
+		processors["Run_UnitTests"] = run_unit_tests_processor
+	}
+
+	run_remove_group_from_instance_folder_processor, run_remove_group_from_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_RemoveGroupFromInstanceFolder")
+	if run_remove_group_from_instance_folder_processor_errors != nil {
+		errors = append(errors, run_remove_group_from_instance_folder_processor_errors...)
+	} else if run_remove_group_from_instance_folder_processor != nil {
+		processors["Run_RemoveGroupFromInstanceFolder"] = run_remove_group_from_instance_folder_processor
+	}
+
+	run_remove_group_from_user_processor, run_remove_group_from_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_RemoveGroupFromUser")
+	if run_remove_group_from_user_processor_errors != nil {
+		errors = append(errors, run_remove_group_from_user_processor_errors...)
+	} else if run_remove_group_from_user_processor != nil {
+		processors["Run_RemoveGroupFromUser"] = run_remove_group_from_user_processor
+	}
+
+	run_delete_group_processor, run_delete_group_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_DeleteGroup")
+	if run_delete_group_processor_errors != nil {
+		errors = append(errors, run_delete_group_processor_errors...)
+	} else if run_delete_group_processor != nil {
+		processors["Run_DeleteGroup"] = run_delete_group_processor
+	}
+
+	run_delete_user_processor, run_delete_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_DeleteUser")
+	if run_delete_user_processor_errors != nil {
+		errors = append(errors, run_delete_user_processor_errors...)
+	} else if run_delete_user_processor != nil {
+		processors["Run_DeleteUser"] = run_delete_user_processor
+	}
+
+	run_delete_instance_folder_processor, run_delete_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_DeleteInstanceFolder")
+	if run_delete_instance_folder_processor_errors != nil {
+		errors = append(errors, run_delete_instance_folder_processor_errors...)
+	} else if run_delete_instance_folder_processor != nil {
+		processors["Run_DeleteInstanceFolder"] = run_delete_instance_folder_processor
+	}
+
+	run_end_processor, run_end_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_End")
+	if run_end_processor_errors != nil {
+		errors = append(errors, run_end_processor_errors...)
+	} else if run_end_processor != nil {
+		processors["Run_End"] = run_end_processor
+	}
+
 	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
 	if get_tables_processor_errors != nil {
 		errors = append(errors, get_tables_processor_errors...)

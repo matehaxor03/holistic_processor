@@ -147,8 +147,36 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		processor_function = commandRunCreateTagInstancesFolderFunc()
 	} else if queue == "Run_CopyToInstanceFolder" {
 		processor_function = commandRunCopyToInstanceFolderFunc()
-	}  else if queue == "Run_CreateInstanceFolder" {
+	} else if queue == "Run_CreateInstanceFolder" {
 		processor_function = commandRunCreateInstanceFolderFunc()
+	} else if queue == "Run_CreateGroup" {
+		processor_function = commandRunCreateGroupFunc()
+	} else if queue == "Run_CreateUser" {
+		processor_function = commandRunCreateUserFunc()
+	} else if queue == "Run_DeleteUser" {
+		processor_function = commandRunCreateUserFunc()
+	}  else if queue == "Run_DeleteGroup" {
+		processor_function = commandRunDeleteGroupFunc()
+	} else if queue == "Run_DeleteInstanceFolder" {
+		processor_function = commandRunDeleteInstanceFolderFunc()
+	} else if queue == "Run_End" {
+		processor_function = commandRunEndFunc()
+	} else if queue == "Run_Clean" {
+		processor_function = commandRunCleanFunc()
+	} else if queue == "Run_Lint" {
+		processor_function = commandRunLintFunc()
+	} else if queue == "Run_RemoveGroupFromInstanceFolder" {
+		processor_function = commandRunRemoveGroupFromInstanceFolderFunc()
+	} else if queue == "Run_RemoveGroupFromUser" {
+		processor_function = commandRunRemoveGroupFromUserFunc()
+	} else if queue == "Run_UnitTests" {
+		processor_function = commandRunUnitTestsFunc()
+	} else if queue == "Run_Build" {
+		processor_function = commandRunBuildFunc()
+	} else if queue == "Run_AssignGroupToUser" {
+		processor_function = commandRunAssignGroupToUserFunc()
+	} else if queue == "Run_AssignGroupToInstanceFolder" {
+		processor_function = commandRunAssignGroupToInstanceFolderFunc()
 	} else {
 		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue))
 		return nil, errors
