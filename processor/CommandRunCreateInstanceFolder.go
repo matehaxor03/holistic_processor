@@ -4,8 +4,8 @@ import (
 	json "github.com/matehaxor03/holistic_json/json"
 	common "github.com/matehaxor03/holistic_common/common"
     "path/filepath"
-	"fmt"
 	"os"
+	"fmt"
 )
 
 func commandRunCreateInstanceFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -25,12 +25,14 @@ func commandRunCreateInstanceFolder(processor *Processor, request *json.Map, res
 	directory_parts = append(directory_parts, *repository_name)
 	directory_parts = append(directory_parts, "branch_instances")
 	directory_parts = append(directory_parts, fmt.Sprintf("%d", *build_branch_instance_id))
-	full_path_of_directory := filepath.Join(directory_parts...)
+	full_path_of_directory := "/" + filepath.Join(directory_parts...)
 
-	permissions := int(0700)
-	create_directory_error := os.MkdirAll("/" + full_path_of_directory, os.FileMode(permissions))
-	if create_directory_error != nil {
-		errors = append(errors, create_directory_error)
+	if _, stat_error := os.Stat(full_path_of_directory); os.IsNotExist(stat_error) {
+		permissions := int(0700)
+		create_directory_error := os.MkdirAll(full_path_of_directory, os.FileMode(permissions))
+		if create_directory_error != nil {
+			errors = append(errors, create_directory_error)
+		}
 	}
 
 	if len(errors) > 0 {
