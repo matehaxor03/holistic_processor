@@ -145,7 +145,11 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		processor_function = commandRunCreateBranchInstancesFolderFunc()
 	} else if queue == "Run_CreateTagInstancesFolder" {
 		processor_function = commandRunCreateTagInstancesFolderFunc()
-	}  else {
+	} else if queue == "Run_CopyToInstanceFolder" {
+		processor_function = commandRunCopyToInstanceFolderFunc()
+	}  else if queue == "Run_CreateInstanceFolder" {
+		processor_function = commandRunCreateInstanceFolderFunc()
+	} else {
 		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue))
 		return nil, errors
 	}
