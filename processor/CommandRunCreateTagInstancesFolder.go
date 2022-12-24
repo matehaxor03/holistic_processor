@@ -6,10 +6,9 @@ import (
 	"os"
     "path/filepath"
 	"fmt"
-	"strings"
 )
 
-func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+func commandRunCreateTagInstancesFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, errors := validateRunCommandHeaders(request)
 	if errors != nil {
 		return errors
@@ -18,33 +17,22 @@ func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, r
 		errors = new_errors
 	}
 
-
-
 	// todo: validate directory names
 	directory_parts := common.GetDataDirectory()
 	directory_parts = append(directory_parts, "src")
 	directory_parts = append(directory_parts, *domain_name)
 	directory_parts = append(directory_parts, *repository_account_name)
 	directory_parts = append(directory_parts, *repository_name)
-	directory_parts = append(directory_parts, "branches")
-	directory_parts = append(directory_parts, *branch_name)
-	directory_parts = append(directory_parts, *repository_name)
-
-	full_path_of_directory := filepath.Join(directory_parts...)
-
-	if _, stat_error := os.Stat("/" + full_path_of_directory); os.IsNotExist(stat_error) {
-		bashCommand := common.NewBashCommand()
-		command := fmt.Sprintf("git clone --branch %s git@%s:%s/%s.git %s", *branch_name, *domain_name, *repository_account_name, *repository_name, "/" + full_path_of_directory)
-		stdout, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
-		if bash_command_errors != nil && len(bash_command_errors) > 0 {
-			if !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "Cloning into") {
-				errors = append(errors, bash_command_errors...)
-			}
-		} else {
-			fmt.Println(stdout)
-		}
-	}
+	directory_parts = append(directory_parts, "tag_instances")
 	
+	
+	permissions := int(0700)
+	full_path_of_directory := filepath.Join(directory_parts...)
+	fmt.Println(full_path_of_directory)
+	create_directory_error := os.MkdirAll("/" + full_path_of_directory, os.FileMode(permissions))
+	if create_directory_error != nil {
+		errors = append(errors, create_directory_error)
+	}
 
 	if len(errors) > 0 {
 		return errors
@@ -58,7 +46,7 @@ func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, r
 	return nil
 }
 
-func commandRunCloneBranchOrTagFolderFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	funcValue := commandRunCloneBranchOrTagFolder
+func commandRunCreateTagInstancesFolderFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandRunCreateTagInstancesFolder
 	return &funcValue
 }
