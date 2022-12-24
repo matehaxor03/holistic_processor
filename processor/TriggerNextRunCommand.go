@@ -6,8 +6,14 @@ import (
 	"fmt"
 )
 
-func triggerNextRunCommand(processor *Processor, build_branch_instance_step_id *uint64, build_branch_instance_id *uint64, build_step_id  *uint64, order  *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, request *json.Map) ([]error) {
+func triggerNextRunCommand(processor *Processor, command_name *string, build_branch_instance_step_id *uint64, build_branch_instance_id *uint64, build_step_id  *uint64, order  *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, request *json.Map) ([]error) {
 	var errors []error
+	if command_name == nil {
+		errors = append(errors, fmt.Errorf("current command_name is nil"))
+		return errors
+	} else if *command_name == "Run_End" {
+		return nil
+	}
 	
 	read_records_build_branch_instance_step_request := json.Map{"ReadRecords_BuildBranchInstanceStep":json.Map{"[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*order}, "[where_fields_logic]":json.Map{"order":">"}, "[order_by]":json.Array{json.Map{"order":"ascending"}}, "[limit]":1}}
 	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(&read_records_build_branch_instance_step_request)
@@ -144,6 +150,8 @@ func triggerNextRunCommand(processor *Processor, build_branch_instance_step_id *
 	first_build_step.SetString("repository_account_name", repository_account_name)
 	first_build_step.SetString("repository_name", repository_name)
 	first_build_step.SetString("branch_name", branch_name)
+	first_build_step.SetString("command_name", name_of_next_step)
+
 
 	next_command := json.Map{*name_of_next_step:json.Map{"data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}}
 	_, message_errors := processor.SendMessageToQueue(&next_command)

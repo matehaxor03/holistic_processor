@@ -7,7 +7,7 @@ import (
 	//"fmt"
 )
 
-func commandRunDeleteInstanceFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+func commandRunIntegrationTests(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	command_name, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, errors := validateRunCommandHeaders(request)
 	if errors != nil {
 		return errors
@@ -30,7 +30,7 @@ func commandRunDeleteInstanceFolder(processor *Processor, request *json.Map, res
 	return nil
 }
 
-func commandRunDeleteInstanceFolderFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	funcValue := commandRunDeleteInstanceFolder
+func commandRunIntegrationTestsFunc() *func(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	funcValue := commandRunIntegrationTests
 	return &funcValue
 }

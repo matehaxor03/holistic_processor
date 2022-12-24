@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func validateRunCommandHeaders(request *json.Map) (*uint64, *uint64, *uint64, *int64, *string, *string, *string, *string, []error) {
+func validateRunCommandHeaders(request *json.Map) (*string, *uint64, *uint64, *uint64, *int64, *string, *string, *string, *string, []error) {
 	var errors []error
 
 	request_keys := request.Keys()
@@ -18,7 +18,7 @@ func validateRunCommandHeaders(request *json.Map) (*uint64, *uint64, *uint64, *i
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	request_data, request_data_errors := request_inner_map.GetMap("data")
@@ -29,8 +29,15 @@ func validateRunCommandHeaders(request *json.Map) (*uint64, *uint64, *uint64, *i
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
+
+	command_name, command_name_errors := request_data.GetString("command_name")
+	if command_name_errors != nil {
+		errors = append(errors, command_name_errors...) 
+	} else if common.IsNil(command_name) {
+		errors = append(errors, fmt.Errorf("command_name is nil"))
+	}
 
 	build_branch_instance_step_id, build_branch_instance_step_id_errors := request_data.GetUInt64("build_branch_instance_step_id")
 	if build_branch_instance_step_id_errors != nil {
@@ -89,8 +96,8 @@ func validateRunCommandHeaders(request *json.Map) (*uint64, *uint64, *uint64, *i
 	}	
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
-	return build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, nil
+	return command_name, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, nil
 }

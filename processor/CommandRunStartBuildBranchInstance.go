@@ -697,6 +697,8 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	first_build_step.SetString("repository_account_name", repository_account_name)
 	first_build_step.SetString("repository_name", repository_name)
 	first_build_step.SetString("branch_name", branch_name)
+	first_build_step.SetString("command_name", name_of_next_step)
+
 	
 	next_command := json.Map{*name_of_next_step:json.Map{"data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}}
 	_, message_errors := processor.SendMessageToQueue(&next_command)

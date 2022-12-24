@@ -171,6 +171,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		processor_function = commandRunRemoveGroupFromUserFunc()
 	} else if queue == "Run_UnitTests" {
 		processor_function = commandRunUnitTestsFunc()
+	} else if queue == "Run_IntegrationTests" {
+		processor_function = commandRunIntegrationTestsFunc()
 	} else if queue == "Run_Build" {
 		processor_function = commandRunBuildFunc()
 	} else if queue == "Run_AssignGroupToUser" {
