@@ -22,7 +22,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return nil, client_manager_errors
 	}
 
-	test_read_client, test_read_client_errors := client_manager.GetClient("holistic_db_config:127.0.0.1:3306:holistic:holistic_read")
+	test_read_client, test_read_client_errors := client_manager.GetClient("holistic_db_config#127.0.0.1#3306#holistic#holistic_read")
 	if test_read_client_errors != nil {
 		return nil, test_read_client_errors
 	}
