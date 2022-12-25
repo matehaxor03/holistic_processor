@@ -2,9 +2,9 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
-	//common "github.com/matehaxor03/holistic_common/common"
-    //"path/filepath"
-	//"fmt"
+	common "github.com/matehaxor03/holistic_common/common"
+    "path/filepath"
+	"fmt"
 )
 
 func commandRunBuild(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -16,7 +16,22 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 		errors = new_errors
 	}
 
-	// todo
+	instance_folder_parts := common.GetDataDirectory()
+	instance_folder_parts = append(instance_folder_parts, "src")
+	instance_folder_parts = append(instance_folder_parts, *domain_name)
+	instance_folder_parts = append(instance_folder_parts, *repository_account_name)
+	instance_folder_parts = append(instance_folder_parts, *repository_name)
+	instance_folder_parts = append(instance_folder_parts, "branch_instances")
+	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *build_branch_instance_id))
+	instance_folder_parts = append(instance_folder_parts, *repository_name)
+	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
+
+	bashCommand := common.NewBashCommand()
+	command := fmt.Sprintf("cd %s && go build", full_path_of_instance_directory)
+	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
+	if bash_command_errors != nil {
+		errors = append(errors, bash_command_errors...)
+	} 
 
 	if len(errors) > 0 {
 		return errors

@@ -2,9 +2,10 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
-	//common "github.com/matehaxor03/holistic_common/common"
-    //"path/filepath"
-	//"fmt"
+	common "github.com/matehaxor03/holistic_common/common"
+    "path/filepath"
+	"os"
+	"fmt"
 )
 
 func commandRunIntegrationTests(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -16,7 +17,25 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		errors = new_errors
 	}
 
-	// todo
+	instance_folder_parts := common.GetDataDirectory()
+	instance_folder_parts = append(instance_folder_parts, "src")
+	instance_folder_parts = append(instance_folder_parts, *domain_name)
+	instance_folder_parts = append(instance_folder_parts, *repository_account_name)
+	instance_folder_parts = append(instance_folder_parts, *repository_name)
+	instance_folder_parts = append(instance_folder_parts, "branch_instances")
+	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *build_branch_instance_id))
+	instance_folder_parts = append(instance_folder_parts, *repository_name)
+	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
+
+
+	if _, stat_error := os.Stat(full_path_of_instance_directory + "/tests/integration"); !os.IsNotExist(stat_error) {
+		bashCommand := common.NewBashCommand()
+		command := fmt.Sprintf("cd %s && go clean -testcache | go test -outputdir= -json ./tests/integration", full_path_of_instance_directory)
+		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
+		if bash_command_errors != nil {
+			errors = append(errors, bash_command_errors...)
+		} 
+	}
 
 	if len(errors) > 0 {
 		return errors
