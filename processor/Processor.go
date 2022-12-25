@@ -356,14 +356,10 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
-						fmt.Println("processing processing " + response_queue)
-						fmt.Println(string(response_body_payload))
-
 						processor_errors := (*processor_function)(getProcessor(), response_json_payload, &response_queue_result)
 						if processor_errors != nil {
 							response_queue_result.SetNil("data")
 							response_queue_result.SetErrors("[errors]", &processor_errors)
-							fmt.Println(processor_errors)
 						} else {
 							response_queue_result.SetNil("[errors]")
 						}

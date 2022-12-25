@@ -19,7 +19,6 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 	keys := request.Keys()
 	queue_name := keys[0]
 	_, unsafe_table_name, _ := strings.Cut(queue_name, "_")
-	fmt.Println(unsafe_table_name)
 									
 	table, table_errors := temp_write_database.GetTable(unsafe_table_name)
 	if table_errors != nil {

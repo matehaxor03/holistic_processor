@@ -41,7 +41,11 @@ func commandRunPullLatestBranchOrTagFolder(processor *Processor, request *json.M
 	command := fmt.Sprintf("cd %s && git pull", "/" + full_path_of_directory)
 	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
 	if bash_command_errors != nil && len(bash_command_errors) > 0 {
-		if !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "-> origin/") {
+		if !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "-> ") &&
+		   !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "file changed") &&
+		   !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "Updating") &&
+		   !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "Fast-forward") &&
+		   !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), ".go") {
 			errors = append(errors, bash_command_errors...)
 		}
 	} 

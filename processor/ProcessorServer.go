@@ -150,9 +150,6 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			http_extension.WriteResponse(w, json.Map{}, errors)
 			return
 		}
-	
-		fmt.Println(json_payload.Keys())
-		fmt.Println(string(body_payload))
 
 		keys := json_payload.Keys()
 		if len(keys) != 1 {
