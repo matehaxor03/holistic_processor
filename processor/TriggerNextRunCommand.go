@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func triggerNextRunCommand(processor *Processor, command_name *string, build_branch_instance_step_id *uint64, build_branch_instance_id *uint64, build_step_id  *uint64, order  *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, request *json.Map) ([]error) {
+func triggerNextRunCommand(processor *Processor, command_name *string, build_branch_id *uint64, build_branch_instance_step_id *uint64, build_branch_instance_id *uint64, build_step_id  *uint64, order  *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, request *json.Map) ([]error) {
 	var errors []error
 	if command_name == nil {
 		errors = append(errors, fmt.Errorf("current command_name is nil"))
@@ -151,6 +151,8 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	first_build_step.SetString("repository_name", repository_name)
 	first_build_step.SetString("branch_name", branch_name)
 	first_build_step.SetString("command_name", name_of_next_step)
+	first_build_step.SetUInt64("build_branch_id", build_branch_id)
+
 
 
 	next_command := json.Map{*name_of_next_step:json.Map{"data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}}
