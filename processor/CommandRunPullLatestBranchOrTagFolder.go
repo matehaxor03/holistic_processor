@@ -17,7 +17,13 @@ func commandRunPullLatestBranchOrTagFolder(processor *Processor, request *json.M
 		errors = new_errors
 	}
 
+	std_callback := func(message string) {
+		fmt.Println(message)
+	}
 
+	stderr_callback := func(message error) {
+		fmt.Println(message)
+	}
 
 	// todo: validate directory names
 	directory_parts := common.GetDataDirectory()
@@ -33,7 +39,7 @@ func commandRunPullLatestBranchOrTagFolder(processor *Processor, request *json.M
 
 	bashCommand := common.NewBashCommand()
 	command := fmt.Sprintf("cd %s && git pull", "/" + full_path_of_directory)
-	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
+	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
 	if bash_command_errors != nil && len(bash_command_errors) > 0 {
 		if !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "-> origin/") {
 			errors = append(errors, bash_command_errors...)

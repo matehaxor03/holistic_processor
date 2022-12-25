@@ -17,6 +17,14 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		errors = new_errors
 	}
 
+	std_callback := func(message string) {
+		fmt.Println(message)
+	}
+
+	stderr_callback := func(message error) {
+		fmt.Println(message)
+	}
+
 	instance_folder_parts := common.GetDataDirectory()
 	instance_folder_parts = append(instance_folder_parts, "src")
 	instance_folder_parts = append(instance_folder_parts, *domain_name)
@@ -31,7 +39,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	if _, stat_error := os.Stat(full_path_of_instance_directory + "/tests/integration"); !os.IsNotExist(stat_error) {
 		bashCommand := common.NewBashCommand()
 		command := fmt.Sprintf("cd %s && go clean -testcache | go test -outputdir= -json ./tests/integration", full_path_of_instance_directory)
-		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
+		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
 		} 

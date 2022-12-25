@@ -16,6 +16,14 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 		errors = new_errors
 	}
 
+	std_callback := func(message string) {
+		fmt.Println(message)
+	}
+
+	stderr_callback := func(message error) {
+		fmt.Println(message)
+	}
+
 	instance_folder_parts := common.GetDataDirectory()
 	instance_folder_parts = append(instance_folder_parts, "src")
 	instance_folder_parts = append(instance_folder_parts, *domain_name)
@@ -28,7 +36,7 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 
 	bashCommand := common.NewBashCommand()
 	command := fmt.Sprintf("cd %s && go build", full_path_of_instance_directory)
-	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
+	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
 	if bash_command_errors != nil {
 		errors = append(errors, bash_command_errors...)
 	} 

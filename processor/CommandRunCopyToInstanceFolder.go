@@ -16,6 +16,13 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 		errors = new_errors
 	}
 
+	std_callback := func(message string) {
+		fmt.Println(message)
+	}
+
+	stderr_callback := func(message error) {
+		fmt.Println(message)
+	}
 	//depending if doing by branch or tag
 
 
@@ -44,7 +51,7 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 
 	bashCommand := common.NewBashCommand()
 	command := fmt.Sprintf("cp -r %s %s", "/" + full_path_of_directory,  "/" + full_path_of_instance_directory)
-	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command)
+	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback,  &stderr_callback)
 	if bash_command_errors != nil {
 		errors = append(errors, bash_command_errors...)
 	} 
