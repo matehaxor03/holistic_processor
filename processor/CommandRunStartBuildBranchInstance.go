@@ -245,18 +245,18 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 
 	
 	read_records_build_branch_request := json.Map{"[queue]":"ReadRecords_BuildBranch", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_branch_id":*build_branch_id}, "[select_fields]": json.Array{"build_id", "branch_id"}, "[limit]":1}
-	build_branch_records, build_branch_records_errors := processor.SendMessageToQueue(&read_records_build_branch_request)
-	if build_branch_records_errors != nil {
-		errors = append(errors, build_branch_records_errors...)
-	} else if  common.IsNil(build_branch_records) {
-		errors = append(errors, fmt.Errorf("build_branch_records is nil"))
+	build_branch_records_response, build_branch_records_response_errors := processor.SendMessageToQueue(&read_records_build_branch_request)
+	if build_branch_records_response_errors != nil {
+		errors = append(errors, build_branch_records_response_errors...)
+	} else if  common.IsNil(build_branch_records_response) {
+		errors = append(errors, fmt.Errorf("build_branch_records_response is nil"))
 	}
 
 	if len(errors) > 0 {
 		return errors
 	}
 
-	build_branch_records_data_array, build_branch_records_data_array_errors := read_records_build_branch_request.GetArray("data")
+	build_branch_records_data_array, build_branch_records_data_array_errors := build_branch_records_response.GetArray("data")
 	if build_branch_records_data_array_errors != nil {
 		errors = append(errors, build_branch_records_data_array_errors...)
 	} else if  common.IsNil(build_branch_records_data_array) {

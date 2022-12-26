@@ -9,19 +9,7 @@ import (
 func validateRunCommandHeaders(request *json.Map) (*string, *uint64, *uint64, *uint64, *uint64, *int64, *string, *string, *string, *string, []error) {
 	var errors []error
 
-	request_keys := request.Keys()
-	request_inner_map, request_inner_map_errors := request.GetMap(request_keys[0])
-	if request_inner_map_errors != nil {
-		errors = append(errors, request_inner_map_errors...)
-	} else if common.IsNil(request_inner_map) {
-		errors = append(errors, fmt.Errorf("request inner json is nil"))
-	}
-
-	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
-	} 
-
-	request_data, request_data_errors := request_inner_map.GetMap("data")
+	request_data, request_data_errors := request.GetMap("data")
 	if request_data_errors != nil {
 		errors = append(errors, request_data_errors...) 
 	} else if common.IsNil(request_data) {

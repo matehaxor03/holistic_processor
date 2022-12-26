@@ -92,30 +92,22 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 			return nil, response_json_payload_errors
 		} 
 
-		keys := callback_response_json_payload.Keys()
-		if len(keys) != 1 {
-			errors = append(errors, fmt.Errorf("keys length is not 1"))
-			return nil, errors
-		}
-
-		response_queue := keys[0]
-		json_payload_inner, json_payload_inner_errors := callback_response_json_payload.GetMap(response_queue)
-		if json_payload_inner_errors != nil {
-			return nil, json_payload_inner_errors
-		} else if common.IsNil(json_payload_inner) {
-			errors = append(errors, fmt.Errorf("payload body is nil"))
-			return nil, errors
-		}
-
-		message_trace_id, message_trace_id_errors := json_payload_inner.GetString("[trace_id]")
+		message_trace_id, message_trace_id_errors := callback_response_json_payload.GetString("[trace_id]")
 		if message_trace_id_errors != nil {
 			return nil, message_trace_id_errors
 		} else if message_trace_id == nil {
-			errors = append(errors, fmt.Errorf("message_trace_id is nil"))
+			var tempbuilder strings.Builder
+			temp_thing := message.ToJSONString(&tempbuilder)
+			if temp_thing != nil {
+				return nil, temp_thing
+			} else {
+				fmt.Println(tempbuilder.String())
+			}
+			errors = append(errors, fmt.Errorf("message_trace_id is nil from callback"))
 			return nil, errors
 		}
 
-		async, async_errors := json_payload_inner.GetBool("[async]")
+		async, async_errors := callback_response_json_payload.GetBool("[async]")
 		if async_errors != nil {
 			return nil, async_errors
 		} else if common.IsNil(async) {
@@ -123,7 +115,7 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 			return nil, errors
 		}
 
-		callback_errors, callback_errors_errors := json_payload_inner.GetErrors("[errors]")
+		callback_errors, callback_errors_errors := callback_response_json_payload.GetErrors("[errors]")
 		if callback_errors_errors != nil {
 			return nil, callback_errors_errors
 		} else if common.IsNil(callback_errors) {

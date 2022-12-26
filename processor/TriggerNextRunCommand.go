@@ -15,7 +15,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return nil
 	}
 	
-	read_records_build_branch_instance_step_request := json.Map{"ReadRecords_BuildBranchInstanceStep":json.Map{"[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*order}, "[where_fields_logic]":json.Map{"order":">"}, "[order_by]":json.Array{json.Map{"order":"ascending"}}, "[limit]":1}}
+	read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*order}, "[where_fields_logic]":json.Map{"order":">"}, "[order_by]":json.Array{json.Map{"order":"ascending"}}, "[limit]":1}
 	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(&read_records_build_branch_instance_step_request)
 	if read_records_build_branch_instance_step_response_errors != nil {
 		errors = append(errors, read_records_build_branch_instance_step_response_errors...)
@@ -26,21 +26,8 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	if len(errors) > 0 {
 		return errors
 	}
-
-	read_records_build_branch_instance_step_response_keys := read_records_build_branch_instance_step_response.Keys()
-	read_records_build_branch_instance_step_response_key := read_records_build_branch_instance_step_response_keys[0]
-	read_records_build_branch_instance_step_response_inner, read_records_build_branch_instance_step_response_inner_errors  := (*read_records_build_branch_instance_step_response).GetMap(read_records_build_branch_instance_step_response_key)
-	if read_records_build_branch_instance_step_response_inner_errors != nil {
-		errors = append(errors, read_records_build_branch_instance_step_response_inner_errors...)
-	} else if common.IsNil(read_records_build_branch_instance_step_response_inner) {
-		errors = append(errors, fmt.Errorf("read_records_build_branch_instance_step_response_inner is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
 	
-	first_build_step_array, first_build_step_array_errors := read_records_build_branch_instance_step_response_inner.GetArray("data")
+	first_build_step_array, first_build_step_array_errors := read_records_build_branch_instance_step_response.GetArray("data")
 	if first_build_step_array_errors != nil {
 		errors = append(errors, first_build_step_array_errors...)
 	} else if common.IsNil(first_build_step_array) {
@@ -81,7 +68,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return errors
 	}
 
-	read_records_build_step_request := json.Map{"ReadRecords_BuildStep":json.Map{"[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_step_id":*desired_build_step_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}}
+	read_records_build_step_request := json.Map{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_step_id":*desired_build_step_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
 	read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(&read_records_build_step_request)
 	if read_records_build_step_response_errors != nil {
 		errors = append(errors, read_records_build_step_response_errors...)
@@ -93,20 +80,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return errors
 	}
 
-	read_records_build_step_response_keys := read_records_build_step_response.Keys()
-	read_records_build_step_response_key := read_records_build_step_response_keys[0]
-	read_records_build_step_response_key_response_inner, read_records_build_step_response_key_response_inner_errors  := (*read_records_build_step_response).GetMap(read_records_build_step_response_key)
-	if read_records_build_step_response_key_response_inner_errors != nil {
-		errors = append(errors, read_records_build_step_response_key_response_inner_errors...)
-	} else if common.IsNil(read_records_build_step_response_key_response_inner) {
-		errors = append(errors, fmt.Errorf("read_records_build_step_response_key_response_inner is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	lookup_build_step_array, lookup_build_step_array_errors := read_records_build_step_response_key_response_inner.GetArray("data")
+	lookup_build_step_array, lookup_build_step_array_errors := read_records_build_step_response.GetArray("data")
 	if lookup_build_step_array_errors != nil {
 		errors = append(errors, lookup_build_step_array_errors...)
 	} else if common.IsNil(lookup_build_step_array) {
@@ -153,9 +127,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	first_build_step.SetString("command_name", name_of_next_step)
 	first_build_step.SetUInt64("build_branch_id", build_branch_id)
 
-
-
-	next_command := json.Map{*name_of_next_step:json.Map{"data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}}
+	next_command := json.Map{"[queue]":*name_of_next_step, "data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}
 	_, message_errors := processor.SendMessageToQueue(&next_command)
 	if message_errors != nil {
 		return message_errors
