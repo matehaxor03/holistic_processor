@@ -16,9 +16,15 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		return temp_read_database_errors
 	}
 
-	keys := request.Keys()
-	queue_name := keys[0]
-	_, unsafe_table_name, _ := strings.Cut(queue_name, "_")
+	queue_name, queue_name_errors := request.GetString("[queue]")
+	if queue_name_errors != nil {
+		return queue_name_errors
+	} else if common.IsNil(queue_name) {
+		errors = append(errors, fmt.Errorf("[queue] %s is nil"))
+		return errors
+	}
+
+	_, unsafe_table_name, _ := strings.Cut(*queue_name, "_")
 									
 	table, table_errors := temp_read_database.GetTable(unsafe_table_name)
 	if table_errors != nil {
@@ -28,16 +34,8 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		return errors
 	}
 
-	json_map_inner, json_map_inner_errors := request.GetMap(queue_name)
-	if json_map_inner_errors != nil {
-		return json_map_inner_errors
-	} else if common.IsNil(json_map_inner) {
-		errors = append(errors, fmt.Errorf("request payload %s is nil", unsafe_table_name))
-		return errors
-	}
-
 	minimal_fields := false
-	select_fields, select_fields_errors := json_map_inner.GetArray("[select_fields]")
+	select_fields, select_fields_errors := request.GetArray("[select_fields]")
 	if select_fields_errors != nil {
 		return select_fields_errors
 	} else if !common.IsNil(select_fields) {
@@ -49,7 +47,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	}
 
 	where_fields_actual := json.Map{}
-	where_fields, where_fields_errors := json_map_inner.GetMap("[where_fields]")
+	where_fields, where_fields_errors := request.GetMap("[where_fields]")
 	if where_fields_errors != nil {
 		return where_fields_errors
 	} else if !common.IsNil(where_fields) {
@@ -57,7 +55,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	}
 
 	where_fields_logic_actual := json.Map{}
-	where_fields_logic, where_fields_logic_errors := json_map_inner.GetMap("[where_fields_logic]")
+	where_fields_logic, where_fields_logic_errors := request.GetMap("[where_fields_logic]")
 	if where_fields_logic_errors != nil {
 		return where_fields_logic_errors
 	} else if !common.IsNil(where_fields_logic) {
@@ -65,7 +63,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	}
 
 	include_schema_actual := false
-	include_schema, include_schema_errors :=  json_map_inner.GetBool("[include_schema]")
+	include_schema, include_schema_errors :=  request.GetBool("[include_schema]")
 	if include_schema_errors != nil {
 		return include_schema_errors
 	} else if !common.IsNil(include_schema) {
@@ -107,7 +105,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	} 
 
 	order_by_actual := json.Array{}
-	order_by_fields, order_by_fields_errors := json_map_inner.GetArray("[order_by]")
+	order_by_fields, order_by_fields_errors := request.GetArray("[order_by]")
 	if order_by_fields_errors != nil {
 		return order_by_fields_errors
 	} else if !common.IsNil(order_by_fields) {
@@ -115,7 +113,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	}
 
 	var limit_actual *uint64
-	limit_value, limit_value_errors := json_map_inner.GetUInt64("[limit]")
+	limit_value, limit_value_errors := request.GetUInt64("[limit]")
 	if limit_value_errors != nil {
 		return limit_value_errors
 	} else if !common.IsNil(limit_value) {

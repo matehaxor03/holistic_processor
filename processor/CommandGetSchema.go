@@ -2,6 +2,8 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
+	common "github.com/matehaxor03/holistic_common/common"
+
 	"fmt"
 	"strings"
 )
@@ -15,8 +17,15 @@ func commandGetSchema(processor *Processor, request *json.Map, response_queue_re
 		return temp_read_database_errors
 	}
 
-	queue_name := (request.Keys())[0]
-	_, unsafe_table_name, _ := strings.Cut(queue_name, "_")
+	queue_name, queue_name_errors := request.GetString("[queue]")
+	if queue_name_errors != nil {
+		return queue_name_errors
+	} else if common.IsNil(queue_name) {
+		errors = append(errors, fmt.Errorf("[queue] %s is nil"))
+		return errors
+	}
+
+	_, unsafe_table_name, _ := strings.Cut(*queue_name, "_")
 									
 	table, table_errors := temp_read_database.GetTable(unsafe_table_name)
 	if table_errors != nil {

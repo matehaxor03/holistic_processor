@@ -151,20 +151,19 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			return
 		}
 
-		keys := json_payload.Keys()
-		if len(keys) != 1 {
-			errors = append(errors, fmt.Errorf("keys is not equal to one"))
-		}
-
-		if len(errors) > 0 {
-			http_extension.WriteResponse(w, json.Map{}, errors)
+		queue, queue_errors := json_payload.GetString("[queue]")
+		if queue_errors != nil {
+			http_extension.WriteResponse(w, json.Map{}, queue_errors)
+			return
+		} else if common.IsNil(queue) {
+			queue_errors = append(queue_errors, fmt.Errorf("[queue] is nil"))
+			http_extension.WriteResponse(w, json.Map{}, queue_errors)
 			return
 		}
 
-		queue := keys[0]
-		processor, ok := processors[queue]
+		processor, ok := processors[*queue]
 		if !ok {
-			errors = append(errors, fmt.Errorf("prcoessor: %s does not exist", queue))
+			errors = append(errors, fmt.Errorf("prcoessor: %s does not exist", *queue))
 		}
 
 		if len(errors) > 0 {
@@ -172,25 +171,9 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			return
 		}
 
-		result := json.Map{queue: json.Map{}}
+		result := json.Map{"[queue]":*queue}
 
-		json_payload_inner, json_payload_inner_errors := json_payload.GetMap(queue)
-		if json_payload_inner_errors != nil {
-			errors = append(errors, json_payload_inner_errors...)
-		} 
-		
-		
-		if json_payload_inner == nil {
-			errors = append(errors, fmt.Errorf("json payload inner is nil"))
-		}
-
-		if len(errors) > 0 {
-			http_extension.WriteResponse(w, json.Map{}, errors)
-			return
-		}
-				//trace_id, _ := json_payload.GetString("[trace_id]")
-
-		queue_mode, queue_mode_errors := json_payload_inner.GetString("[queue_mode]")
+		queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
 
 		if queue_mode_errors != nil {
 			errors = append(errors, queue_mode_errors...)
@@ -201,10 +184,10 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 
 		if !(common.IsNil(queue_mode)) {
-			(result[queue].(json.Map))["[queue_mode]"] = *queue_mode
+			result["[queue_mode]"] = *queue_mode
 		}
 
-		trace_id, trace_id_errors := json_payload_inner.GetString("[trace_id]")
+		trace_id, trace_id_errors := json_payload.GetString("[trace_id]")
 
 		if trace_id_errors != nil {
 			errors = append(errors, trace_id_errors...)
@@ -215,7 +198,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 
 		if !(common.IsNil(trace_id)) {
-			(result[queue].(json.Map))["[trace_id]"] = *trace_id
+			result["[trace_id]"] = *trace_id
 		}
 		
 		if len(errors) > 0 {

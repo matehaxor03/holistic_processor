@@ -252,7 +252,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 				for {
 					time.Sleep(1 * time.Nanosecond) 
 					trace_id := generate_trace_id()
-					request_payload := json.Map{queue: json.Map{"[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}}
+					request_payload := json.Map{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
 					var json_payload_builder strings.Builder
 					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
 
@@ -308,23 +308,16 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
-						keys := response_json_payload.Keys()
-						if len(keys) != 1 {
-							fmt.Println("keys length is not 1")
+						response_queue, response_queue_errors := response_json_payload.GetString("[queue]")
+						if response_queue_errors != nil {
+							fmt.Println(response_queue_errors) 
+							continue
+						} else if common.IsNil(response_queue) {
+							fmt.Println("response_queue is nil")
 							continue
 						}
 
-						response_queue := keys[0]
-						json_payload_inner, json_payload_inner_errors := response_json_payload.GetMap(response_queue)
-						if json_payload_inner_errors != nil {
-							fmt.Println(json_payload_inner_errors) 
-							continue
-						} else if common.IsNil(json_payload_inner) {
-							fmt.Println("payload body is nil") 
-							continue
-						}
-
-						message_trace_id, message_trace_id_errors := json_payload_inner.GetString("[trace_id]")
+						message_trace_id, message_trace_id_errors := response_json_payload.GetString("[trace_id]")
 						if message_trace_id_errors != nil {
 							fmt.Println(message_trace_id_errors) 
 							continue
@@ -333,7 +326,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
-						async, async_errors := json_payload_inner.GetBool("[async]")
+						async, async_errors := response_json_payload.GetBool("[async]")
 						if async_errors != nil {
 							fmt.Println(message_trace_id_errors) 
 							continue
@@ -342,29 +335,27 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
-						result := json.Map{}
-						response_queue_result := json.Map{"[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
-						result.SetMap(response_queue, &response_queue_result)
-
-						if response_queue == "empty" {
+						result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
+				
+						if *response_queue == "empty" {
 							retry_lock.Lock()
 							(*retry_condition).Wait()
 							retry_lock.Unlock() 
 						}
 
-						if response_queue == "empty" {
+						if *response_queue == "empty" {
 							continue
 						}
 
-						processor_errors := (*processor_function)(getProcessor(), response_json_payload, &response_queue_result)
+						processor_errors := (*processor_function)(getProcessor(), response_json_payload, &result)
 						if processor_errors != nil {
-							response_queue_result.SetNil("data")
-							response_queue_result.SetErrors("[errors]", &processor_errors)
+							result.SetNil("data")
+							result.SetErrors("[errors]", &processor_errors)
 						} else {
-							response_queue_result.SetNil("[errors]")
+							result.SetNil("[errors]")
 						}
 
-						if !json_payload_inner.IsBoolTrue("[async]") {
+						if !response_json_payload.IsBoolTrue("[async]") {
 							sendMessageToQueueFireAndForget(&result)
 						}
 					}

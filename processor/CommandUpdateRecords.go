@@ -16,9 +16,15 @@ func commandUpdateRecords(processor *Processor, request *json.Map, response_queu
 		return temp_write_database_errors
 	}
 
-	keys := request.Keys()
-	queue_name := keys[0]
-	_, unsafe_table_name, _ := strings.Cut(queue_name, "_")
+	queue_name, queue_name_errors := request.GetString("[queue]")
+	if queue_name_errors != nil {
+		return queue_name_errors
+	} else if common.IsNil(queue_name) {
+		errors = append(errors, fmt.Errorf("[queue] %s is nil"))
+		return errors
+	}
+
+	_, unsafe_table_name, _ := strings.Cut(*queue_name, "_")
 									
 	table, table_errors := temp_write_database.GetTable(unsafe_table_name)
 	if table_errors != nil {
@@ -28,15 +34,7 @@ func commandUpdateRecords(processor *Processor, request *json.Map, response_queu
 		return errors
 	}
 
-	json_map_inner, json_map_inner_errors := request.GetMap(queue_name)
-	if json_map_inner_errors != nil {
-		return json_map_inner_errors
-	} else if common.IsNil(json_map_inner) {
-		errors = append(errors, fmt.Errorf("request payload %s is nil", unsafe_table_name))
-		return errors
-	}
-
-	data_array, data_array_errors := json_map_inner.GetArray("data")
+	data_array, data_array_errors := request.GetArray("data")
 	if data_array_errors != nil {
 		return data_array_errors
 	} else if common.IsNil(data_array) {
