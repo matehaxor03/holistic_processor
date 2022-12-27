@@ -483,6 +483,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		processors["Run_IntegrationTests"] = run_integration_tests_processor
 	}
 
+	run_integration_test_suite_processor, run_integration_test_suite_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_IntegrationTestSuite")
+	if run_integration_test_suite_processor_errors != nil {
+		errors = append(errors, run_integration_test_suite_processor_errors...)
+	} else if run_integration_test_suite_processor != nil {
+		processors["Run_IntegrationTestSuite"] = run_integration_test_suite_processor
+	}
+
 	run_remove_group_from_instance_folder_processor, run_remove_group_from_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_RemoveGroupFromInstanceFolder")
 	if run_remove_group_from_instance_folder_processor_errors != nil {
 		errors = append(errors, run_remove_group_from_instance_folder_processor_errors...)
