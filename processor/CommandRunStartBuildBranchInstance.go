@@ -120,6 +120,22 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 			return errors
 		}
 
+		name, name_errors := current_build_step.GetString("name") 
+		if name_errors != nil {
+			errors = append(errors, name_errors...)
+		} else if common.IsNil(name) {
+			errors = append(errors, fmt.Errorf("name attribute is nil"))
+		}
+
+		if len(errors) > 0 {
+			return errors
+		}
+
+		//determine this later
+		if *name == "Run_IntegrationTestSuite" {
+			continue
+		}
+
 		build_branch_instance_step := json.Map{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*build_step_id, "order":*order}
 		build_branch_instance_steps = append(build_branch_instance_steps, build_branch_instance_step)
 	}
