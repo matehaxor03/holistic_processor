@@ -18,7 +18,7 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	function := func(message string) {
 		time.Sleep(1 * time.Nanosecond) 
 		callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":message,"stdout":true},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
-		this_processor.SendMessageToQueueFireAndForget(&callback_payload)
+		go this_processor.SendMessageToQueueFireAndForget(&callback_payload)
 
 		if this_command_name != "Run_IntegrationTests" {
 			return
@@ -309,7 +309,7 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 
 	time.Sleep(1 * time.Nanosecond) 
 	create_test_log_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult", "data":json.Map{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
-	this_processor.SendMessageToQueueFireAndForget(&create_test_log_payload)
+	go this_processor.SendMessageToQueueFireAndForget(&create_test_log_payload)
 	
 	
 	}	
@@ -325,7 +325,7 @@ func getStderrCallbackFunctionBranch(processor *Processor, command_name string, 
 	
 	function := func(message error) {
 		callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
-		this_processor.SendMessageToQueueFireAndForget(&callback_payload)
+		go this_processor.SendMessageToQueueFireAndForget(&callback_payload)
 	}
 	return &function
 }

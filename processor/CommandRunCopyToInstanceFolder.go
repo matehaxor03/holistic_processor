@@ -50,7 +50,7 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 
 
 	bashCommand := common.NewBashCommand()
-	command := fmt.Sprintf("cp -r %s %s", "/" + full_path_of_directory,  "/" + full_path_of_instance_directory)
+	command := fmt.Sprintf("cp -R %s %s", "/" + full_path_of_directory,  "/" + full_path_of_instance_directory)
 	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback,  &stderr_callback)
 	if bash_command_errors != nil {
 		errors = append(errors, bash_command_errors...)

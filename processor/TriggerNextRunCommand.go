@@ -128,10 +128,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	first_build_step.SetUInt64("build_branch_id", build_branch_id)
 
 	next_command := json.Map{"[queue]":*name_of_next_step, "data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}
-	_, message_errors := processor.SendMessageToQueue(&next_command)
-	if message_errors != nil {
-		return message_errors
-	}
+	go processor.SendMessageToQueueFireAndForget(&next_command)
 
 	return nil
 }

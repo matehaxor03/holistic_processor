@@ -29,12 +29,18 @@ type Processor struct {
 }
 
 func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainName, port string, queue string) (*Processor, []error) {
+	status := "not started"
+	status_lock := &sync.Mutex{}
+	var wg sync.WaitGroup
+	wakeup_lock := &sync.Mutex{}
+
 	var this_processor *Processor
 	var errors []error
 	var messageCountLock sync.Mutex
 	var callbackLock sync.Mutex
 	var messageCount uint64
 	var processor_function *func(processor *Processor, request *json.Map, response *json.Map) []error
+	
 	
 	setProcessor := func(processor *Processor) {
 		this_processor = processor
@@ -48,9 +54,9 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		return queue
 	}
 
-	retry_lock := &sync.Mutex{}
-	retry_condition := sync.NewCond(retry_lock)
-	wakeup_lock := &sync.Mutex{}
+	//retry_lock := &sync.Mutex{}
+	//retry_condition := sync.NewCond(retry_lock)
+	
 
 	processor_callback, processor_callback_errors := NewProcessorCallback(domain_name, port)
 	if processor_callback_errors != nil {
@@ -184,7 +190,16 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		return nil, errors
 	}
 
-	//todo test the connection string before starting
+	get_or_set_status := func(s string) string {
+		status_lock.Lock()
+		defer status_lock.Unlock()
+		if s == "" {
+			return status
+		} else {
+			status = s
+			return ""
+		}
+	}
 
 	incrementMessageCount := func() uint64 {
 		messageCountLock.Lock()
@@ -222,7 +237,13 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		WakeUp: func() {
 			wakeup_lock.Lock()
 			defer wakeup_lock.Unlock()
-			(*retry_condition).Signal()
+			if get_or_set_status("")  == "paused" {
+				//(*retry_condition).Signal()
+				get_or_set_status("try again") 
+				wg.Done()
+			} else {
+				get_or_set_status("try again") 
+			}
 		},
 		GetQueue: func() string {
 			return getQueue()
@@ -250,6 +271,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 			go func(queue_url string, queue string) {
 				fmt.Println("started processor " + queue)
 				for {
+					get_or_set_status("running")
 					time.Sleep(1 * time.Nanosecond) 
 					trace_id := generate_trace_id()
 					request_payload := json.Map{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
@@ -286,7 +308,6 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						// continue
 					}
 
-					//response_json_payload := json.Map{}
 					response_body_payload, response_body_payload_error := ioutil.ReadAll(http_response.Body)
 
 					if response_body_payload_error != nil {
@@ -340,9 +361,17 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
 				
 						if *response_queue == "empty" {
-							retry_lock.Lock()
-							(*retry_condition).Wait()
-							retry_lock.Unlock() 
+							temp_status := get_or_set_status("")
+							if temp_status == "running" {
+								wg.Add(1)
+								get_or_set_status("paused")
+								wg.Wait()
+								
+
+								/*retry_lock.Lock()
+								(*retry_condition).Wait()
+								retry_lock.Unlock() */
+							}
 						}
 
 						if *response_queue == "empty" {
@@ -373,12 +402,13 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		return nil, errors
 	}
 	
+	/*
 	heart_beat := func() {
 		for range time.Tick(time.Second * 60) {
 			x.WakeUp()
 		}
 	}
-	go heart_beat()
+	go heart_beat()*/
 
 	return &x, nil
 }

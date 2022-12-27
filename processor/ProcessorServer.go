@@ -194,7 +194,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		} 
 		
 		if common.IsNil(trace_id) {
-			errors = append(errors, fmt.Errorf("[trace_id]  is nil"))
+			errors = append(errors, fmt.Errorf("[trace_id] is nil"))
 		}
 
 		if !(common.IsNil(trace_id)) {

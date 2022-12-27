@@ -24,8 +24,9 @@ type ProcessorCallback struct {
 }
 
 func NewProcessorCallback(domain_name class.DomainName, port string) (*ProcessorCallback, []error) {	
-	retry_lock := &sync.Mutex{}
-	retry_condition := sync.NewCond(retry_lock)
+	status := "not started"
+	status_lock := &sync.Mutex{}
+	var wg sync.WaitGroup
 	wakeup_lock := &sync.Mutex{}
 
 	callback_queue := thread_safe.NewQueue()
@@ -55,6 +56,17 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 
 	getAndRemoveFront := func() *json.Map {
 		return callback_queue.GetAndRemoveFront()
+	}
+
+	get_or_set_status := func(s string) string {
+		status_lock.Lock()
+		defer status_lock.Unlock()
+		if s == "" {
+			return status
+		} else {
+			status = s
+			return ""
+		}
 	}
 
 	sendMessageToQueue := func(message *json.Map) (*json.Map, []error) {
@@ -131,7 +143,12 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 	wakeUp := func() {
 		wakeup_lock.Lock()
 		defer wakeup_lock.Unlock()
-		(*retry_condition).Signal()
+		if get_or_set_status("") == "paused" {
+			get_or_set_status("try again") 
+			wg.Done()
+		} else {
+			get_or_set_status("try again")
+		}
 	}
 
 	x := ProcessorCallback{
@@ -150,17 +167,21 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 			go func(queue_url string) {
 				fmt.Println("started processor callback")
 				for {
+					get_or_set_status("running")
 					time.Sleep(1 * time.Nanosecond) 
 					result := getAndRemoveFront()
 					if common.IsNil(result) {
-						retry_lock.Lock()
-						(*retry_condition).Wait()
-						retry_lock.Unlock()
+						if get_or_set_status("") == "running" {
+							get_or_set_status("paused")
+							wg.Add(1)
+							wg.Wait()
+						}
 						continue
 					}
 
 					_, response_errors := sendMessageToQueue(result)
 					if response_errors != nil {
+						fmt.Println(response_errors)
 						pushFront(result)
 						time.Sleep(10 * time.Second) 
 						continue
@@ -169,13 +190,13 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 			}(queue_url)
 		},
 	}
-	
+	/*
 	heart_beat := func() {
 		for range time.Tick(time.Second * 60) {
 			x.WakeUp()
 		}
 	}
-	go heart_beat()
+	go heart_beat()*/
 
 	return &x, nil
 }
