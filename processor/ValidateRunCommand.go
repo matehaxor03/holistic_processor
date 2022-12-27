@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func validateRunCommandHeaders(request *json.Map) (*string, *uint64, *uint64, *uint64, *uint64, *int64, *string, *string, *string, *string, []error) {
+func validateRunCommandHeaders(request *json.Map) (*string, *uint64, *uint64, *uint64, *uint64, *int64, *string, *string, *string, *string, *string, []error) {
 	var errors []error
 
 	request_data, request_data_errors := request.GetMap("data")
@@ -17,7 +17,7 @@ func validateRunCommandHeaders(request *json.Map) (*string, *uint64, *uint64, *u
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	command_name, command_name_errors := request_data.GetString("command_name")
@@ -90,9 +90,16 @@ func validateRunCommandHeaders(request *json.Map) (*string, *uint64, *uint64, *u
 		errors = append(errors, fmt.Errorf("branch_name is nil"))
 	}	
 
+	parameters, parameters_errors := request_data.GetString("parameters")
+	if parameters_errors != nil {
+		errors = append(errors, parameters_errors...) 
+	} else if common.IsNil(parameters) {
+		errors = append(errors, fmt.Errorf("parameters is nil"))
+	}	
+
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
-	return command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, nil
+	return command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, nil
 }
