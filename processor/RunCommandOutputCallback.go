@@ -79,6 +79,16 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			return
 		}
 
+		elapsed_value, elapsed_value_errors := json_message.GetFloat64("Elapsed")
+		if elapsed_value_errors != nil {
+			fmt.Println(elapsed_value_errors)
+			return
+		} else if common.IsNil(elapsed_value) {
+			fmt.Println("elapsed_value is nil")
+			return
+		}
+
+
 		this_count++
 		fmt.Println(this_count)
 
@@ -298,7 +308,7 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	}
 
 	time.Sleep(1 * time.Nanosecond) 
-	create_test_log_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult", "data":json.Map{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+	create_test_log_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult", "data":json.Map{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 	this_processor.SendMessageToQueueFireAndForget(&create_test_log_payload)
 	
 	
