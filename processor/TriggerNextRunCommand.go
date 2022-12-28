@@ -6,14 +6,80 @@ import (
 	"fmt"
 )
 
-func triggerNextRunCommand(processor *Processor, command_name *string, build_branch_id *uint64, build_branch_instance_step_id *uint64, build_branch_instance_id *uint64, build_step_id  *uint64, order  *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, parameters *string, request *json.Map) ([]error) {
-	var errors []error
+func triggerNextRunCommand(processor *Processor, command_name *string, build_branch_id *uint64, build_branch_instance_step_id *uint64, build_branch_instance_id *uint64, build_step_id  *uint64, order  *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, parameters *string, errors []error, request *json.Map) ([]error) {
 	if command_name == nil {
 		errors = append(errors, fmt.Errorf("current command_name is nil"))
-		return errors
-	} else if *command_name == "Run_End" {
-		return nil
+	} 
+
+	lookup_name := ""
+	if len(errors) > 0 {
+		lookup_name = "Failed"
+	} else {
+		lookup_name = "Passed"
 	}
+
+	read_records_build_step_status_request := json.Map{"[queue]":"ReadRecords_BuildStepStatus", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"name":lookup_name}, "[select_fields]": json.Array{"build_step_status_id"}, "[limit]":1}
+	read_records_build_step_status_response, read_records_build_step_status_response_errors := processor.SendMessageToQueue(&read_records_build_step_status_request)
+	if read_records_build_step_status_response_errors != nil {
+		errors = append(errors, read_records_build_step_status_response_errors...)
+	} else if common.IsNil(read_records_build_step_status_response) {
+		errors = append(errors, fmt.Errorf("read_records_build_step_status_response is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	read_records_build_step_status_array, read_records_build_step_status_array_errors := read_records_build_step_status_response.GetArray("data")
+	if read_records_build_step_status_array_errors != nil {
+		errors = append(errors, read_records_build_step_status_array_errors...)
+	} else if common.IsNil(read_records_build_step_status_array) {
+		errors = append(errors, fmt.Errorf("read_records_build_step_status_array is nil"))
+	} else if len(*read_records_build_step_status_array) != 1 {
+		errors = append(errors, fmt.Errorf("read_records_build_step_status_array did not return 1 record"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	build_step_status := json.Map{}
+	build_step_status_instance := (*read_records_build_step_status_array)[0]
+	type_of_build_step_status := common.GetType(build_step_status_instance)
+
+	if type_of_build_step_status == "json.Map" {
+		build_step_status = build_step_status_instance.(json.Map)
+	} else if type_of_build_step_status == "*json.Map" {
+		build_step_status = *(build_step_status_instance.(*json.Map))
+	} else {
+		errors = append(errors, fmt.Errorf("build_step_status has invalid type"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	build_step_status_id, build_step_status_id_errors := build_step_status.GetUInt64("build_step_status_id")
+	if build_step_status_id_errors != nil {
+		errors = append(errors, build_step_status_id_errors...)
+	} else if common.IsNil(build_step_status_id) {
+		errors = append(errors, fmt.Errorf("build_step_status_id is nil"))
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+	
+	update_records_build_branch_instance_step_request := json.Map{"[queue]":"UpdateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "data": json.Array{json.Map{"build_branch_instance_step_id":build_branch_instance_step_id, "build_step_status_id":*build_step_status_id}}}
+	_, update_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(&update_records_build_branch_instance_step_request)
+	if update_records_build_branch_instance_step_response_errors != nil {
+		errors = append(errors, update_records_build_branch_instance_step_response_errors...)
+	}
+
+	if len(errors) > 0 {
+		return errors
+	}
+
 	
 	read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*order}, "[where_fields_logic]":json.Map{"order":">"}, "[order_by]":json.Array{json.Map{"order":"ascending"}}, "[limit]":1}
 	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(&read_records_build_branch_instance_step_request)
@@ -36,6 +102,10 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 
 	if len(errors) > 0 {
 		return errors
+	}
+
+	if len(*next_branch_instance_steps) == 0 {
+		return nil
 	}
 
 	var next_branch_instance_build_step json.Map

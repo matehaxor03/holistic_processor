@@ -10,14 +10,17 @@ import (
 
 func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(request)
-	if errors != nil {
-		return errors
-	} else {
+	if errors == nil {
 		var new_errors []error
 		errors = new_errors
+	} else if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
 	}
 
-	fmt.Println(*parameters)
 	parameters_as_map, parameters_as_map_errors := json.ParseJSON(*parameters)
 	if parameters_as_map_errors != nil {
 		errors = append(errors, parameters_as_map_errors...)
@@ -26,6 +29,10 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	}
 
 	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
 		return errors
 	}
 
@@ -37,6 +44,10 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	}
 
 	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
 		return errors
 	}
 
@@ -63,10 +74,8 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	test_suite_parts = append(test_suite_parts, "integration")
 	test_suite_parts = append(test_suite_parts, *test_suite_name)
 	test_suite_relative_path := "/" + filepath.Join(test_suite_parts...)
-	fmt.Println(test_suite_parts)
 
 	full_path_of_test_suite := full_path_of_instance_directory + test_suite_relative_path
-	fmt.Println(full_path_of_test_suite)
 
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		bashCommand := common.NewBashCommand()
@@ -77,11 +86,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		} 
 	}
 
-	if len(errors) > 0 {
-		return errors
-	}
-
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}

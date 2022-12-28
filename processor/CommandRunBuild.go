@@ -10,11 +10,15 @@ import (
 
 func commandRunBuild(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(request)
-	if errors != nil {
-		return errors
-	} else {
+	if errors == nil {
 		var new_errors []error
 		errors = new_errors
+	} else if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
 	}
 
 	std_callback := func(message string) {
@@ -43,15 +47,13 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 
 	bashCommand := common.NewBashCommand()
 
-	build_command := fmt.Sprintf("cd %s && go build", full_path_of_instance_directory)
-	_, build_bash_command_errors := bashCommand.ExecuteUnsafeCommand(build_command, &std_callback, &stderr_callback)
-	if build_bash_command_errors != nil {
-		errors = append(errors, build_bash_command_errors...)
+	if _, stat_error := os.Stat(full_path_of_instance_directory); !os.IsNotExist(stat_error) {
+		build_command := fmt.Sprintf("cd %s && go build", full_path_of_instance_directory)
+		_, build_bash_command_errors := bashCommand.ExecuteUnsafeCommand(build_command, &std_callback, &stderr_callback)
+		if build_bash_command_errors != nil {
+			errors = append(errors, build_bash_command_errors...)
+		} 
 	} 
-
-	if len(errors) > 0 {
-		return errors
-	}
 
 	if _, stat_error := os.Stat(full_path_of_integration_tests_folder); !os.IsNotExist(stat_error) {
 		build_tests_command := fmt.Sprintf("cd %s && go clean -testcache | go test -c -outputdir= .%s", full_path_of_instance_directory, test_integration_relative_path)
@@ -59,13 +61,9 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 		if build_tests_bash_command_errors != nil {
 			errors = append(errors, build_tests_bash_command_errors...)
 		} 
-	}
+	} 
 
-	if len(errors) > 0 {
-		return errors
-	}
-
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}
