@@ -94,7 +94,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 			select_fields_actual = append(select_fields_actual, identity_field)
 		}
 
-		non_identify_fields, non_identify_fields_errors := table.GetNonIdentityColumns()
+		non_identify_fields, non_identify_fields_errors := table.GetNonPrimaryKeyColumns()
 		if non_identify_fields_errors != nil {
 			return non_identify_fields_errors
 		}

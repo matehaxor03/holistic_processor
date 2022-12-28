@@ -85,6 +85,8 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
 		} 
+	} else {
+		fmt.Println("not found file " + *test_suite_name)
 	}
 
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
