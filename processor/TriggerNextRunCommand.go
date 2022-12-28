@@ -65,7 +65,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return errors
 	}
 
-	next_read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order", "parameters"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*new_order}, "[where_fields_logic]":json.Map{"order":"="}, "[order_by]":json.Array{json.Map{"order":"ascending"}}}
+	next_read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order", "parameters"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*new_order}, "[where_fields_logic]":json.Map{"order":"="}}
 	next_read_records_build_branch_instance_step_response, next_read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(&next_read_records_build_branch_instance_step_request)
 	if next_read_records_build_branch_instance_step_response_errors != nil {
 		errors = append(errors, next_read_records_build_branch_instance_step_response_errors...)

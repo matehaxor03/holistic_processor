@@ -39,7 +39,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
 	full_path_of_integration_tests_folder := full_path_of_instance_directory + "/tests/integration"
 
-
+	var suite_names []string
 	if _, stat_error := os.Stat(full_path_of_integration_tests_folder); !os.IsNotExist(stat_error) {
 		files, files_error := ioutil.ReadDir(full_path_of_integration_tests_folder)
 		if files_error != nil {
@@ -50,7 +50,6 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			return errors
 		}
 
-		var suite_names []string
 		for _, file := range files {
 			filename := file.Name()
 			if strings.HasSuffix(filename, "test.go") {
@@ -139,7 +138,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				return errors
 			}
 
-			create_instance_steps_request := json.Map{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "data":build_branch_instance_steps}
+			create_instance_steps_request := json.Map{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(),"data":build_branch_instance_steps, "[async]":false}
 			create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(&create_instance_steps_request)
 			if create_instance_steps_response_errors != nil {
 				errors = append(errors, create_instance_steps_response_errors...)
@@ -161,6 +160,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}
+	
 
 	return nil
 }

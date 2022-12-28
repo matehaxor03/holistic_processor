@@ -5,6 +5,7 @@ import (
 	common "github.com/matehaxor03/holistic_common/common"
     "path/filepath"
 	"fmt"
+	"os"
 )
 
 func commandRunBuild(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -33,13 +34,32 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *build_branch_instance_id))
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
+	
+	test_integration_parts := []string{}
+	test_integration_parts = append(test_integration_parts, "tests")
+	test_integration_parts = append(test_integration_parts, "integration")
+	test_integration_relative_path := "/" + filepath.Join(test_integration_parts...)
+	full_path_of_integration_tests_folder := full_path_of_instance_directory + test_integration_relative_path
 
 	bashCommand := common.NewBashCommand()
-	command := fmt.Sprintf("cd %s && go build", full_path_of_instance_directory)
-	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
-	if bash_command_errors != nil {
-		errors = append(errors, bash_command_errors...)
+
+	build_command := fmt.Sprintf("cd %s && go build", full_path_of_instance_directory)
+	_, build_bash_command_errors := bashCommand.ExecuteUnsafeCommand(build_command, &std_callback, &stderr_callback)
+	if build_bash_command_errors != nil {
+		errors = append(errors, build_bash_command_errors...)
 	} 
+
+	if len(errors) > 0 {
+		return errors
+	}
+
+	if _, stat_error := os.Stat(full_path_of_integration_tests_folder); !os.IsNotExist(stat_error) {
+		build_tests_command := fmt.Sprintf("cd %s && go clean -testcache | go test -c -outputdir= .%s", full_path_of_instance_directory, test_integration_relative_path)
+		_, build_tests_bash_command_errors := bashCommand.ExecuteUnsafeCommand(build_tests_command, &std_callback, &stderr_callback)
+		if build_tests_bash_command_errors != nil {
+			errors = append(errors, build_tests_bash_command_errors...)
+		} 
+	}
 
 	if len(errors) > 0 {
 		return errors

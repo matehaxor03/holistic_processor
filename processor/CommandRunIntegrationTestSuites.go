@@ -70,7 +70,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		bashCommand := common.NewBashCommand()
-		command := fmt.Sprintf("cd %s && go clean -testcache | go test -outputdir= -json .%s", full_path_of_instance_directory, test_suite_relative_path)
+		command := fmt.Sprintf("cd %s && go test -outputdir= -json .%s", full_path_of_instance_directory, test_suite_relative_path)
 		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, std_callback, stderr_callback)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
