@@ -45,8 +45,8 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
     `log` VARCHAR(1024) NOT NULL DEFAULT '',
     `stdout` BOOLEAN DEFAULT 1,*/
 
-	std_callback := getStdoutCallbackFunctionBranch(processor, *command_name, *build_branch_id, *build_branch_instance_step_id)
-	stderr_callback := getStderrCallbackFunctionBranch(processor, *command_name, *build_branch_id, *build_branch_instance_step_id)
+	std_callback := getStdoutCallbackFunctionBranch(processor, *command_name, *build_branch_id, *build_branch_instance_step_id, *test_suite_name)
+	stderr_callback := getStderrCallbackFunctionBranch(processor, *command_name, *build_branch_id, *build_branch_instance_step_id, *test_suite_name)
 
 	instance_folder_parts := common.GetDataDirectory()
 	instance_folder_parts = append(instance_folder_parts, "src")

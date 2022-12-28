@@ -58,6 +58,10 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 		return callback_queue.GetAndRemoveFront()
 	}
 
+	getLen := func() uint64 {
+		return callback_queue.Len()
+	}
+
 	get_or_set_status := func(s string) string {
 		status_lock.Lock()
 		defer status_lock.Unlock()
@@ -96,45 +100,50 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 		callback_response_body_payload, callback_response_body_payload_error := ioutil.ReadAll(http_callback_response.Body)
 		if callback_response_body_payload_error != nil {
 			errors = append(errors, callback_response_body_payload_error)
+		} else if common.IsNil(callback_response_body_payload) {
+			errors = append(errors,  fmt.Errorf("callback_response_body_payload is nil from callback"))
+		}
+
+		if len(errors) > 0 {
 			return nil, errors
 		}	
 
 		callback_response_json_payload, response_json_payload_errors := json.ParseJSON(string(callback_response_body_payload))
 		if response_json_payload_errors != nil {
-			return nil, response_json_payload_errors
-		} 
+			errors = append(errors, response_json_payload_errors...)
+		} else if common.IsNil(callback_response_json_payload) {
+			errors = append(errors,  fmt.Errorf("callback_response_json_payload is nil from callback"))
+		}
+
+		if len(errors) > 0 {
+			return nil, errors
+		}	
 
 		message_trace_id, message_trace_id_errors := callback_response_json_payload.GetString("[trace_id]")
 		if message_trace_id_errors != nil {
-			return nil, message_trace_id_errors
-		} else if message_trace_id == nil {
-			var tempbuilder strings.Builder
-			temp_thing := message.ToJSONString(&tempbuilder)
-			if temp_thing != nil {
-				return nil, temp_thing
-			} else {
-				fmt.Println(tempbuilder.String())
-			}
+			errors = append(errors, message_trace_id_errors...)
+		} else if common.IsNil(message_trace_id) {
 			errors = append(errors, fmt.Errorf("message_trace_id is nil from callback"))
-			return nil, errors
 		}
 
 		async, async_errors := callback_response_json_payload.GetBool("[async]")
 		if async_errors != nil {
-			return nil, async_errors
+			errors = append(errors, async_errors...)
 		} else if common.IsNil(async) {
 			errors = append(errors, fmt.Errorf("async is nil"))
-			return nil, errors
 		}
 
 		callback_errors, callback_errors_errors := callback_response_json_payload.GetErrors("[errors]")
 		if callback_errors_errors != nil {
-			return nil, callback_errors_errors
-		} else if common.IsNil(callback_errors) {
-			errors = append(errors, fmt.Errorf("callback_errors is nil"))
+			errors = append(errors, callback_errors_errors...)
+		} 
+		
+		if !common.IsNil(callback_errors) {
+			errors = append(errors, callback_errors...)
+		} 
+		
+		if len(errors) > 0 {
 			return nil, errors
-		} else if len(callback_errors) > 0 {
-			return nil, callback_errors
 		}	
 	
 		return callback_response_json_payload, nil
@@ -171,7 +180,7 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 					time.Sleep(1 * time.Nanosecond) 
 					result := getAndRemoveFront()
 					if common.IsNil(result) {
-						if get_or_set_status("") == "running" {
+						if get_or_set_status("") == "running" && getLen() == 0 {
 							get_or_set_status("paused")
 							wg.Add(1)
 							wg.Wait()
@@ -181,9 +190,15 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 
 					_, response_errors := sendMessageToQueue(result)
 					if response_errors != nil {
-						fmt.Println(response_errors)
-						pushFront(result)
-						time.Sleep(10 * time.Second) 
+						if !(len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "Duplicate entry")) {
+							fmt.Println("retry error detected")
+							fmt.Println(response_errors)
+							pushFront(result)
+							time.Sleep(10 * time.Second) 
+						} else {
+							fmt.Println("no retry error detected")
+							fmt.Println(response_errors)
+						}		
 						continue
 					}
 				}

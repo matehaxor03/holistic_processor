@@ -363,11 +363,13 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
 				
 						if *response_queue == "empty" {
-							temp_status := get_or_set_status("")
-							if temp_status == "running" {
+							// todo get length
+							if  get_or_set_status("") == "running" {
 								wg.Add(1)
 								get_or_set_status("paused")
 								wg.Wait()
+								get_or_set_status("running")
+
 								
 
 								/*retry_lock.Lock()
