@@ -89,7 +89,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 	
 	for _, next_branch_instance_step := range *next_branch_instance_steps_array {
-		var next_build_step json.Map
+		next_build_step := json.Map{}
 		type_of_next_build_step := common.GetType(next_branch_instance_step)
 
 		if type_of_next_build_step == "json.Map" {
@@ -174,7 +174,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		next_build_step.SetString("command_name", name_of_next_step)
 		next_build_step.SetUInt64("build_branch_id", build_branch_id)
 
-		next_command := json.Map{"[queue]":*name_of_next_step, "data":next_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}
+		next_command := json.Map{"[queue]":*name_of_next_step, "data":next_build_step,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
 		go processor.SendMessageToQueueFireAndForget(&next_command)
 	}
 
