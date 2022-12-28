@@ -17,6 +17,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		errors = new_errors
 	}
 
+	fmt.Println(*parameters)
 	parameters_as_map, parameters_as_map_errors := json.ParseJSON(*parameters)
 	if parameters_as_map_errors != nil {
 		errors = append(errors, parameters_as_map_errors...)
@@ -57,12 +58,15 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
 
-	test_suite_parts := make([]string, 3)
+	test_suite_parts := []string{}
 	test_suite_parts = append(test_suite_parts, "tests")
 	test_suite_parts = append(test_suite_parts, "integration")
 	test_suite_parts = append(test_suite_parts, *test_suite_name)
 	test_suite_relative_path := "/" + filepath.Join(test_suite_parts...)
+	fmt.Println(test_suite_parts)
+
 	full_path_of_test_suite := full_path_of_instance_directory + test_suite_relative_path
+	fmt.Println(full_path_of_test_suite)
 
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		bashCommand := common.NewBashCommand()

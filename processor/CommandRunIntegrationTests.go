@@ -50,7 +50,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			return errors
 		}
 
-		suite_names := make([]string, len(files))
+		var suite_names []string
 		for _, file := range files {
 			filename := file.Name()
 			if strings.HasSuffix(filename, "test.go") {
@@ -78,10 +78,6 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				errors = append(errors, fmt.Errorf("lookup_build_step_array is nil"))
 			} else if len(*lookup_build_step_array) != 1 {
 				errors = append(errors, fmt.Errorf("lookup_build_step_array does not have one element"))
-			}
-
-			if len(errors) > 0 {
-				return errors
 			}
 
 			if len(errors) > 0 {
@@ -124,8 +120,9 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 
 			build_branch_instance_steps := json.Array{}
 			for _, suite_name := range suite_names {
+				fmt.Println(suite_name)
 				paramters_map := json.Map{}
-				paramters_map.SetString("test_sute_name", &suite_name)
+				paramters_map.SetString("test_suite_name", &suite_name)
 
 				var parameters_builder strings.Builder
 				parameters_json_string_errors := paramters_map.ToJSONString(&parameters_builder)
@@ -148,6 +145,10 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				errors = append(errors, create_instance_steps_response_errors...)
 			} else if common.IsNil(create_instance_steps_response) {
 				errors = append(errors, fmt.Errorf("create_instance_steps_response is nil"))
+			}
+
+			if len(errors) > 0 {
+				return errors
 			}
 		}
 	}
