@@ -27,6 +27,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 
@@ -40,6 +41,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 
@@ -56,6 +58,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 
@@ -67,6 +70,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 	
@@ -77,9 +81,9 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
-
 	
 	read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*order}, "[where_fields_logic]":json.Map{"order":">"}, "[order_by]":json.Array{json.Map{"order":"ascending"}}, "[limit]":1}
 	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(&read_records_build_branch_instance_step_request)
@@ -90,6 +94,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 	
@@ -101,6 +106,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 
@@ -121,6 +127,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 
@@ -132,6 +139,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 
@@ -144,6 +152,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 
@@ -155,6 +164,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	}
 
 	if len(errors) > 0 {
+		fmt.Println(errors)
 		return errors
 	}
 	
@@ -171,6 +181,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		}
 
 		if len(errors) > 0 {
+			fmt.Println(errors)
 			return errors
 		}
 
@@ -182,6 +193,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		}
 
 		if len(errors) > 0 {
+			fmt.Println(errors)
 			return errors
 		}
 
@@ -194,6 +206,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		}
 
 		if len(errors) > 0 {
+			fmt.Println(errors)
 			return errors
 		}
 
@@ -207,10 +220,11 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		}
 
 		if len(errors) > 0 {
+			fmt.Println(errors)
 			return errors
 		}
 
-		var build_step json.Map
+		build_step := json.Map{}
 		build_step_interface := (*lookup_build_step_array)[0]
 		type_of_build_step := common.GetType(build_step_interface)
 
@@ -223,6 +237,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		}
 
 		if len(errors) > 0 {
+			fmt.Println(errors)
 			return errors
 		}
 
@@ -234,6 +249,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		}
 
 		if len(errors) > 0 {
+			fmt.Println(errors)
 			return errors
 		}
 

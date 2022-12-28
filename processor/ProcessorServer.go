@@ -308,6 +308,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 	}
 
+	run_sync_processor, run_sync_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Sync")
+	if run_sync_processor_errors != nil {
+		errors = append(errors, run_sync_processor_errors...)
+	} else if run_sync_processor != nil {
+		processors["Run_Sync"] = run_sync_processor
+	}
+
 	run_build_branch_instance_processor, run_build_branch_instance_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_StartBuildBranchInstance")
 	if run_build_branch_instance_processor_errors != nil {
 		errors = append(errors, run_build_branch_instance_processor_errors...)

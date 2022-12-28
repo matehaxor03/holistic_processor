@@ -187,6 +187,8 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		processor_function = commandRunAssignGroupToUserFunc()
 	} else if queue == "Run_AssignGroupToInstanceFolder" {
 		processor_function = commandRunAssignGroupToInstanceFolderFunc()
+	} else if queue == "Run_Sync" {
+		processor_function = commandRunSyncFunc()
 	} else {
 		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue))
 		return nil, errors
