@@ -190,14 +190,14 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 
 					_, response_errors := sendMessageToQueue(result)
 					if response_errors != nil {
-						if !(len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "Duplicate entry")) {
-							fmt.Println("retry error detected")
+						if len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "Duplicate entry") {
+							fmt.Println("Duplicate entry found")
 							fmt.Println(response_errors)
-							pushFront(result)
-							time.Sleep(10 * time.Second) 
 						} else {
 							fmt.Println("no retry error detected")
 							fmt.Println(response_errors)
+							pushFront(result)
+							time.Sleep(10 * time.Second) 
 						}		
 						continue
 					}

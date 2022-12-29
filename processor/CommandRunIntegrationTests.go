@@ -72,6 +72,12 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
+
+			if len(errors) > 0 {
+				return errors
+			} else {
+				return nil
+			}
 		}
 
 		read_records_build_step_request := json.Map{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"name":"Run_IntegrationTestSuite"}, "[select_fields]": json.Array{"build_step_id", "order"}, "[limit]":1}
@@ -187,6 +193,8 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		} else if common.IsNil(create_instance_steps_response) {
 			errors = append(errors, fmt.Errorf("create_instance_steps_response is nil"))
 		}
+	} else {
+		fmt.Println("not found " + full_path_of_integration_tests_folder)
 	}
 	
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
