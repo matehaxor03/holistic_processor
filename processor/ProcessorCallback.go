@@ -108,7 +108,7 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 			return nil, errors
 		}	
 
-		callback_response_json_payload, response_json_payload_errors := json.ParseJSON(string(callback_response_body_payload))
+		callback_response_json_payload, response_json_payload_errors := json.Parse(string(callback_response_body_payload))
 		if response_json_payload_errors != nil {
 			errors = append(errors, response_json_payload_errors...)
 		} else if common.IsNil(callback_response_json_payload) {

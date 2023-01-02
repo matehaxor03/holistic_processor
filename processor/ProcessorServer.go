@@ -179,7 +179,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			return
 		}
 		
-		json_payload, json_payload_errors := json.ParseJSON(string(body_payload))
+		json_payload, json_payload_errors := json.Parse(string(body_payload))
 		if json_payload_errors != nil {
 			errors = append(errors, json_payload_errors...)
 		} 
@@ -209,7 +209,9 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			return
 		}
 
-		result := json.Map{"[queue]":*queue}
+
+		result_map := map[string]interface{}{"[queue]":*queue}
+		result := json.NewMapOfValues(&result_map)
 
 		queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
 
@@ -222,7 +224,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 
 		if !(common.IsNil(queue_mode)) {
-			result["[queue_mode]"] = *queue_mode
+			result.SetStringValue("[queue_mode]", *queue_mode)
 		}
 
 		trace_id, trace_id_errors := json_payload.GetString("[trace_id]")
@@ -236,11 +238,11 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 
 		if !(common.IsNil(trace_id)) {
-			result["[trace_id]"] = *trace_id
+			result.SetStringValue("[trace_id]", *trace_id)
 		}
 		
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, result, errors)
+			http_extension.WriteResponse(w, *result, errors)
 			return
 		}
 
@@ -250,7 +252,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			errors = append(errors, fmt.Errorf("[queue_mode] is not supported: %s",  *queue_mode))
 		}
 
-		http_extension.WriteResponse(w, result, errors)
+		http_extension.WriteResponse(w, *result, errors)
 	}
 
 	x := ProcessorServer{

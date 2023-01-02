@@ -278,7 +278,9 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 					get_or_set_status("running")
 					time.Sleep(1 * time.Nanosecond) 
 					trace_id := generate_trace_id()
-					request_payload := json.Map{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
+					request_payload_map := map[string]interface{}{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
+					request_payload := json.NewMapOfValues(&request_payload_map)
+					//request_payload := json.Map{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
 					var json_payload_builder strings.Builder
 					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
 
@@ -326,7 +328,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						//fmt.Println("processing " + string(response_body_payload))
 
 
-						request_json_payload, request_json_payload_errors := json.ParseJSON(string(response_body_payload))
+						request_json_payload, request_json_payload_errors := json.Parse(string(response_body_payload))
 						if request_json_payload_errors != nil {
 							fmt.Println(request_json_payload_errors)
 							time.Sleep(10 * time.Second) 
@@ -360,9 +362,11 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
-						(*request_json_payload)["[queue_mode]"] = "complete"
-						(*request_json_payload)["[trace_id]"] = *message_trace_id
-						result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
+						(*request_json_payload).SetStringValue("[queue_mode]","complete")
+						(*request_json_payload).SetStringValue("[trace_id]", *message_trace_id)
+						result_map := map[string]interface{}{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
+						result := json.NewMapOfValues(&result_map)
+						//result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
 				
 						if *response_queue == "empty" {
 							// todo get length
@@ -384,17 +388,17 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 							continue
 						}
 
-						processor_errors := (*processor_function)(getProcessor(), request_json_payload, &result)
+						processor_errors := (*processor_function)(getProcessor(), request_json_payload, result)
 						if processor_errors != nil {
 							result.SetNil("data")
 							fmt.Println(processor_errors)
-							result.SetErrors("[errors]", &processor_errors)
+							result.SetErrors("[errors]", processor_errors)
 						} else {
 							result.SetNil("[errors]")
 						}
 
 						if !request_json_payload.IsBoolTrue("[async]") {
-							sendMessageToQueueFireAndForget(&result)
+							sendMessageToQueueFireAndForget(result)
 						}
 					}
 				
