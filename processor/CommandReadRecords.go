@@ -39,27 +39,27 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	if select_fields_errors != nil {
 		return select_fields_errors
 	} else if !common.IsNil(select_fields) {
-		for _, field := range *select_fields {
-			if *(field.(*string)) == "[minimal_fields]" {
+		for _, field := range *(select_fields.GetValues()){
+			if field.IsValueEqualToStringValue("[minimal_fields]") {
 				minimal_fields = true
 			}
 		}
 	}
 
-	where_fields_actual := json.Map{}
+	where_fields_actual := json.NewMap()
 	where_fields, where_fields_errors := request.GetMap("[where_fields]")
 	if where_fields_errors != nil {
 		return where_fields_errors
 	} else if !common.IsNil(where_fields) {
-		where_fields_actual = *where_fields
+		where_fields_actual = where_fields
 	}
 
-	where_fields_logic_actual := json.Map{}
+	where_fields_logic_actual := json.NewMap()
 	where_fields_logic, where_fields_logic_errors := request.GetMap("[where_fields_logic]")
 	if where_fields_logic_errors != nil {
 		return where_fields_logic_errors
 	} else if !common.IsNil(where_fields_logic) {
-		where_fields_logic_actual = *where_fields_logic
+		where_fields_logic_actual = where_fields_logic
 	}
 
 	include_schema_actual := false
@@ -83,7 +83,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		}
 	}
 
-	select_fields_actual := json.Array{}
+	select_fields_actual := json.NewArray()
 	if minimal_fields {
 		identity_fields, identity_fields_errors := table.GetIdentityColumns()
 		if identity_fields_errors != nil {
@@ -91,7 +91,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		}
 
 		for _, identity_field := range *identity_fields {
-			select_fields_actual = append(select_fields_actual, identity_field)
+			select_fields_actual.AppendStringValue(identity_field)
 		}
 
 		non_identify_fields, non_identify_fields_errors := table.GetNonPrimaryKeyColumns()
@@ -100,16 +100,16 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		}
 
 		if common.Contains(*non_identify_fields, "name") {
-			select_fields_actual = append(select_fields_actual, "name")
+			select_fields_actual.AppendStringValue("name")
 		}
 	} 
 
-	order_by_actual := json.Array{}
+	order_by_actual := json.NewArray()
 	order_by_fields, order_by_fields_errors := request.GetArray("[order_by]")
 	if order_by_fields_errors != nil {
 		return order_by_fields_errors
 	} else if !common.IsNil(order_by_fields) {
-		order_by_actual = *order_by_fields
+		order_by_actual = order_by_fields
 	}
 
 	var limit_actual *uint64
@@ -128,13 +128,13 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		return errors
 	}
 	
-	array := json.Array{}
+	array := json.NewArray()
 	for _, record := range *records {
 		fields_for_record, fields_for_record_error := record.GetFields()
 		if fields_for_record_error != nil {
 			errors = append(errors, fields_for_record_error...)
 		} else {
-			array = append(array, *fields_for_record)
+			array.AppendMapValue(*fields_for_record)
 		}		
 	}
 
@@ -142,7 +142,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		return errors
 	} 
 	
-	response_queue_result.SetArray("data", &array)	
+	response_queue_result.SetArray("data", array)	
 	
 	if include_schema_actual {
 		response_queue_result.SetMap("schema", &table_schema_actual)

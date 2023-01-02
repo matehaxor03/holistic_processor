@@ -80,8 +80,16 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			}
 		}
 
-		read_records_build_step_request := json.Map{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"name":"Run_IntegrationTestSuite"}, "[select_fields]": json.Array{"build_step_id", "order"}, "[limit]":1}
-		read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(&read_records_build_step_request)
+		read_records_build_step_request_select_fields := []string{"build_step_id", "order"}
+		read_records_build_step_request_select_fields_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_request_select_fields))
+		read_records_build_step_request_where_fields := map[string]interface{}{"name":"Run_IntegrationTestSuite"}
+		read_records_build_step_request_where_fields_map := json.NewMapOfValues(&read_records_build_step_request_where_fields)
+		read_records_build_step_request_map := map[string]interface{}{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+		read_records_build_step_request := json.NewMapOfValues(&read_records_build_step_request_map)
+		read_records_build_step_request.SetMap("[where_fields]", read_records_build_step_request_where_fields_map)
+		read_records_build_step_request.SetArray("[select_fields]", read_records_build_step_request_select_fields_array)
+
+		read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(read_records_build_step_request)
 		if read_records_build_step_response_errors != nil {
 			errors = append(errors, read_records_build_step_response_errors...)
 		} else if common.IsNil(read_records_build_step_response) {
@@ -102,7 +110,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			errors = append(errors, lookup_build_step_array_errors...)
 		} else if common.IsNil(lookup_build_step_array) {
 			errors = append(errors, fmt.Errorf("lookup_build_step_array is nil"))
-		} else if len(*lookup_build_step_array) != 1 {
+		} else if len(*(lookup_build_step_array.GetValues())) != 1 {
 			errors = append(errors, fmt.Errorf("lookup_build_step_array does not have one element"))
 		}
 
@@ -115,20 +123,12 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			return errors
 		}
 		
-		var build_step json.Map
-		build_step_interface := (*lookup_build_step_array)[0]
-		type_of_build_step := common.GetType(build_step_interface)
-	
-		if type_of_build_step == "json.Map" {
-			build_step = build_step_interface.(json.Map)
-		} else if type_of_build_step == "*json.Map" {
-			build_step = *(build_step_interface.(*json.Map))
-		} else {
-			errors = append(errors, fmt.Errorf("build step has invalid type"))
+		build_step, build_step_errors := (*(lookup_build_step_array.GetValues()))[0].GetMapValue()
+		if build_step_errors != nil {
+			errors = append(errors, build_step_errors...)
 		}
 		
 		if len(errors) > 0 {
-			fmt.Println(errors)
 			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
@@ -159,9 +159,8 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			return errors
 		}
 
-		build_branch_instance_steps := json.Array{}
+		build_branch_instance_steps := json.NewArray()
 		for _, suite_name := range suite_names {
-			fmt.Println(suite_name)
 			paramters_map := json.Map{}
 			paramters_map.SetString("test_suite_name", &suite_name)
 
@@ -173,12 +172,11 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				continue
 			}
 
-			build_branch_instance_step := json.Map{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*run_integration_test_suite_build_step_id, "order":*run_integration_test_suite_build_step_id_order, "parameters":parameters_builder.String()}
-			build_branch_instance_steps = append(build_branch_instance_steps, build_branch_instance_step)
+			build_branch_instance_step := map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*run_integration_test_suite_build_step_id, "order":*run_integration_test_suite_build_step_id_order, "parameters":parameters_builder.String()}
+			build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
 		}
 
 		if len(errors) > 0 {
-			fmt.Println(errors)
 			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
@@ -186,8 +184,8 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			return errors
 		}
 
-		create_instance_steps_request := json.Map{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(),"data":build_branch_instance_steps, "[async]":false}
-		create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(&create_instance_steps_request)
+		create_instance_steps_request := map[string]interface{}{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(),"data":build_branch_instance_steps, "[async]":false}
+		create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(json.NewMapOfValues(&create_instance_steps_request))
 		if create_instance_steps_response_errors != nil {
 			errors = append(errors, create_instance_steps_response_errors...)
 		} else if common.IsNil(create_instance_steps_response) {

@@ -21,7 +21,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		return errors
 	}
 
-	parameters_as_map, parameters_as_map_errors := json.ParseJSON(*parameters)
+	parameters_as_map, parameters_as_map_errors := json.Parse(*parameters)
 	if parameters_as_map_errors != nil {
 		errors = append(errors, parameters_as_map_errors...)
 	} else if common.IsNil(parameters_as_map) {

@@ -2,6 +2,7 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
+	common "github.com/matehaxor03/holistic_common/common"
 )
 
 func commandGetTableNames(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -17,13 +18,7 @@ func commandGetTableNames(processor *Processor, request *json.Map, response_queu
 		return table_name_errors
 	}
 
-
-	array, array_errors := json.ToArray(table_names)
-	if array_errors != nil {
-		return array_errors
-	}
-
-	response_queue_result.SetArray("data", array)
+	response_queue_result.SetArray("data", json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(table_names)))
 		
 	return nil
 }

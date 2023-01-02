@@ -38,21 +38,29 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	} 
 
-	callback_payload := json.Map{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[order_by]":json.Array{json.Map{"order":"ascending"}}}
-	response, response_errors := processor.SendMessageToQueue(&callback_payload)
-	if response_errors != nil {
-		errors = append(errors, response_errors...)
-	} else if common.IsNil(response) {
+	
+	all_build_steps_order_by :=  map[string]interface{}{"order":"ascending"}
+	all_build_steps_order_by_map := json.NewMapOfValues(&all_build_steps_order_by)
+	all_build_steps_order_by_array := json.NewArray()
+	all_build_steps_order_by_array.AppendMap(all_build_steps_order_by_map)
+	all_build_steps_request_map := map[string]interface{}{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId()}
+	all_build_steps_request := json.NewMapOfValues(&all_build_steps_request_map)
+	all_build_steps_request.SetArray("[order_by]", all_build_steps_order_by_array)
+	all_build_steps_response, all_build_steps_response_errors := processor.SendMessageToQueue(all_build_steps_request)
+	if all_build_steps_response_errors != nil {
+		errors = append(errors, all_build_steps_response_errors...)
+	} else if common.IsNil(all_build_steps_response) {
 		errors = append(errors, fmt.Errorf("response is nil"))
 	}
 
 	if len(errors) > 0 {
 		return errors
 	} 
+	
 
-	if !response.HasKey("data") {
+	if !all_build_steps_response.HasKey("data") {
 		errors = append(errors, fmt.Errorf("data not found"))
-	} else if !response.IsArray("data") {
+	} else if !all_build_steps_response.IsArray("data") {
 		errors = append(errors, fmt.Errorf("data is not an array"))
 	} 
 
@@ -60,12 +68,12 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	build_steps, build_steps_array := response.GetArray("data")
+	build_steps, build_steps_array := all_build_steps_response.GetArray("data")
 	if build_steps_array != nil {
 		errors = append(errors, build_steps_array...)
 	} else if common.IsNil(build_steps) {
 		errors = append(errors, fmt.Errorf("build steps is nil"))
-	} else if len(*build_steps) == 0 {
+	} else if len(*(build_steps.GetValues())) == 0 {
 		errors = append(errors, fmt.Errorf("no build steps were found"))
 	}
 
@@ -73,8 +81,8 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	build_branch_instance_steps := json.Array{}
-	for _, build_step_interface := range *build_steps {
+	build_branch_instance_steps := json.NewArray()
+	for _, build_step_interface := range *(build_steps.GetValues()) {
 		if !common.IsMap(build_step_interface) {
 			errors = append(errors, fmt.Errorf("build step is not a map"))
 		}
@@ -83,15 +91,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 			return errors
 		}
 
-		var current_build_step json.Map
-		type_of := common.GetType(build_step_interface)
-
-		if type_of == "json.Map" {
-			current_build_step = build_step_interface.(json.Map)
-		} else if type_of == "*json.Map" {
-			current_build_step = *(build_step_interface.(*json.Map))
-		} else {
-			errors = append(errors, fmt.Errorf("build step has invalid type"))
+		current_build_step, current_build_step_errors := build_step_interface.GetMap()
+		if current_build_step_errors != nil {
+			errors = append(errors, current_build_step_errors...)
+		} else if common.IsNil(current_build_step) {
+			errors = append(errors, fmt.Errorf("current build step is nil"))
 		}
 
 		if len(errors) > 0 {
@@ -136,13 +140,16 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 			continue
 		}
 
-		build_branch_instance_step := json.Map{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*build_step_id, "order":*order}
-		build_branch_instance_steps = append(build_branch_instance_steps, build_branch_instance_step)
+		build_branch_instance_step :=  map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*build_step_id, "order":*order}
+		//build_branch_instance_step := json.Map{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*build_step_id, "order":*order}
+		build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
 	}
 	
 
-	create_instance_steps_request := json.Map{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "data":build_branch_instance_steps}
-	create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(&create_instance_steps_request)
+	create_instance_steps_request_map := map[string]interface{}{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId()}
+	create_instance_steps_request := json.NewMapOfValues(&create_instance_steps_request_map)
+	create_instance_steps_request.SetArray("data", build_branch_instance_steps)
+	create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(create_instance_steps_request)
 	if create_instance_steps_response_errors != nil {
 		errors = append(errors, create_instance_steps_response_errors...)
 	} else if common.IsNil(create_instance_steps_response) {
@@ -154,8 +161,25 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	}
 
 
-	read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"},  "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id}, "[limit]":1, "[order_by]":json.Array{json.Map{"order":"ascending"}}}
-	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(&read_records_build_branch_instance_step_request)
+	read_records_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}
+	read_records_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_branch_instance_step_select))
+
+	read_records_build_branch_instance_step_where := map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id}
+	read_records_build_branch_instance_step_where_map := json.NewMapOfValues(&read_records_build_branch_instance_step_where)
+
+	read_records_build_branch_instance_step_where_order_by :=  map[string]interface{}{"order":"ascending"}
+	read_records_build_branch_instance_step_where_order_by_map := json.NewMapOfValues(&read_records_build_branch_instance_step_where_order_by)
+	read_records_build_branch_instance_step_where_order_by_array := json.NewArray()
+	read_records_build_branch_instance_step_where_order_by_array.AppendMap(read_records_build_branch_instance_step_where_order_by_map)
+
+	read_records_build_branch_instance_step_request := map[string]interface{}{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+	read_records_build_branch_instance_step_request_map := json.NewMapOfValues(&read_records_build_branch_instance_step_request)
+	read_records_build_branch_instance_step_request_map.SetArray("[select_fields]", read_records_build_branch_instance_step_select_array)
+	read_records_build_branch_instance_step_request_map.SetMap("[where_fields]", read_records_build_branch_instance_step_where_map)
+	read_records_build_branch_instance_step_request_map.SetArray("[order_by]", read_records_build_branch_instance_step_where_order_by_array)
+
+	//read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"},  "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id}, "[limit]":1, "[order_by]":json.Array{json.Map{"order":"ascending"}}}
+	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(read_records_build_branch_instance_step_request_map)
 	if read_records_build_branch_instance_step_response_errors != nil {
 		errors = append(errors, read_records_build_branch_instance_step_response_errors...)
 	} else if common.IsNil(read_records_build_branch_instance_step_response) {
@@ -171,7 +195,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, first_build_step_array_errors...)
 	} else if common.IsNil(first_build_step_array) {
 		errors = append(errors, fmt.Errorf("first_build_step_array is nil"))
-	} else if len(*first_build_step_array) != 1 {
+	} else if len(*(first_build_step_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("first_build_step_array does not have one element"))
 
 	}
@@ -180,16 +204,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 	
-	var first_build_step json.Map
-	first_build_step_interface := (*first_build_step_array)[0]
-	type_of_first_build_step := common.GetType(first_build_step_interface)
-
-	if type_of_first_build_step == "json.Map" {
-		first_build_step = first_build_step_interface.(json.Map)
-	} else if type_of_first_build_step == "*json.Map" {
-		first_build_step = *(first_build_step_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("first build step has invalid type"))
+	first_build_step, first_build_step_errors := (*(first_build_step_array.GetValues()))[0].GetMap()
+	if first_build_step_errors != nil {
+		errors = append(errors, first_build_step_errors...)
+	} else if common.IsNil(first_build_step) {
+		errors = append(errors, fmt.Errorf("first_build_step is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -207,8 +226,19 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	read_records_build_step_request := json.Map{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_step_id":*desired_build_step_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
-	read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(&read_records_build_step_request)
+	read_records_build_step_select := []string{"name"}
+	read_records_build_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_select))
+
+	read_records_build_step_where := map[string]interface{}{"build_step_id":*desired_build_step_id}
+	read_records_build_step_where_map := json.NewMapOfValues(&read_records_build_step_where)
+
+	read_records_build_step_request := map[string]interface{}{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+	read_records_build_step_request_map := json.NewMapOfValues(&read_records_build_step_request)
+	read_records_build_step_request_map.SetArray("[select_fields]", read_records_build_step_select_array)
+	read_records_build_step_request_map.SetMap("[where_fields]", read_records_build_step_where_map)
+
+	//read_records_build_step_request := json.Map{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_step_id":*desired_build_step_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
+	read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(read_records_build_step_request_map)
 	if read_records_build_step_response_errors != nil {
 		errors = append(errors, read_records_build_step_response_errors...)
 	} else if common.IsNil(read_records_build_step_response) {
@@ -224,7 +254,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, lookup_build_step_array_errors...)
 	} else if common.IsNil(lookup_build_step_array) {
 		errors = append(errors, fmt.Errorf("lookup_build_step_array is nil"))
-	} else if len(*lookup_build_step_array) != 1 {
+	} else if len(*(lookup_build_step_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("lookup_build_step_array does not have one element"))
 	}
 
@@ -232,16 +262,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	var build_step json.Map
-	build_step_interface := (*lookup_build_step_array)[0]
-	type_of_build_step := common.GetType(build_step_interface)
-
-	if type_of_build_step == "json.Map" {
-		build_step = build_step_interface.(json.Map)
-	} else if type_of_build_step == "*json.Map" {
-		build_step = *(build_step_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("build step has invalid type"))
+	build_step, build_step_errors := (*(lookup_build_step_array.GetValues()))[0].GetMapValue()
+	if build_step_errors != nil {
+		errors = append(errors, build_step_errors...)
+	} else if common.IsNil(build_step) {
+		errors = append(errors, fmt.Errorf("build_step is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -259,9 +284,19 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	
-	read_records_build_branch_request := json.Map{"[queue]":"ReadRecords_BuildBranch", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_branch_id":*build_branch_id}, "[select_fields]": json.Array{"build_id", "branch_id"}, "[limit]":1}
-	build_branch_records_response, build_branch_records_response_errors := processor.SendMessageToQueue(&read_records_build_branch_request)
+	read_records_build_branch_select := []string{"build_id", "branch_id"}
+	read_records_build_branch_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_branch_select))
+
+	read_records_build_branch_where := map[string]interface{}{"build_branch_id":*build_branch_id}
+	read_records_build_branch_where_map := json.NewMapOfValues(&read_records_build_branch_where)
+
+	read_records_build_branch_request := map[string]interface{}{"[queue]":"ReadRecords_BuildBranch", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+	read_records_build_branch_request_map := json.NewMapOfValues(&read_records_build_branch_request)
+	read_records_build_branch_request_map.SetArray("[select_fields]", read_records_build_branch_array)
+	read_records_build_branch_request_map.SetMap("[where_fields]",read_records_build_branch_where_map)
+
+	//read_records_build_branch_request := json.Map{"[queue]":"ReadRecords_BuildBranch", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_branch_id":*build_branch_id}, "[select_fields]": json.Array{"build_id", "branch_id"}, "[limit]":1}
+	build_branch_records_response, build_branch_records_response_errors := processor.SendMessageToQueue(read_records_build_branch_request_map)
 	if build_branch_records_response_errors != nil {
 		errors = append(errors, build_branch_records_response_errors...)
 	} else if  common.IsNil(build_branch_records_response) {
@@ -277,7 +312,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, build_branch_records_data_array_errors...)
 	} else if  common.IsNil(build_branch_records_data_array) {
 		errors = append(errors, fmt.Errorf("build_branch_records_data_array is nil"))
-	} else if len(*build_branch_records_data_array) != 1 {
+	} else if len(*(build_branch_records_data_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("build_branch_records_data_array did not have one result"))
 	}
 
@@ -285,16 +320,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	var build_branch json.Map
-	build_branch_interface := (*build_branch_records_data_array)[0]
-	type_of_build_branch_interface := common.GetType(build_branch_interface)
-
-	if type_of_build_branch_interface == "json.Map" {
-		build_branch = build_branch_interface.(json.Map)
-	} else if type_of_build_branch_interface == "*json.Map" {
-		build_branch = *(build_branch_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("build_branch has invalid type"))
+	build_branch, build_branch_errors := (*(build_branch_records_data_array.GetValues()))[0].GetMapValue()
+	if build_branch_errors != nil {
+		errors = append(errors, build_branch_errors...)
+	} else if common.IsNil(build_branch) {
+		errors = append(errors, fmt.Errorf("build_branch is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -319,8 +349,19 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	read_records_branch_request := json.Map{"[queue]":"ReadRecords_Branch", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"branch_id":*branch_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
-	read_records_branch_response, read_records_branch_response_errors := processor.SendMessageToQueue(&read_records_branch_request)
+	read_records_branch_select := []string{"name"}
+	read_records_branch_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_branch_select))
+
+	read_records_branch_where := map[string]interface{}{"branch_id":*branch_id}
+	read_records_branch_where_map := json.NewMapOfValues(&read_records_branch_where)
+
+	read_records_branch_request := map[string]interface{}{"[queue]":"ReadRecords_Branch", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+	read_records_branch_request_map := json.NewMapOfValues(&read_records_branch_request)
+	read_records_branch_request_map.SetArray("[select_fields]", read_records_branch_array)
+	read_records_branch_request_map.SetMap("[where_fields]",read_records_branch_where_map)
+
+	//read_records_branch_request := json.Map{"[queue]":"ReadRecords_Branch", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"branch_id":*branch_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
+	read_records_branch_response, read_records_branch_response_errors := processor.SendMessageToQueue(read_records_branch_request_map)
 	if read_records_branch_response_errors != nil {
 		errors = append(errors, read_records_branch_response_errors...)
 	} else if  common.IsNil(read_records_branch_response) {
@@ -336,7 +377,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, branch_records_data_array_errors...)
 	} else if common.IsNil(branch_records_data_array) {
 		errors = append(errors, fmt.Errorf("branch_records_data_array is nil"))
-	} else if len(*branch_records_data_array) != 1 {
+	} else if len(*(branch_records_data_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("branch_records_data_array did not have one result"))
 	}
 
@@ -344,16 +385,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	var branch json.Map
-	branch_interface := (*branch_records_data_array)[0]
-	type_of_branch_interface := common.GetType(branch_interface)
-
-	if type_of_branch_interface == "json.Map" {
-		branch = branch_interface.(json.Map)
-	} else if type_of_branch_interface == "*json.Map" {
-		branch = *(branch_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("branch has invalid type"))
+	branch, branch_errors := (*(branch_records_data_array.GetValues()))[0].GetMapValue()
+	if branch_errors != nil {
+		errors = append(errors, branch_errors...)
+	} else if  common.IsNil(branch) {
+		errors = append(errors, fmt.Errorf("branch is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -367,8 +403,20 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, fmt.Errorf("branch_name is nil"))
 	}
 
-	read_records_build_request := json.Map{"[queue]":"ReadRecords_Build", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_id":*build_id}, "[select_fields]": json.Array{"domain_name_id", "repository_account_id", "repository_id"}, "[limit]":1}
-	read_records_build_response, read_records_build_response_errors := processor.SendMessageToQueue(&read_records_build_request)
+
+	read_records_build_select := []string{"domain_name_id", "repository_account_id", "repository_id"}
+	read_records_build_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_select))
+
+	read_records_build_where := map[string]interface{}{"build_id":*build_id}
+	read_records_build_where_map := json.NewMapOfValues(&read_records_build_where)
+
+	read_records_build_request := map[string]interface{}{"[queue]":"ReadRecords_Build", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+	read_records_build_request_map := json.NewMapOfValues(&read_records_build_request)
+	read_records_build_request_map.SetArray("[select_fields]", read_records_build_array)
+	read_records_build_request_map.SetMap("[where_fields]",read_records_build_where_map)
+
+	//read_records_build_request := json.Map{"[queue]":"ReadRecords_Build", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_id":*build_id}, "[select_fields]": json.Array{"domain_name_id", "repository_account_id", "repository_id"}, "[limit]":1}
+	read_records_build_response, read_records_build_response_errors := processor.SendMessageToQueue(read_records_build_request_map)
 	if read_records_build_response_errors != nil {
 		errors = append(errors, read_records_build_response_errors...)
 	} else if  common.IsNil(read_records_branch_response) {
@@ -384,7 +432,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, build_records_data_array_errors...)
 	} else if  common.IsNil(build_records_data_array) {
 		errors = append(errors, fmt.Errorf("build_records_data_array is nil"))
-	} else if len(*build_records_data_array) != 1 {
+	} else if len(*(build_records_data_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("build_records_data_array did not have one result"))
 	}
 
@@ -392,16 +440,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	var build json.Map
-	build_interface := (*build_records_data_array)[0]
-	type_of_build_interface := common.GetType(build_interface)
-
-	if type_of_build_interface == "json.Map" {
-		build = build_interface.(json.Map)
-	} else if type_of_build_interface == "*json.Map" {
-		build = *(build_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("build has invalid type"))
+	build, build_errors := (*(build_records_data_array.GetValues()))[0].GetMapValue()
+	if build_errors != nil {
+		errors = append(errors, build_errors...)
+	} else if  common.IsNil(build) {
+		errors = append(errors, fmt.Errorf("build is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -433,8 +476,19 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	read_records_domain_name_request := json.Map{"[queue]":"ReadRecords_DomainName", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"domain_name_id":*domain_name_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
-	read_records_domain_name_response, read_records_domain_name_response_errors := processor.SendMessageToQueue(&read_records_domain_name_request)
+	read_records_domain_name_select := []string{"name"}
+	read_records_domain_name_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_domain_name_select))
+
+	read_records_domain_name_where := map[string]interface{}{"domain_name_id":*domain_name_id}
+	read_records_domain_name_where_map := json.NewMapOfValues(&read_records_domain_name_where)
+
+	read_records_domain_name_request := map[string]interface{}{"[queue]":"ReadRecords_DomainName", "[trace_id]":processor.GenerateTraceId(),"[limit]":1}
+	read_records_domain_name_request_map := json.NewMapOfValues(&read_records_domain_name_request)
+	read_records_domain_name_request_map.SetArray("[select_fields]", read_records_domain_name_array)
+	read_records_domain_name_request_map.SetMap("[where_fields]",read_records_domain_name_where_map)
+
+	//read_records_domain_name_request := json.Map{"[queue]":"ReadRecords_DomainName", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"domain_name_id":*domain_name_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
+	read_records_domain_name_response, read_records_domain_name_response_errors := processor.SendMessageToQueue(read_records_domain_name_request_map)
 	if read_records_domain_name_response_errors != nil {
 		errors = append(errors, read_records_domain_name_response_errors...)
 	} else if  common.IsNil(read_records_domain_name_response) {
@@ -450,7 +504,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, domain_name_records_data_array_errors...)
 	} else if  common.IsNil(domain_name_records_data_array) {
 		errors = append(errors, fmt.Errorf("domain_name_records_data_array is nil"))
-	} else if len(*domain_name_records_data_array) != 1 {
+	} else if len(*(domain_name_records_data_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("domain_name_records_data_array did not have one result"))
 	}
 
@@ -458,16 +512,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	var domain_name_map json.Map
-	domain_name_interface := (*domain_name_records_data_array)[0]
-	type_of_domain_name_interface := common.GetType(domain_name_interface)
-
-	if type_of_domain_name_interface == "json.Map" {
-		domain_name_map = domain_name_interface.(json.Map)
-	} else if type_of_domain_name_interface == "*json.Map" {
-		domain_name_map = *(domain_name_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("domain_name has invalid type"))
+	domain_name_map, domain_name_map_errors := (*(domain_name_records_data_array.GetValues()))[0].GetMapValue()
+	if domain_name_map_errors != nil {
+		errors = append(errors, domain_name_map_errors...)
+	} else if  common.IsNil(domain_name_map) {
+		errors = append(errors, fmt.Errorf("domain_name_map is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -485,8 +534,19 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	read_records_repository_account_name_request := json.Map{"[queue]":"ReadRecords_RepositoryAccount", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"repository_account_id":*repository_account_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
-	read_records_repository_account_name_response, read_records_repository_account_name_response_errors := processor.SendMessageToQueue(&read_records_repository_account_name_request)
+	read_records_repository_account_name_select := []string{"name"}
+	read_records_repository_account_name_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_repository_account_name_select))
+
+	read_records_repository_account_name_where := map[string]interface{}{"repository_account_id":*repository_account_id}
+	read_records_repository_account_name_where_map := json.NewMapOfValues(&read_records_repository_account_name_where)
+
+	read_records_repository_account_name_request := map[string]interface{}{"[queue]":"ReadRecords_RepositoryAccount", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+	read_records_repository_account_name_request_map := json.NewMapOfValues(&read_records_repository_account_name_request)
+	read_records_repository_account_name_request_map.SetArray("[select_fields]", read_records_repository_account_name_array)
+	read_records_repository_account_name_request_map.SetMap("[where_fields]", read_records_repository_account_name_where_map)
+
+	//read_records_repository_account_name_request := json.Map{"[queue]":"ReadRecords_RepositoryAccount", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"repository_account_id":*repository_account_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
+	read_records_repository_account_name_response, read_records_repository_account_name_response_errors := processor.SendMessageToQueue(read_records_repository_account_name_request_map)
 	if read_records_repository_account_name_response_errors != nil {
 		errors = append(errors, read_records_repository_account_name_response_errors...)
 	} else if  common.IsNil(read_records_domain_name_response) {
@@ -502,7 +562,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, repository_account_name_records_data_array_errors...)
 	} else if  common.IsNil(repository_account_name_records_data_array) {
 		errors = append(errors, fmt.Errorf("repository_account_name_records_data_array is nil"))
-	} else if len(*repository_account_name_records_data_array) != 1 {
+	} else if len(*(repository_account_name_records_data_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("repository_account_name_records_data_array did not have one result"))
 	}
 
@@ -510,16 +570,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	var repository_account_name_map json.Map
-	repository_account_name_interface := (*repository_account_name_records_data_array)[0]
-	type_of_repository_account_name_interface := common.GetType(repository_account_name_interface)
-
-	if type_of_repository_account_name_interface == "json.Map" {
-		repository_account_name_map = repository_account_name_interface.(json.Map)
-	} else if type_of_repository_account_name_interface == "*json.Map" {
-		repository_account_name_map = *(repository_account_name_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("repository_account_name has invalid type"))
+	repository_account_name_map, repository_account_name_map_errors := (*(repository_account_name_records_data_array.GetValues()))[0].GetMapValue()
+	if repository_account_name_map_errors != nil {
+		errors = append(errors, repository_account_name_map_errors...)
+	} else if  common.IsNil(read_records_domain_name_response) {
+		errors = append(errors, fmt.Errorf("repository_account_name_map is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -537,8 +592,19 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	read_records_repository_name_request := json.Map{"[queue]":"ReadRecords_Repository", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"repository_id":*repository_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
-	read_records_repository_name_request_response, read_records_repository_name_request_response_errors := processor.SendMessageToQueue(&read_records_repository_name_request)
+	read_records_repository_name_select := []string{"name"}
+	read_records_repository_name_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_repository_name_select))
+
+	read_records_repository_name_where := map[string]interface{}{"repository_id":*repository_id}
+	read_records_repository_name_where_map := json.NewMapOfValues(&read_records_repository_name_where)
+
+	read_records_repository_name_request := map[string]interface{}{"[queue]":"ReadRecords_Repository", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+	read_records_repository_name_request_map := json.NewMapOfValues(&read_records_repository_name_request)
+	read_records_repository_name_request_map.SetArray("[select_fields]", read_records_repository_name_array)
+	read_records_repository_name_request_map.SetMap("[where_fields]", read_records_repository_name_where_map)
+
+	//read_records_repository_name_request := json.Map{"[queue]":"ReadRecords_Repository", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"repository_id":*repository_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
+	read_records_repository_name_request_response, read_records_repository_name_request_response_errors := processor.SendMessageToQueue(read_records_repository_name_request_map)
 	if read_records_repository_name_request_response_errors != nil {
 		errors = append(errors, read_records_repository_name_request_response_errors...)
 	} else if  common.IsNil(read_records_repository_name_request_response) {
@@ -554,7 +620,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		errors = append(errors, repository_name_records_data_array_errors...)
 	} else if  common.IsNil(repository_name_records_data_array) {
 		errors = append(errors, fmt.Errorf("repository_name_records_data_array is nil"))
-	} else if len(*repository_name_records_data_array) != 1 {
+	} else if len(*(repository_name_records_data_array.GetValues())) != 1 {
 		errors = append(errors, fmt.Errorf("repository_name_records_data_array did not have one result"))
 	}
 
@@ -562,16 +628,11 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	var repository_name_map json.Map
-	repository_name_interface := (*repository_name_records_data_array)[0]
-	type_of_repository_name_interface := common.GetType(repository_name_interface)
-
-	if type_of_repository_name_interface == "json.Map" {
-		repository_name_map = repository_name_interface.(json.Map)
-	} else if type_of_repository_name_interface == "*json.Map" {
-		repository_name_map = *(repository_name_interface.(*json.Map))
-	} else {
-		errors = append(errors, fmt.Errorf("repository_name has invalid type"))
+	repository_name_map, repository_name_map_errors := (*(repository_name_records_data_array.GetValues()))[0].GetMapValue()
+	if repository_name_map_errors != nil {
+		errors = append(errors, repository_name_map_errors...)
+	} else if  common.IsNil(repository_name_map) {
+		errors = append(errors, fmt.Errorf("repository_name_map is nil"))
 	}
 
 	if len(errors) > 0 {
@@ -597,9 +658,13 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	first_build_step.SetUInt64("build_branch_id", build_branch_id)
 	first_build_step.SetStringValue("parameters", "{}")
 
+
+	next_command := map[string]interface{}{"[queue]":*name_of_next_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}
+	next_command_map := json.NewMapOfValues(&next_command)
+	next_command_map.SetMap("data", first_build_step)
 	
-	next_command := json.Map{"[queue]":*name_of_next_step, "data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}
-	_, message_errors := processor.SendMessageToQueue(&next_command)
+	//next_command := json.Map{"[queue]":*name_of_next_step, "data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}
+	_, message_errors := processor.SendMessageToQueue(next_command_map)
 	if message_errors != nil {
 		return message_errors
 	}
