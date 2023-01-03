@@ -16,15 +16,23 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	
 	function := func(message string) {
 		fmt.Println(message)
-		callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":message,"stdout":true},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
-		go this_processor.SendMessageToQueueFireAndForget(&callback_payload)
+
+		callback_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":message,"stdout":true}
+		callback_payload_data :=  json.NewMapOfValues(&callback_payload_map_data)
+
+		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+		callback_payload := json.NewMapOfValues(&callback_payload_map)
+		callback_payload.SetMap("data", callback_payload_data)
+
+		//callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":message,"stdout":true},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+		go this_processor.SendMessageToQueueFireAndForget(callback_payload)
 
 		if this_command_name != "Run_IntegrationTestSuite" {
 			return
 		}
 		
 		message = strings.ReplaceAll(message, "\\\"", "\"")
-		json_message, json_message_errors := json.ParseJSON(message)
+		json_message, json_message_errors := json.Parse(message)
 		if json_message_errors != nil {
 			fmt.Println(json_message_errors)
 			return
@@ -76,8 +84,15 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			return
 		}
 
-		select_test_suite_payload := json.Map{"[queue]":"ReadRecords_TestSuiteBuildBranch", "[where_fields]":json.Map{"build_branch_id":this_build_branch_id,"name":this_label}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
-		test_suite_response, test_suite_response_errors := this_processor.SendMessageToQueue(&select_test_suite_payload)
+		read_records_test_suite_where := map[string]interface{}{"build_branch_id":this_build_branch_id,"name":this_label}
+		read_records_test_suite_where_map := json.NewMapOfValues(&read_records_test_suite_where)
+
+		read_records_test_suite_request := map[string]interface{}{"[queue]":"ReadRecords_TestSuiteBuildBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
+		read_records_test_suite_request_map := json.NewMapOfValues(&read_records_test_suite_request)
+		read_records_test_suite_request_map.SetMap("[where_fields]", read_records_test_suite_where_map)
+
+		//select_test_suite_payload := json.Map{"[queue]":"ReadRecords_TestSuiteBuildBranch", "[where_fields]":json.Map{"build_branch_id":this_build_branch_id,"name":this_label}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
+		test_suite_response, test_suite_response_errors := this_processor.SendMessageToQueue(read_records_test_suite_request_map)
 		if test_suite_response_errors != nil {
 			fmt.Println(test_suite_response_errors)
 			return
@@ -96,16 +111,22 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		}
 
 		var test_suite_map json.Map
-		if len(*test_suite_response_array) == 0 {
-			create_test_suite_payload := json.Map{"[queue]":"CreateRecord_TestSuiteBuildBranch", "data":json.Map{"build_branch_id":this_build_branch_id,"name":this_label},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
-			create_suite_response, create_suite_response_errors := this_processor.SendMessageToQueue(&create_test_suite_payload)
+		if len(*(test_suite_response_array.GetValues())) == 0 {
+			create_test_suite_payload_map_data :=  map[string]interface{}{"build_branch_id":this_build_branch_id,"name":this_label}
+			create_test_suite_payload_data :=  json.NewMapOfValues(&create_test_suite_payload_map_data)
+
+			create_test_suite_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+			create_test_suite_payload := json.NewMapOfValues(&create_test_suite_payload_map)
+			create_test_suite_payload.SetMap("data", create_test_suite_payload_data)
+			
+			//create_test_suite_payload := json.Map{"[queue]":"CreateRecord_TestSuiteBuildBranch", "data":json.Map{"build_branch_id":this_build_branch_id,"name":this_label},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+			create_suite_response, create_suite_response_errors := this_processor.SendMessageToQueue(create_test_suite_payload)
 			if create_suite_response_errors != nil {
 				if !(len(create_suite_response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", create_suite_response_errors[0]), "Duplicate entry")) { 
 					fmt.Println(create_suite_response_errors)
 					return
 				} else {
-					select_test_suite_payload := json.Map{"[queue]":"ReadRecords_TestSuiteBuildBranch", "[where_fields]":json.Map{"build_branch_id":this_build_branch_id,"name":this_label}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
-					test_suite_response, test_suite_response_errors = this_processor.SendMessageToQueue(&select_test_suite_payload)
+					test_suite_response, test_suite_response_errors = this_processor.SendMessageToQueue(read_records_test_suite_request_map)
 					if test_suite_response_errors != nil {
 						fmt.Println(test_suite_response_errors)
 						return
@@ -121,7 +142,7 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 					} else if common.IsNil(test_suite_response_array) {
 						fmt.Println("test_suite_response_array is nil")
 						return
-					} else if len(*test_suite_response_array) != 1 {
+					} else if len(*(test_suite_response_array.GetValues())) != 1 {
 						fmt.Println("test_suite_response_array not one record")
 						return
 					}
@@ -139,24 +160,25 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 					return
 				}
 
-				*test_suite_response_array = append(*test_suite_response_array,  *created_test_suite_map)
+				test_suite_response_array.AppendMap(created_test_suite_map)
 			}
 		} 
 		
 		
-		if len(*test_suite_response_array) == 1 {
-			test_suite_interface := (*test_suite_response_array)[0]
-			type_of_test_suite_interface := common.GetType(test_suite_interface)
+		if len(*(test_suite_response_array.GetValues())) == 1 {
+			temp_test_suite_map, temp_test_suite_map_errors := (*(test_suite_response_array.GetValues()))[0].GetMap()
 
-			if type_of_test_suite_interface == "json.Map" {
-				test_suite_map = test_suite_interface.(json.Map)
-			} else if type_of_test_suite_interface == "*json.Map" {
-				test_suite_map = *(test_suite_interface.(*json.Map))
+			if temp_test_suite_map_errors != nil {
+				fmt.Println(temp_test_suite_map_errors)
+				return 
+			} else if common.IsNil(temp_test_suite_map) {
+				fmt.Println("test_suite_map is nil")
+				return
 			} else {
 				fmt.Println("test_suite_map is not a map")
 				return
 			}
-
+			test_suite_map = *temp_test_suite_map
 		} else {
 			fmt.Println("test_suite_response_array did not return 1 or 0 records")
 			return
@@ -171,8 +193,16 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			return
 		}
 
-		select_test_payload := json.Map{"[queue]":"ReadRecords_TestBuildBranch", "[where_fields]":json.Map{"test_suite_build_branch_id":*test_suite_build_branch_id,"name":*test_value}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
-		test_response, test_response_errors := this_processor.SendMessageToQueue(&select_test_payload)
+		read_records_test_where := map[string]interface{}{"test_suite_build_branch_id":*test_suite_build_branch_id,"name":*test_value}
+		read_records_test_where_map := json.NewMapOfValues(&read_records_test_where)
+
+		read_records_test_request := map[string]interface{}{"[queue]":"ReadRecords_TestBuildBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+		read_records_test_request_map := json.NewMapOfValues(&read_records_test_request)
+		read_records_test_request_map.SetMap("[where_fields]", read_records_test_where_map)
+
+
+		//select_test_payload := json.Map{"[queue]":"ReadRecords_TestBuildBranch", "[where_fields]":json.Map{"test_suite_build_branch_id":*test_suite_build_branch_id,"name":*test_value}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+		test_response, test_response_errors := this_processor.SendMessageToQueue(read_records_test_request_map)
 		if test_response_errors != nil {
 			fmt.Println(test_response_errors)
 			return
@@ -191,16 +221,22 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		}
 
 		var test_map json.Map
-		if len(*test_response_array) == 0 {
-			create_test_payload := json.Map{"[queue]":"CreateRecord_TestBuildBranch", "data":json.Map{"test_suite_build_branch_id":test_suite_build_branch_id,"name":*test_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
-			create_test_response, create_test_response_errors := this_processor.SendMessageToQueue(&create_test_payload)
+		if len(*(test_response_array.GetValues())) == 0 {
+			create_test_payload_map_data :=  map[string]interface{}{"test_suite_build_branch_id":test_suite_build_branch_id,"name":*test_value}
+			create_test_payload_data := json.NewMapOfValues(&create_test_payload_map_data)
+
+			create_test_payload_map := map[string]interface{}{"[queue]":"CreateRecord_TestBuildBranch","[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+			create_test_payload := json.NewMapOfValues(&create_test_payload_map)
+			create_test_payload.SetMap("data", create_test_payload_data)
+
+			//create_test_payload := json.Map{"[queue]":"CreateRecord_TestBuildBranch", "data":json.Map{"test_suite_build_branch_id":test_suite_build_branch_id,"name":*test_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+			create_test_response, create_test_response_errors := this_processor.SendMessageToQueue(create_test_payload)
 			if create_test_response_errors != nil {
 				if !(len(create_test_response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", create_test_response_errors[0]), "Duplicate entry")) { 
 					fmt.Println(create_test_response_errors)
 					return
 				} else {
-					select_test_payload := json.Map{"[queue]":"ReadRecords_TestBuildBranch", "[where_fields]":json.Map{"test_suite_build_branch_id":*test_suite_build_branch_id,"name":*test_value}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
-					test_response, test_response_errors := this_processor.SendMessageToQueue(&select_test_payload)
+					test_response, test_response_errors := this_processor.SendMessageToQueue(read_records_test_request_map)
 					if test_response_errors != nil {
 						fmt.Println(test_response_errors)
 						return
@@ -216,7 +252,7 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 					} else if common.IsNil(test_response_array) {
 						fmt.Println("test_response_array is nil")
 						return
-					} else if len(*test_response_array) != 1 {
+					} else if len(*(test_response_array.GetValues())) != 1 {
 						fmt.Println("test_response_array not one record")
 						return
 					}
@@ -234,22 +270,20 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 					return
 				}
 
-				*test_response_array = append(*test_response_array,  *created_test_map)
+				test_response_array.AppendMap(created_test_map)
 			}
 		} 
 		
-	if len(*test_response_array) == 1 {
-		test_interface := (*test_response_array)[0]
-		type_of_test_interface := common.GetType(test_interface)
-
-		if type_of_test_interface == "json.Map" {
-			test_map = test_interface.(json.Map)
-		} else if type_of_test_interface == "*json.Map" {
-			test_map = *(test_interface.(*json.Map))
-		} else {
-			fmt.Println("test_map is not a map")
+	if len(*(test_response_array.GetValues())) == 1 {
+		temp_test_map, temp_test_map_errors := (*(test_response_array.GetValues()))[0].GetMap()
+		if temp_test_map_errors != nil {
+			fmt.Println(temp_test_map_errors)
+			return 
+		} else if common.IsNil(temp_test_map) {
+			fmt.Println("temp_test_map is nil")
 			return
 		}
+		test_map = *temp_test_map
 	} else {
 		fmt.Println("test_response_array returned more than 1 record")
 		return
@@ -264,8 +298,15 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		return
 	}
 
-	select_test_result_payload := json.Map{"[queue]":"ReadRecords_TestResult", "[where_fields]":json.Map{"name":*test_result_value}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
-	test_result_response, test_result_response_errors := this_processor.SendMessageToQueue(&select_test_result_payload)
+	select_test_result_where := map[string]interface{}{"name":*test_result_value}
+	select_test_result_where_map := json.NewMapOfValues(&select_test_result_where)
+
+	select_test_result_request := map[string]interface{}{"[queue]":"ReadRecords_TestResult", "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+	select_test_result_request_map := json.NewMapOfValues(&select_test_result_request)
+	select_test_result_request_map.SetMap("[where_fields]", select_test_result_where_map)
+
+	//select_test_result_payload := json.Map{"[queue]":"ReadRecords_TestResult", "[where_fields]":json.Map{"name":*test_result_value}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+	test_result_response, test_result_response_errors := this_processor.SendMessageToQueue(select_test_result_request_map)
 	if test_result_response_errors != nil {
 		fmt.Println(test_result_response_errors)
 		return
@@ -284,18 +325,16 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	}
 
 	var test_result_map json.Map
-	if len(*test_result_response_array) == 1 {
-		test_result_interface := (*test_result_response_array)[0]
-		type_of_test_result_interface := common.GetType(test_result_interface)
-
-		if type_of_test_result_interface == "json.Map" {
-			test_result_map = test_result_interface.(json.Map)
-		} else if type_of_test_result_interface == "*json.Map" {
-			test_result_map = *(test_result_interface.(*json.Map))
-		} else {
-			fmt.Println("test_result_map is not a map")
+	if len(*(test_result_response_array.GetValues())) == 1 {
+		temp_test_result_map, temp_test_result_map_errors := (*(test_result_response_array.GetValues()))[0].GetMap()
+		if temp_test_result_map_errors != nil {
+			fmt.Println(temp_test_result_map_errors)
+			return
+		} else if common.IsNil(temp_test_result_map) {
+			fmt.Println("temp_test_result_map is nil")
 			return
 		}
+		test_result_map = *temp_test_result_map
 	} else {
 		fmt.Println("test_result_response_array did not have 1 record")
 		return
