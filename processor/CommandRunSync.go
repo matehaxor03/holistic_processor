@@ -257,7 +257,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return errors
 	}
 
-
+	incomplete_steps_found := false
 	for _, previous_read_records_build_branch_instance_step := range *(previous_read_records_build_branch_instance_step_array.GetValues()) {
 		compare_step, compare_step_errors  := previous_read_records_build_branch_instance_step.GetMap()
 		if compare_step_errors != nil {
@@ -281,17 +281,20 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		}
 
 		if *compare_step_build_step_status_id == *build_step_status_running_id {
-			fmt.Println("there are steps still running")
+			fmt.Println("there are steps with status \"Running\" ignore triggering next step")
+			incomplete_steps_found = true
 			return nil
 		}
 
 		if *compare_step_build_step_status_id == *build_step_status_not_started_id {
-			fmt.Println("there are steps not started running")
+			fmt.Println("there are steps with status \"Not Started\" ignore triggering next step")
+			incomplete_steps_found = true
 			return nil
 		}
 	}
 
-	if len(errors) == 0 {
+	if len(errors) == 0 && !incomplete_steps_found {
+		fmt.Println("all previous steps have completed... triggering next step")
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)

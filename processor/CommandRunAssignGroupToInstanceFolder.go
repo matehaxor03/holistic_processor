@@ -4,7 +4,7 @@ import (
 	json "github.com/matehaxor03/holistic_json/json"
 	//common "github.com/matehaxor03/holistic_common/common"
    // "path/filepath"
-	//"fmt"
+	"fmt"
 )
 
 func commandRunAssignGroupToInstanceFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -20,7 +20,7 @@ func commandRunAssignGroupToInstanceFolder(processor *Processor, request *json.M
 		return errors
 	}
 
-	// todo
+	fmt.Println("todo: run assigned group to instance folder")
 
 
 

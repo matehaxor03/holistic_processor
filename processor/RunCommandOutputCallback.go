@@ -49,7 +49,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		}
 
 		if test_value == nil {
-			fmt.Println("test_value is nil " + message)
 			return
 		}
 
@@ -172,10 +171,8 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			} else if common.IsNil(temp_test_suite_map) {
 				fmt.Println("test_suite_map is nil")
 				return
-			} else {
-				fmt.Println("test_suite_map is not a map")
-				return
 			}
+			
 			test_suite_map = *temp_test_suite_map
 		} else {
 			fmt.Println("test_suite_response_array did not return 1 or 0 records")

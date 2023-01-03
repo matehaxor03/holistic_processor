@@ -4,7 +4,7 @@ import (
 	json "github.com/matehaxor03/holistic_json/json"
 	//common "github.com/matehaxor03/holistic_common/common"
     //"path/filepath"
-	//"fmt"
+	"fmt"
 )
 
 func commandRunAssignGroupToUser(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -19,7 +19,9 @@ func commandRunAssignGroupToUser(processor *Processor, request *json.Map, respon
 		}
 		return errors
 	}
-	// todo
+	
+	fmt.Println("todo: run assigned group to user")
+
 
 
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)

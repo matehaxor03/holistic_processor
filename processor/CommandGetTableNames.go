@@ -3,12 +3,10 @@ package processor
 import (
 	json "github.com/matehaxor03/holistic_json/json"
 	common "github.com/matehaxor03/holistic_common/common"
-	"fmt"
 )
 
 func commandGetTableNames(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	temp_client := processor.GetClientRead()
-	fmt.Println(request)
 	
 	temp_read_database, temp_read_database_errors := temp_client.GetDatabase()
 	if temp_read_database_errors != nil {

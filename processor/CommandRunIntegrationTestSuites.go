@@ -84,6 +84,9 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, std_callback, stderr_callback)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
+			fmt.Println("running " + *test_suite_name + " fail")
+		} else {
+			fmt.Println("running " + *test_suite_name + " pass")
 		} 
 	} else {
 		fmt.Println("not found file " + *test_suite_name)

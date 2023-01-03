@@ -83,14 +83,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 
 	build_branch_instance_steps := json.NewArray()
 	for _, build_step_interface := range *(build_steps.GetValues()) {
-		if !common.IsMap(build_step_interface) {
-			errors = append(errors, fmt.Errorf("build step is not a map"))
-		}
-
-		if len(errors) > 0 {
-			return errors
-		}
-
 		current_build_step, current_build_step_errors := build_step_interface.GetMap()
 		if current_build_step_errors != nil {
 			errors = append(errors, current_build_step_errors...)

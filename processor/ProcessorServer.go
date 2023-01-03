@@ -93,27 +93,6 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	map_system_schema.SetMapValue("[queue_domain_name]", map_queue_domain_name)
 
 	data.SetMapValue("[system_schema]", map_system_schema)
-	
-
-		/*
-	data := json.Map{
-		"[fields]": json.Map{},
-		"[schema]": json.Map{},
-		"[system_fields]": json.Map{
-			"[port]":&port,
-			"[server_crt_path]":&server_crt_path,
-			"[server_key_path]":&server_key_path,
-			"[queue_port]":&queue_port,
-			"[queue_domain_name]":domain_name,	
-		},
-		"[system_schema]":json.Map{
-			"[port]": json.Map{"type":"string"},
-			"[server_crt_path]": json.Map{"type":"string"},
-			"[server_key_path]": json.Map{"type":"string"},
-			"[queue_port]": json.Map{"type":"string"},
-			"[queue_domain_name]": json.Map{"type":"class.DomainName"},
-		},
-	}*/
 
 	getData := func() *json.Map {
 		return &data
@@ -164,8 +143,10 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			errors = append(errors, fmt.Errorf("request method not supported: " + req.Method))
 		}
 
+		dummy_result := json.NewMapValue()
+
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, json.Map{}, errors)
+			http_extension.WriteResponse(w, dummy_result, errors)
 			return
 		}
 
@@ -175,7 +156,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		} 
 
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, json.Map{}, errors)
+			http_extension.WriteResponse(w, dummy_result, errors)
 			return
 		}
 		
@@ -185,17 +166,17 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		} 
 
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, json.Map{}, errors)
+			http_extension.WriteResponse(w, dummy_result, errors)
 			return
 		}
 
 		queue, queue_errors := json_payload.GetString("[queue]")
 		if queue_errors != nil {
-			http_extension.WriteResponse(w, json.Map{}, queue_errors)
+			http_extension.WriteResponse(w, dummy_result, queue_errors)
 			return
 		} else if common.IsNil(queue) {
 			queue_errors = append(queue_errors, fmt.Errorf("[queue] is nil"))
-			http_extension.WriteResponse(w, json.Map{}, queue_errors)
+			http_extension.WriteResponse(w, dummy_result, queue_errors)
 			return
 		}
 
@@ -205,7 +186,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, json.Map{}, errors)
+			http_extension.WriteResponse(w, dummy_result, errors)
 			return
 		}
 

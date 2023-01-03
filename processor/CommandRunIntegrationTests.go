@@ -158,8 +158,8 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 
 		build_branch_instance_steps := json.NewArray()
 		for _, suite_name := range suite_names {
-			paramters_map := json.Map{}
-			paramters_map.SetString("test_suite_name", &suite_name)
+			paramters_map := json.NewMap()
+			paramters_map.SetStringValue("test_suite_name", suite_name)
 
 			var parameters_builder strings.Builder
 			parameters_json_string_errors := paramters_map.ToJSONString(&parameters_builder)

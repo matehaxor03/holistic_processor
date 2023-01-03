@@ -70,7 +70,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		include_schema_actual = *include_schema
 	}
 
-	table_schema_actual := json.Map{}
+	table_schema_actual := json.NewMap()
 	if include_schema_actual {
 		table_schema, table_schema_errors := table.GetSchema()
 		if table_schema_errors != nil {
@@ -79,7 +79,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 			errors = append(errors, fmt.Errorf("table schema %s is nil", unsafe_table_name))
 			return errors
 		} else {
-			table_schema_actual = *table_schema
+			table_schema_actual = table_schema
 		}
 	}
 
@@ -133,7 +133,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		fields_for_record, fields_for_record_error := record.GetFields()
 		if fields_for_record_error != nil {
 			errors = append(errors, fields_for_record_error...)
-		} else if common.IsNil(fields_for_record) {
+		} else if common.IsNil(fields_for_record){
 			errors = append(errors, fmt.Errorf("record is nil for record %d", index))
 		} else {
 			array.AppendMap(fields_for_record)
@@ -147,7 +147,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	response_queue_result.SetArray("data", array)	
 	
 	if include_schema_actual {
-		response_queue_result.SetMap("schema", &table_schema_actual)
+		response_queue_result.SetMap("schema", table_schema_actual)
 	}	
 
 	return nil
