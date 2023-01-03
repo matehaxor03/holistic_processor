@@ -349,8 +349,15 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		return
 	}
 
-	create_test_log_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult", "data":json.Map{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
-	go this_processor.SendMessageToQueueFireAndForget(&create_test_log_payload)
+	create_test_log_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value}
+	create_test_log_payload_data := json.NewMapOfValues(&create_test_log_payload_map_data)
+
+	create_test_log_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult","[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+	create_test_log_payload := json.NewMapOfValues(&create_test_log_payload_map)
+	create_test_log_payload.SetMap("data", create_test_log_payload_data)
+
+	//create_test_log_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult", "data":json.Map{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+	go this_processor.SendMessageToQueueFireAndForget(create_test_log_payload)
 	
 	
 	}	
@@ -365,8 +372,15 @@ func getStderrCallbackFunctionBranch(processor *Processor, command_name string, 
 	
 	
 	function := func(message error) {
-		callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
-		go this_processor.SendMessageToQueueFireAndForget(&callback_payload)
+		callback_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false}
+		callback_payload_data :=  json.NewMapOfValues(&callback_payload_map_data)
+
+		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+		callback_payload := json.NewMapOfValues(&callback_payload_map)
+		callback_payload.SetMap("data", callback_payload_data)
+
+		//callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+		go this_processor.SendMessageToQueueFireAndForget(callback_payload)
 	}
 	return &function
 }
