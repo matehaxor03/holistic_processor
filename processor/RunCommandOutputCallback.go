@@ -15,8 +15,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	this_label := label
 	
 	function := func(message string) {
-		fmt.Println(message)
-
 		callback_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":message,"stdout":true}
 		callback_payload_data :=  json.NewMapOfValues(&callback_payload_map_data)
 

@@ -129,13 +129,15 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	}
 	
 	array := json.NewArray()
-	for _, record := range *records {
+	for index, record := range *records {
 		fields_for_record, fields_for_record_error := record.GetFields()
 		if fields_for_record_error != nil {
 			errors = append(errors, fields_for_record_error...)
+		} else if common.IsNil(fields_for_record) {
+			errors = append(errors, fmt.Errorf("record is nil for record %d", index))
 		} else {
-			array.AppendMapValue(*fields_for_record)
-		}		
+			array.AppendMap(fields_for_record)
+		}	
 	}
 
 	if len(errors) > 0 {

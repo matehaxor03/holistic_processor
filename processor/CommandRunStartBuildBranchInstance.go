@@ -262,7 +262,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	build_step, build_step_errors := (*(lookup_build_step_array.GetValues()))[0].GetMapValue()
+	build_step, build_step_errors := (*(lookup_build_step_array.GetValues()))[0].GetMap()
 	if build_step_errors != nil {
 		errors = append(errors, build_step_errors...)
 	} else if common.IsNil(build_step) {
@@ -320,7 +320,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	build_branch, build_branch_errors := (*(build_branch_records_data_array.GetValues()))[0].GetMapValue()
+	build_branch, build_branch_errors := (*(build_branch_records_data_array.GetValues()))[0].GetMap()
 	if build_branch_errors != nil {
 		errors = append(errors, build_branch_errors...)
 	} else if common.IsNil(build_branch) {
@@ -385,7 +385,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	branch, branch_errors := (*(branch_records_data_array.GetValues()))[0].GetMapValue()
+	branch, branch_errors := (*(branch_records_data_array.GetValues()))[0].GetMap()
 	if branch_errors != nil {
 		errors = append(errors, branch_errors...)
 	} else if  common.IsNil(branch) {
@@ -440,7 +440,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	build, build_errors := (*(build_records_data_array.GetValues()))[0].GetMapValue()
+	build, build_errors := (*(build_records_data_array.GetValues()))[0].GetMap()
 	if build_errors != nil {
 		errors = append(errors, build_errors...)
 	} else if  common.IsNil(build) {
@@ -512,7 +512,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	domain_name_map, domain_name_map_errors := (*(domain_name_records_data_array.GetValues()))[0].GetMapValue()
+	domain_name_map, domain_name_map_errors := (*(domain_name_records_data_array.GetValues()))[0].GetMap()
 	if domain_name_map_errors != nil {
 		errors = append(errors, domain_name_map_errors...)
 	} else if  common.IsNil(domain_name_map) {
@@ -570,7 +570,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	repository_account_name_map, repository_account_name_map_errors := (*(repository_account_name_records_data_array.GetValues()))[0].GetMapValue()
+	repository_account_name_map, repository_account_name_map_errors := (*(repository_account_name_records_data_array.GetValues()))[0].GetMap()
 	if repository_account_name_map_errors != nil {
 		errors = append(errors, repository_account_name_map_errors...)
 	} else if  common.IsNil(read_records_domain_name_response) {
@@ -628,7 +628,7 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		return errors
 	}
 
-	repository_name_map, repository_name_map_errors := (*(repository_name_records_data_array.GetValues()))[0].GetMapValue()
+	repository_name_map, repository_name_map_errors := (*(repository_name_records_data_array.GetValues()))[0].GetMap()
 	if repository_name_map_errors != nil {
 		errors = append(errors, repository_name_map_errors...)
 	} else if  common.IsNil(repository_name_map) {

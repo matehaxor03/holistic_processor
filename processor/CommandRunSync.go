@@ -12,13 +12,10 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		var new_errors []error
 		errors = new_errors
 	} else if len(errors) > 0 {
-		fmt.Println("1")
-		fmt.Println(errors)
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -53,8 +50,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("2")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -70,15 +65,13 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		} 
 
 		if len(errors) > 0 {
-			fmt.Println("3")
-			fmt.Println(errors)
 			return errors
 		} else {
 			return nil
 		}
 	} 
 
-	prevous_step, prevous_step_errors := (*(previous_step_array.GetValues()))[0].GetMapValue()
+	prevous_step, prevous_step_errors := (*(previous_step_array.GetValues()))[0].GetMap()
 	if prevous_step_errors != nil {
 		errors = append(errors, prevous_step_errors...)
 	} else if common.IsNil(prevous_step) {
@@ -86,8 +79,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("4")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -100,12 +91,8 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("5")
-		fmt.Println(errors)
 		return errors
 	}
-
-	fmt.Println(*previous_order)
 
 	previous_instance_steps_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
 	previous_instance_steps_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&previous_instance_steps_select))
@@ -137,8 +124,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	} 	
 
 	if len(errors) > 0 {
-		fmt.Println("6")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -152,8 +137,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("7")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -177,8 +160,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("8")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -192,8 +173,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("9")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -205,8 +184,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("10")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -218,8 +195,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("11")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -244,8 +219,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("12")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -259,8 +232,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("13")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -272,8 +243,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("14")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -285,8 +254,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) > 0 {
-		fmt.Println("15")
-		fmt.Println(errors)
 		return errors
 	}
 
@@ -299,8 +266,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 			errors = append(errors, fmt.Errorf("compare_step is nil"))
 		}
 		if len(errors) > 0 {
-			fmt.Println("16")
-			fmt.Println(errors)
 			return errors
 		}
 
@@ -312,13 +277,8 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		} 
 
 		if len(errors) > 0 {
-			fmt.Println("17")
-			fmt.Println(errors)
 			return errors
 		}
-
-		fmt.Println(*compare_step_build_step_status_id)
-
 
 		if *compare_step_build_step_status_id == *build_step_status_running_id {
 			fmt.Println("there are steps still running")
@@ -332,8 +292,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) == 0 {
-		fmt.Println("18")
-		fmt.Println(errors)
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
@@ -341,8 +299,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 	
 	if len(errors) > 0 {
-		fmt.Println("19")
-		fmt.Println(errors)
 		return errors
 	}
 

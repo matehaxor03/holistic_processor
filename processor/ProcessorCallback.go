@@ -78,7 +78,8 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 		var json_payload_callback_builder strings.Builder
 		callback_payload_as_string_errors := message.ToJSONString(&json_payload_callback_builder)
 		if callback_payload_as_string_errors != nil {
-			return nil, callback_payload_as_string_errors
+			errors = append(errors, callback_payload_as_string_errors...)
+			return nil, errors
 		}
 
 		callback_json_bytes_string := json_payload_callback_builder.String()
@@ -172,9 +173,7 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 			return sendMessageToQueue(message)
 		},
 		Start: func() {
-			fmt.Println("starting processor callback")
 			go func(queue_url string) {
-				fmt.Println("started processor callback")
 				for {
 					get_or_set_status("running")
 					time.Sleep(1 * time.Nanosecond) 

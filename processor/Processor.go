@@ -271,9 +271,7 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 			return sendMessageToQueue(message)
 		},
 		Start: func() {
-			fmt.Println("starting processor " + queue)
 			go func(queue_url string, queue string) {
-				fmt.Println("started processor " + queue)
 				for {
 					get_or_set_status("running")
 					time.Sleep(1 * time.Nanosecond) 
@@ -289,8 +287,6 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 						time.Sleep(10 * time.Second) 
 						continue
 					}
-
-					//fmt.Println(json_payload_builder.String())
 
 					request_json_bytes := []byte(json_payload_builder.String())
 					request_json_reader := bytes.NewReader(request_json_bytes)

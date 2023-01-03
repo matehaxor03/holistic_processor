@@ -259,7 +259,6 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		Start: func() []error {
 			var errors []error
 
-			fmt.Println(len(processors))
 			for _, value := range processors {
 				value.Start()
 			}
