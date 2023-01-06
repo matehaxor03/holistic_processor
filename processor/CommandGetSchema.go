@@ -38,12 +38,9 @@ func commandGetSchema(processor *Processor, request *json.Map, response_queue_re
 	schema, schema_errors := table.GetSchema()
 	if schema_errors != nil {
 		return schema_errors
-	} else if schema == nil {
-		errors = append(errors, fmt.Errorf("schema %s is nil", unsafe_table_name))
-		return errors
 	}
 
-	response_queue_result.SetMap("data", schema)
+	response_queue_result.SetMapValue("data", schema)
 		
 	return nil
 }

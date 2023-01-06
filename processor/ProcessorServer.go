@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	common "github.com/matehaxor03/holistic_common/common"
-	class "github.com/matehaxor03/holistic_db_client/class"
+	db_client "github.com/matehaxor03/holistic_db_client/db_client"
+	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 	http_extension "github.com/matehaxor03/holistic_http/http_extension"
+	helper "github.com/matehaxor03/holistic_db_client/helper"
 )
 
 type ProcessorServer struct {
@@ -17,7 +19,7 @@ type ProcessorServer struct {
 func NewProcessorServer(port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
 	var errors []error
 	struct_type := "processor.ProcessorServer"
-	client_manager, client_manager_errors := class.NewClientManager()
+	client_manager, client_manager_errors := db_client.NewClientManager()
 	if client_manager_errors != nil {
 		return nil, client_manager_errors
 	}
@@ -38,7 +40,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return nil, table_names_errors
 	}
 
-	domain_name, domain_name_errors := class.NewDomainName(queue_domain_name)
+	domain_name, domain_name_errors := dao.NewDomainName(queue_domain_name)
 	if domain_name_errors != nil {
 		return nil, domain_name_errors
 	}
@@ -99,7 +101,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	getPort := func() (string, []error) {
-		temp_value, temp_value_errors := class.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[port]", "string")
+		temp_value, temp_value_errors := helper.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[port]", "string")
 		if temp_value_errors != nil {
 			return "",temp_value_errors
 		}
@@ -107,7 +109,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	getServerCrtPath := func() (string, []error) {
-		temp_value, temp_value_errors := class.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_crt_path]", "string")
+		temp_value, temp_value_errors := helper.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_crt_path]", "string")
 		if temp_value_errors != nil {
 			return "",temp_value_errors
 		}
@@ -115,7 +117,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	getServerKeyPath := func() (string, []error) {
-		temp_value, temp_value_errors := class.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_key_path]", "string")
+		temp_value, temp_value_errors := helper.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_key_path]", "string")
 		if temp_value_errors != nil {
 			return "",temp_value_errors
 		}
@@ -123,7 +125,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	validate := func() []error {
-		return class.ValidateData(getData(), "ProcessorServer")
+		return dao.ValidateData(getData(), "ProcessorServer")
 	}
 
 	/*

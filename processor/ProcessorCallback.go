@@ -10,7 +10,7 @@ import (
 	"sync"
 	"strings"
 	common "github.com/matehaxor03/holistic_common/common"
-	class "github.com/matehaxor03/holistic_db_client/class"
+	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 	thread_safe "github.com/matehaxor03/holistic_thread_safe/thread_safe"
 )
@@ -23,7 +23,7 @@ type ProcessorCallback struct {
 	SendMessageToQueue func(*json.Map) (*json.Map, []error)
 }
 
-func NewProcessorCallback(domain_name class.DomainName, port string) (*ProcessorCallback, []error) {	
+func NewProcessorCallback(domain_name dao.DomainName, port string) (*ProcessorCallback, []error) {	
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -194,7 +194,7 @@ func NewProcessorCallback(domain_name class.DomainName, port string) (*Processor
 							fmt.Println(response_errors)
 						} else {
 							fmt.Println("no retry error detected")
-							fmt.Println(response_errors)
+							fmt.Println(fmt.Sprintf("%s", response_errors))
 							pushFront(result)
 							time.Sleep(10 * time.Second) 
 						}		

@@ -11,7 +11,8 @@ import (
 	"strings"
 	"crypto/rand"
 	common "github.com/matehaxor03/holistic_common/common"
-	class "github.com/matehaxor03/holistic_db_client/class"
+	db_client "github.com/matehaxor03/holistic_db_client/db_client"
+	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 )
 
@@ -21,14 +22,14 @@ type Processor struct {
 	SendMessageToQueue func(message *json.Map) (*json.Map, []error)
 	SendMessageToQueueFireAndForget func(message *json.Map) 
 	GetProcessor func() *Processor
-	GetClientRead func() *class.Client
-	GetClientWrite func() *class.Client
+	GetClientRead func() *db_client.Client
+	GetClientWrite func() *db_client.Client
 	GetQueue func() string
 	GenerateTraceId func() string
 	WakeUp func()
 }
 
-func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainName, port string, queue string) (*Processor, []error) {
+func NewProcessor(client_manager *db_client.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -255,10 +256,10 @@ func NewProcessor(client_manager *class.ClientManager, domain_name class.DomainN
 		GenerateTraceId: func() string {
 			return generate_trace_id()
 		},
-		GetClientRead: func() *class.Client {
+		GetClientRead: func() *db_client.Client {
 			return read_database_client
 		},
-		GetClientWrite: func() *class.Client {
+		GetClientWrite: func() *db_client.Client {
 			return write_database_client
 		},
 		GetProcessor: func() *Processor {

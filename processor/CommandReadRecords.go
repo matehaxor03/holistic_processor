@@ -75,11 +75,8 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		table_schema, table_schema_errors := table.GetSchema()
 		if table_schema_errors != nil {
 			return table_schema_errors
-		} else if common.IsNil(table_schema) {
-			errors = append(errors, fmt.Errorf("table schema %s is nil", unsafe_table_name))
-			return errors
 		} else {
-			table_schema_actual = table_schema
+			table_schema_actual = &table_schema
 		}
 	}
 
