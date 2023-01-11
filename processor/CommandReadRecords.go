@@ -11,9 +11,10 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	var errors []error
 	temp_client := processor.GetClientRead()
 	
-	temp_read_database, temp_read_database_errors := temp_client.GetDatabase()
-	if temp_read_database_errors != nil {
-		return temp_read_database_errors
+	temp_read_database := temp_client.GetDatabase()
+	if temp_read_database == nil {
+		errors = append(errors, fmt.Errorf("database is nil"))
+		return errors
 	}
 
 	queue_name, queue_name_errors := request.GetString("[queue]")
@@ -76,7 +77,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		if table_schema_errors != nil {
 			return table_schema_errors
 		} else {
-			table_schema_actual = &table_schema
+			table_schema_actual = table_schema
 		}
 	}
 
@@ -87,7 +88,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 			return identity_fields_errors
 		}
 
-		for _, identity_field := range *identity_fields {
+		for identity_field, _  := range *identity_fields {
 			select_fields_actual.AppendStringValue(identity_field)
 		}
 
@@ -96,7 +97,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 			return non_identify_fields_errors
 		}
 
-		if common.Contains(*non_identify_fields, "name") {
+		if _, found := (*non_identify_fields)[ "name"]; found {
 			select_fields_actual.AppendStringValue("name")
 		}
 	} 

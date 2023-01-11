@@ -31,10 +31,7 @@ func NewProcessorCallback(domain_name dao.DomainName, port string) (*ProcessorCa
 
 	callback_queue := thread_safe.NewQueue()
 
-	domain_name_value, domain_name_value_errors := domain_name.GetDomainName()
-	if domain_name_value_errors != nil {
-		return nil, domain_name_value_errors
-	}
+	domain_name_value := domain_name.GetDomainName()
 
 	queue_url := fmt.Sprintf("https://%s:%s/", domain_name_value, port)
 	transport_config := &http.Transport{

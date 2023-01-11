@@ -11,9 +11,10 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 	var errors []error
 	temp_write_client := processor.GetClientWrite()
 	
-	temp_write_database, temp_write_database_errors := temp_write_client.GetDatabase()
-	if temp_write_database_errors != nil {
-		return temp_write_database_errors
+	temp_write_database := temp_write_client.GetDatabase()
+	if temp_write_database == nil {
+		errors = append(errors, fmt.Errorf("database is nil"))
+		return errors
 	}
 
 	queue_name, queue_name_errors := request.GetString("[queue]")

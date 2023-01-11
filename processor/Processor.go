@@ -11,7 +11,6 @@ import (
 	"strings"
 	"crypto/rand"
 	common "github.com/matehaxor03/holistic_common/common"
-	db_client "github.com/matehaxor03/holistic_db_client/db_client"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 )
@@ -22,14 +21,14 @@ type Processor struct {
 	SendMessageToQueue func(message *json.Map) (*json.Map, []error)
 	SendMessageToQueueFireAndForget func(message *json.Map) 
 	GetProcessor func() *Processor
-	GetClientRead func() *db_client.Client
-	GetClientWrite func() *db_client.Client
+	GetClientRead func() *dao.Client
+	GetClientWrite func() *dao.Client
 	GetQueue func() string
 	GenerateTraceId func() string
 	WakeUp func()
 }
 
-func NewProcessor(client_manager *db_client.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
+func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -72,11 +71,7 @@ func NewProcessor(client_manager *db_client.ClientManager, domain_name dao.Domai
 		return processor_callback
 	}
 
-	//var wg sync.WaitGroup
-	domain_name_value, domain_name_value_errors := domain_name.GetDomainName()
-	if domain_name_value_errors != nil {
-		return nil, domain_name_value_errors
-	}
+	domain_name_value := domain_name.GetDomainName()
 
 	queue_url := fmt.Sprintf("https://%s:%s/", domain_name_value, port)
 	transport_config := &http.Transport{
@@ -88,26 +83,14 @@ func NewProcessor(client_manager *db_client.ClientManager, domain_name dao.Domai
 		Transport: transport_config,
 	}
 
-	read_database_connection_string := "holistic_db_config#127.0.0.1#3306#holistic#holistic_read"
-	read_database_client, read_database_client_errors := client_manager.GetClient(read_database_connection_string)
+	read_database_client, read_database_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_read")
 	if read_database_client_errors != nil {
 		return nil, read_database_client_errors
 	}
-	
-	_, read_database_errors := read_database_client.GetDatabase()
-	if read_database_errors != nil {
-		return nil, read_database_errors
-	}
 
-	write_database_connection_string := "holistic_db_config#127.0.0.1#3306#holistic#holistic_write"
-	write_database_client, write_database_client_errors := client_manager.GetClient(write_database_connection_string)
+	write_database_client, write_database_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_write")
 	if write_database_client_errors != nil {
 		return nil, write_database_client_errors
-	}
-	
-	_, write_database_errors := write_database_client.GetDatabase()
-	if write_database_errors != nil {
-		return nil, write_database_errors
 	}
 
 	if queue == "GetTableNames" {
@@ -256,10 +239,10 @@ func NewProcessor(client_manager *db_client.ClientManager, domain_name dao.Domai
 		GenerateTraceId: func() string {
 			return generate_trace_id()
 		},
-		GetClientRead: func() *db_client.Client {
+		GetClientRead: func() *dao.Client {
 			return read_database_client
 		},
-		GetClientWrite: func() *db_client.Client {
+		GetClientWrite: func() *dao.Client {
 			return write_database_client
 		},
 		GetProcessor: func() *Processor {

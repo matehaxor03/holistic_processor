@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	common "github.com/matehaxor03/holistic_common/common"
-	db_client "github.com/matehaxor03/holistic_db_client/db_client"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 	http_extension "github.com/matehaxor03/holistic_http/http_extension"
 	helper "github.com/matehaxor03/holistic_db_client/helper"
+	validate "github.com/matehaxor03/holistic_db_client/validate"
 )
 
 type ProcessorServer struct {
@@ -18,21 +18,19 @@ type ProcessorServer struct {
 
 func NewProcessorServer(port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
 	var errors []error
-	struct_type := "processor.ProcessorServer"
-	client_manager, client_manager_errors := db_client.NewClientManager()
+	verify := validate.NewValidator()
+
+	client_manager, client_manager_errors := dao.NewClientManager()
 	if client_manager_errors != nil {
 		return nil, client_manager_errors
 	}
-
-	test_read_client, test_read_client_errors := client_manager.GetClient("holistic_db_config#127.0.0.1#3306#holistic#holistic_read")
+	
+	test_read_client, test_read_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_read")
 	if test_read_client_errors != nil {
 		return nil, test_read_client_errors
 	}
 	
-	test_read_database, test_read_database_errors := test_read_client.GetDatabase()
-	if test_read_database_errors != nil {
-		return nil, test_read_database_errors
-	}
+	test_read_database := test_read_client.GetDatabase()
 	
 	processors := make(map[string](*Processor))
 	table_names, table_names_errors := test_read_database.GetTableNames()
@@ -40,7 +38,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return nil, table_names_errors
 	}
 
-	domain_name, domain_name_errors := dao.NewDomainName(queue_domain_name)
+	domain_name, domain_name_errors := dao.NewDomainName(verify, queue_domain_name)
 	if domain_name_errors != nil {
 		return nil, domain_name_errors
 	}
@@ -101,7 +99,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	getPort := func() (string, []error) {
-		temp_value, temp_value_errors := helper.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[port]", "string")
+		temp_value, temp_value_errors := helper.GetField(*getData(), "[system_schema]", "[system_fields]", "[port]", "string")
 		if temp_value_errors != nil {
 			return "",temp_value_errors
 		}
@@ -109,7 +107,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	getServerCrtPath := func() (string, []error) {
-		temp_value, temp_value_errors := helper.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_crt_path]", "string")
+		temp_value, temp_value_errors := helper.GetField(*getData(), "[system_schema]", "[system_fields]", "[server_crt_path]", "string")
 		if temp_value_errors != nil {
 			return "",temp_value_errors
 		}
@@ -117,7 +115,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	getServerKeyPath := func() (string, []error) {
-		temp_value, temp_value_errors := helper.GetField(struct_type, getData(), "[system_schema]", "[system_fields]", "[server_key_path]", "string")
+		temp_value, temp_value_errors := helper.GetField(*getData(), "[system_schema]", "[system_fields]", "[server_key_path]", "string")
 		if temp_value_errors != nil {
 			return "",temp_value_errors
 		}
@@ -278,7 +276,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	//setHolisticQueueServer(&x)
 
 
-	for _, table_name := range *table_names {
+	for _, table_name := range table_names {
 		create_processor, create_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "CreateRecords_" + table_name)
 		if create_processor_errors != nil {
 			errors = append(errors, create_processor_errors...)
