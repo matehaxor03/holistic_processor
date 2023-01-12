@@ -10,6 +10,7 @@ import (
 	http_extension "github.com/matehaxor03/holistic_http/http_extension"
 	helper "github.com/matehaxor03/holistic_db_client/helper"
 	validate "github.com/matehaxor03/holistic_db_client/validate"
+	monitoring "github.com/matehaxor03/holistic_processor/monitoring"
 )
 
 type ProcessorServer struct {
@@ -372,6 +373,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			processors[command] = processor
 		} else {
 			errors = append(errors, fmt.Errorf("failed to create processor: %s", command))
+		}
+
+		cpu_load, cpu_load_errors := monitoring.GetCPULoad()
+		if cpu_load_errors != nil {
+			fmt.Println(cpu_load_errors)
+		} else {
+			fmt.Println(cpu_load)
 		}
 	}
 	
