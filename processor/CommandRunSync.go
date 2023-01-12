@@ -258,6 +258,8 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	incomplete_steps_found := false
+	incomplete_steps_found_running_count := 0
+	incomplete_steps_found_not_started_count := 0
 	for _, previous_read_records_build_branch_instance_step := range *(previous_read_records_build_branch_instance_step_array.GetValues()) {
 		compare_step, compare_step_errors  := previous_read_records_build_branch_instance_step.GetMap()
 		if compare_step_errors != nil {
@@ -281,16 +283,19 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		}
 
 		if *compare_step_build_step_status_id == *build_step_status_running_id {
-			fmt.Println("there are steps with status \"Running\" ignore triggering next step")
 			incomplete_steps_found = true
-			return nil
+			incomplete_steps_found_running_count++
 		}
 
 		if *compare_step_build_step_status_id == *build_step_status_not_started_id {
-			fmt.Println("there are steps with status \"Not Started\" ignore triggering next step")
 			incomplete_steps_found = true
-			return nil
+			incomplete_steps_found_not_started_count++
 		}
+	}
+
+	if incomplete_steps_found {
+		fmt.Println(fmt.Sprintf("there are %d steps with status \"Running\" and %d steps with status \"Not Started\" ignore triggering next step", incomplete_steps_found_running_count, incomplete_steps_found_not_started_count))
+		return nil
 	}
 
 	if len(errors) == 0 && !incomplete_steps_found {

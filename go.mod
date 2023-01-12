@@ -3,8 +3,8 @@ module github.com/matehaxor03/holistic_processor
 go 1.19
 
 require (
-	github.com/matehaxor03/holistic_db_client v0.0.483
-	github.com/matehaxor03/holistic_json v0.0.84
+	github.com/matehaxor03/holistic_db_client v0.0.484
+	github.com/matehaxor03/holistic_json v0.0.85
 )
 
 require (
