@@ -328,243 +328,53 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 	}
 
-	run_sync_processor, run_sync_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Sync")
-	if run_sync_processor_errors != nil {
-		errors = append(errors, run_sync_processor_errors...)
-	} else if run_sync_processor != nil {
-		processors["Run_Sync"] = run_sync_processor
-	}
+	commands_list := [...]string{"Run_Sync",
+								"Run_StartBuildBranchInstance", 
+								"Run_NotStarted", 
+								"Run_Start",
+								"Run_CreateSourceFolder",
+								"Run_CreateDomainNameFolder",
+								"Run_CreateRepositoryAccountFolder",
+								"Run_CreateRepositoryFolder",
+								"Run_CreateBranchesFolder",
+								"Run_CreateTagsFolder",
+								"Run_CreateBranchOrTagFolder",
+								"Run_CloneBranchOrTagFolder",
+								"Run_PullLatestBranchOrTagFolder",
+								"Run_CreateBranchInstancesFolder",
+								"Run_CreateTagInstancesFolder",
+								"Run_CopyToInstanceFolder",
+								"Run_CreateInstanceFolder",
+								"Run_CreateGroup",
+								"Run_CreateUser",
+								"Run_AssignGroupToUser",
+								"Run_AssignGroupToInstanceFolder",
+								"Run_Clean",
+								"Run_Lint",
+								"Run_Build",
+								"Run_UnitTests",
+								"Run_IntegrationTests",
+								"Run_IntegrationTestSuite",
+								"Run_RemoveGroupFromInstanceFolder",
+								"Run_RemoveGroupFromUser",
+								"Run_DeleteGroup",
+								"Run_DeleteUser",
+								"Run_DeleteInstanceFolder",
+								"Run_End",
+								"GetTableNames"}
 
-	run_build_branch_instance_processor, run_build_branch_instance_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_StartBuildBranchInstance")
-	if run_build_branch_instance_processor_errors != nil {
-		errors = append(errors, run_build_branch_instance_processor_errors...)
-	} else if run_build_branch_instance_processor != nil {
-		processors["Run_StartBuildBranchInstance"] = run_build_branch_instance_processor
-	}
 
-	run_not_started_processor, run_not_started_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_NotStarted")
-	if run_not_started_processor_errors != nil {
-		errors = append(errors, run_not_started_processor_errors...)
-	} else if run_not_started_processor != nil {
-		processors["Run_NotStarted"] = run_not_started_processor
+	for _, command := range commands_list {
+		processor, processor_errors := NewProcessor(client_manager, *domain_name, queue_port, command)
+		if processor_errors != nil {
+			errors = append(errors, processor_errors...)
+		} else if processor != nil {
+			processors[command] = processor
+		} else {
+			errors = append(errors, fmt.Errorf("failed to create processor: %s", command))
+		}
 	}
-
-	run_start_processor, run_start_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Start")
-	if run_start_processor_errors != nil {
-		errors = append(errors, run_start_processor_errors...)
-	} else if run_not_started_processor != nil {
-		processors["Run_Start"] = run_start_processor
-	}
-
-	run_create_sources_processor, run_create_sources_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateSourceFolder")
-	if run_create_sources_processor_errors != nil {
-		errors = append(errors, run_create_sources_processor_errors...)
-	} else if run_not_started_processor != nil {
-		processors["Run_CreateSourceFolder"] = run_create_sources_processor
-	}
-
-	run_create_domain_name_processor, run_create_domain_name_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateDomainNameFolder")
-	if run_create_domain_name_processor_errors != nil {
-		errors = append(errors, run_create_domain_name_processor_errors...)
-	} else if run_create_domain_name_processor != nil {
-		processors["Run_CreateDomainNameFolder"] = run_create_domain_name_processor
-	}
-
-	run_create_repository_account_processor, run_create_repository_account_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateRepositoryAccountFolder")
-	if run_create_repository_account_processor_errors != nil {
-		errors = append(errors, run_create_repository_account_processor_errors...)
-	} else if run_create_repository_account_processor != nil {
-		processors["Run_CreateRepositoryAccountFolder"] = run_create_repository_account_processor
-	}
-
-	run_create_repository_processor, run_create_repository_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateRepositoryFolder")
-	if run_create_repository_processor_errors != nil {
-		errors = append(errors, run_create_repository_processor_errors...)
-	} else if run_create_repository_processor != nil {
-		processors["Run_CreateRepositoryFolder"] = run_create_repository_processor
-	}
-
-	run_create_branches_processor, run_create_branches_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateBranchesFolder")
-	if run_create_branches_processor_errors != nil {
-		errors = append(errors, run_create_branches_processor_errors...)
-	} else if run_create_branches_processor != nil {
-		processors["Run_CreateBranchesFolder"] = run_create_branches_processor
-	}
-
-	run_create_tags_processor, run_create_tags_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateTagsFolder")
-	if run_create_tags_processor_errors != nil {
-		errors = append(errors, run_create_tags_processor_errors...)
-	} else if run_create_tags_processor != nil {
-		processors["Run_CreateTagsFolder"] = run_create_tags_processor
-	}
-
-	run_create_branch_or_tag_folder_processor, run_create_branch_or_tag_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateBranchOrTagFolder")
-	if run_create_branch_or_tag_folder_processor_errors != nil {
-		errors = append(errors, run_create_branch_or_tag_folder_processor_errors...)
-	} else if run_create_branch_or_tag_folder_processor != nil {
-		processors["Run_CreateBranchOrTagFolder"] = run_create_branch_or_tag_folder_processor
-	}
-
-	run_clone_branch_or_tag_processor, run_clone_branch_or_tag_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CloneBranchOrTagFolder")
-	if run_clone_branch_or_tag_processor_errors != nil {
-		errors = append(errors, run_clone_branch_or_tag_processor_errors...)
-	} else if run_clone_branch_or_tag_processor != nil {
-		processors["Run_CloneBranchOrTagFolder"] = run_clone_branch_or_tag_processor
-	}
-
-	run_pull_latest_branch_or_tag_processor, run_pull_latest_branch_or_tag_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_PullLatestBranchOrTagFolder")
-	if run_pull_latest_branch_or_tag_processor_errors != nil {
-		errors = append(errors, run_pull_latest_branch_or_tag_processor_errors...)
-	} else if run_pull_latest_branch_or_tag_processor != nil {
-		processors["Run_PullLatestBranchOrTagFolder"] = run_pull_latest_branch_or_tag_processor
-	}
-
-	run_create_branch_instances_folder_processor, run_create_branch_instances_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateBranchInstancesFolder")
-	if run_create_branch_instances_folder_processor_errors != nil {
-		errors = append(errors, run_create_branch_instances_folder_processor_errors...)
-	} else if run_create_branch_instances_folder_processor != nil {
-		processors["Run_CreateBranchInstancesFolder"] = run_create_branch_instances_folder_processor
-	}
-
-	run_create_tag_instances_folder_processor, run_create_tag_instances_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateTagInstancesFolder")
-	if run_create_tag_instances_folder_processor_errors != nil {
-		errors = append(errors, run_create_tag_instances_folder_processor_errors...)
-	} else if run_create_tag_instances_folder_processor != nil {
-		processors["Run_CreateTagInstancesFolder"] = run_create_tag_instances_folder_processor
-	}
-
-	run_copy_to_instance_folder_processor, run_copy_to_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CopyToInstanceFolder")
-	if run_copy_to_instance_folder_processor_errors != nil {
-		errors = append(errors, run_copy_to_instance_folder_processor_errors...)
-	} else if run_copy_to_instance_folder_processor != nil {
-		processors["Run_CopyToInstanceFolder"] = run_copy_to_instance_folder_processor
-	}
-
-	run_create_instance_folder_processor, run_create_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateInstanceFolder")
-	if run_create_instance_folder_processor_errors != nil {
-		errors = append(errors, run_create_instance_folder_processor_errors...)
-	} else if run_create_instance_folder_processor != nil {
-		processors["Run_CreateInstanceFolder"] = run_create_instance_folder_processor
-	}
-
-	run_create_group_processor, run_create_group_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateGroup")
-	if run_create_group_processor_errors != nil {
-		errors = append(errors, run_create_group_processor_errors...)
-	} else if run_create_group_processor != nil {
-		processors["Run_CreateGroup"] = run_create_group_processor
-	}
-
-	run_create_user_processor, run_create_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_CreateUser")
-	if run_create_user_processor_errors != nil {
-		errors = append(errors, run_create_user_processor_errors...)
-	} else if run_create_user_processor != nil {
-		processors["Run_CreateUser"] = run_create_user_processor
-	}
-
-	run_assign_group_to_user_processor, run_assign_group_to_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_AssignGroupToUser")
-	if run_assign_group_to_user_processor_errors != nil {
-		errors = append(errors, run_assign_group_to_user_processor_errors...)
-	} else if run_assign_group_to_user_processor != nil {
-		processors["Run_AssignGroupToUser"] = run_assign_group_to_user_processor
-	}
-
-	run_assign_group_to_instance_folder_processor, run_assign_group_to_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_AssignGroupToInstanceFolder")
-	if run_assign_group_to_instance_folder_processor_errors != nil {
-		errors = append(errors, run_assign_group_to_instance_folder_processor_errors...)
-	} else if run_assign_group_to_instance_folder_processor != nil {
-		processors["Run_AssignGroupToInstanceFolder"] = run_assign_group_to_instance_folder_processor
-	}
-
-	run_clean_processor, run_clean_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Clean")
-	if run_clean_processor_errors != nil {
-		errors = append(errors, run_clean_processor_errors...)
-	} else if run_clean_processor != nil {
-		processors["Run_Clean"] = run_clean_processor
-	}
-
-	run_lint_processor, run_lint_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Lint")
-	if run_lint_processor_errors != nil {
-		errors = append(errors, run_lint_processor_errors...)
-	} else if run_lint_processor != nil {
-		processors["Run_Lint"] = run_lint_processor
-	}
-
-	run_build_processor, run_build_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_Build")
-	if run_build_processor_errors != nil {
-		errors = append(errors, run_build_processor_errors...)
-	} else if run_build_processor != nil {
-		processors["Run_Build"] = run_build_processor
-	}
-
-	run_unit_tests_processor, run_unit_tests_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_UnitTests")
-	if run_unit_tests_processor_errors != nil {
-		errors = append(errors, run_unit_tests_processor_errors...)
-	} else if run_unit_tests_processor != nil {
-		processors["Run_UnitTests"] = run_unit_tests_processor
-	}
-
-	run_integration_tests_processor, run_integration_tests_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_IntegrationTests")
-	if run_integration_tests_processor_errors != nil {
-		errors = append(errors, run_integration_tests_processor_errors...)
-	} else if run_integration_tests_processor != nil {
-		processors["Run_IntegrationTests"] = run_integration_tests_processor
-	}
-
-	run_integration_test_suite_processor, run_integration_test_suite_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_IntegrationTestSuite")
-	if run_integration_test_suite_processor_errors != nil {
-		errors = append(errors, run_integration_test_suite_processor_errors...)
-	} else if run_integration_test_suite_processor != nil {
-		processors["Run_IntegrationTestSuite"] = run_integration_test_suite_processor
-	}
-
-	run_remove_group_from_instance_folder_processor, run_remove_group_from_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_RemoveGroupFromInstanceFolder")
-	if run_remove_group_from_instance_folder_processor_errors != nil {
-		errors = append(errors, run_remove_group_from_instance_folder_processor_errors...)
-	} else if run_remove_group_from_instance_folder_processor != nil {
-		processors["Run_RemoveGroupFromInstanceFolder"] = run_remove_group_from_instance_folder_processor
-	}
-
-	run_remove_group_from_user_processor, run_remove_group_from_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_RemoveGroupFromUser")
-	if run_remove_group_from_user_processor_errors != nil {
-		errors = append(errors, run_remove_group_from_user_processor_errors...)
-	} else if run_remove_group_from_user_processor != nil {
-		processors["Run_RemoveGroupFromUser"] = run_remove_group_from_user_processor
-	}
-
-	run_delete_group_processor, run_delete_group_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_DeleteGroup")
-	if run_delete_group_processor_errors != nil {
-		errors = append(errors, run_delete_group_processor_errors...)
-	} else if run_delete_group_processor != nil {
-		processors["Run_DeleteGroup"] = run_delete_group_processor
-	}
-
-	run_delete_user_processor, run_delete_user_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_DeleteUser")
-	if run_delete_user_processor_errors != nil {
-		errors = append(errors, run_delete_user_processor_errors...)
-	} else if run_delete_user_processor != nil {
-		processors["Run_DeleteUser"] = run_delete_user_processor
-	}
-
-	run_delete_instance_folder_processor, run_delete_instance_folder_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_DeleteInstanceFolder")
-	if run_delete_instance_folder_processor_errors != nil {
-		errors = append(errors, run_delete_instance_folder_processor_errors...)
-	} else if run_delete_instance_folder_processor != nil {
-		processors["Run_DeleteInstanceFolder"] = run_delete_instance_folder_processor
-	}
-
-	run_end_processor, run_end_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "Run_End")
-	if run_end_processor_errors != nil {
-		errors = append(errors, run_end_processor_errors...)
-	} else if run_end_processor != nil {
-		processors["Run_End"] = run_end_processor
-	}
-
-	get_tables_processor, get_tables_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetTableNames")
-	if get_tables_processor_errors != nil {
-		errors = append(errors, get_tables_processor_errors...)
-	} else if get_tables_processor != nil {
-		processors["GetTableNames"] = get_tables_processor
-	}
+	
 
 	validate_errors := validate()
 	if validate_errors != nil {
