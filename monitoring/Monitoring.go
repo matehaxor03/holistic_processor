@@ -34,3 +34,31 @@ func GetCPULoad() (float64, []error) {
 	return cpu_value, nil
 }
 
+func GetCPUVirtualCores() (int, []error) {
+	var errors []error
+	bashCommand := common.NewBashCommand()
+	shell_output, bash_errors := bashCommand.ExecuteUnsafeCommand("sysctl -n hw.ncpu", nil, nil)
+	
+	if bash_errors != nil && len(bash_errors) > 0 {
+		return 0.0, bash_errors
+	}
+
+	if len(*shell_output) != 1 {
+		errors = append(errors, fmt.Errorf("cpu cores contained more than one line"))
+		return 0, errors
+	}
+
+	cpu_cores_as_string := (*shell_output)[0]
+
+	cpu_cores, cpu_cores_error := strconv.Atoi(cpu_cores_as_string)
+	if cpu_cores_error != nil {
+		errors = append(errors, cpu_cores_error)
+	}
+
+	if len(errors) > 0 {
+		return 0, errors
+	}
+
+	return cpu_cores, nil
+}
+

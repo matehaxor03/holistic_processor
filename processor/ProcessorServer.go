@@ -381,6 +381,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		} else {
 			fmt.Println(cpu_load)
 		}
+
+		cpu_cores, cpu_cores_errors := monitoring.GetCPUVirtualCores()
+		if cpu_cores_errors != nil {
+			fmt.Println(cpu_cores_errors)
+		} else {
+			fmt.Println(cpu_cores)
+		}
 	}
 	
 
