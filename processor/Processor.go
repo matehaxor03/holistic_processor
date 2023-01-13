@@ -83,12 +83,12 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 		Transport: transport_config,
 	}
 
-	read_database_client, read_database_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_read")
+	read_database_client, read_database_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_r")
 	if read_database_client_errors != nil {
 		return nil, read_database_client_errors
 	}
 
-	write_database_client, write_database_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_write")
+	write_database_client, write_database_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_w")
 	if write_database_client_errors != nil {
 		return nil, write_database_client_errors
 	}

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"fmt"
 	"io/ioutil"
+	"strings"
+	"strconv"
 	common "github.com/matehaxor03/holistic_common/common"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
@@ -26,14 +28,14 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return nil, client_manager_errors
 	}
 	
-	test_read_client, test_read_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_read")
+	test_read_client, test_read_client_errors := client_manager.GetClient("127.0.0.1", "3306", "holistic", "holistic_r")
 	if test_read_client_errors != nil {
 		return nil, test_read_client_errors
 	}
 	
 	test_read_database := test_read_client.GetDatabase()
 	
-	processors := make(map[string](*Processor))
+	processors := make(map[string](*ProcessorManager))
 	table_names, table_names_errors := test_read_database.GetTableNames()
 	if table_names_errors != nil {
 		return nil, table_names_errors
@@ -278,35 +280,35 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 
 	for _, table_name := range table_names {
-		create_processor, create_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "CreateRecords_" + table_name)
+		create_processor, create_processor_errors := NewProcessorManager(client_manager, *domain_name, queue_port, "CreateRecords_" + table_name, 1, -1)
 		if create_processor_errors != nil {
 			errors = append(errors, create_processor_errors...)
 		} else if create_processor != nil {
 			processors["CreateRecords_" + table_name] = create_processor
 		}
 
-		create_record_processor, create_record_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "CreateRecord_" + table_name)
+		create_record_processor, create_record_processor_errors := NewProcessorManager(client_manager, *domain_name, queue_port, "CreateRecord_" + table_name, 1, -1)
 		if create_record_processor_errors != nil {
 			errors = append(errors, create_record_processor_errors...)
 		} else if create_record_processor != nil {
 			processors["CreateRecord_" + table_name] = create_record_processor
 		}
 
-		read_processor, read_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "ReadRecords_" + table_name)
+		read_processor, read_processor_errors := NewProcessorManager(client_manager, *domain_name, queue_port, "ReadRecords_" + table_name, 1, -1)
 		if read_processor_errors != nil {
 			errors = append(errors, read_processor_errors...)
 		} else if read_processor != nil {
 			processors["ReadRecords_" + table_name] = read_processor
 		}
 
-		update_processor, update_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name)
+		update_processor, update_processor_errors := NewProcessorManager(client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name, 1, 1)
 		if update_processor_errors != nil {
 			errors = append(errors, update_processor_errors...)
 		} else if update_processor != nil {
 			processors["UpdateRecords_" + table_name] = update_processor
 		}
 
-		update_record_processor, update_record_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name)
+		update_record_processor, update_record_processor_errors := NewProcessorManager(client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name, 1, 1)
 		if update_record_processor_errors != nil {
 			errors = append(errors, update_record_processor_errors...)
 		} else if update_record_processor != nil {
@@ -321,7 +323,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			processors["DeleteRecords_" + table_name] = delete_processor
 		}*/
 
-		get_schema_processor, get_schema_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "GetSchema_" + table_name)
+		get_schema_processor, get_schema_processor_errors := NewProcessorManager(client_manager, *domain_name, queue_port, "GetSchema_" + table_name, 1, -1)
 		if get_schema_processor_errors != nil {
 			errors = append(errors, get_schema_processor_errors...)
 		} else if get_schema_processor != nil {
@@ -329,50 +331,70 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		}
 	}
 
-	commands_list := [...]string{"Run_Sync",
-								"Run_StartBuildBranchInstance", 
-								"Run_NotStarted", 
-								"Run_Start",
-								"Run_CreateSourceFolder",
-								"Run_CreateDomainNameFolder",
-								"Run_CreateRepositoryAccountFolder",
-								"Run_CreateRepositoryFolder",
-								"Run_CreateBranchesFolder",
-								"Run_CreateTagsFolder",
-								"Run_CreateBranchOrTagFolder",
-								"Run_CloneBranchOrTagFolder",
-								"Run_PullLatestBranchOrTagFolder",
-								"Run_CreateBranchInstancesFolder",
-								"Run_CreateTagInstancesFolder",
-								"Run_CopyToInstanceFolder",
-								"Run_CreateInstanceFolder",
-								"Run_CreateGroup",
-								"Run_CreateUser",
-								"Run_AssignGroupToUser",
-								"Run_AssignGroupToInstanceFolder",
-								"Run_Clean",
-								"Run_Lint",
-								"Run_Build",
-								"Run_UnitTests",
-								"Run_IntegrationTests",
-								"Run_IntegrationTestSuite",
-								"Run_RemoveGroupFromInstanceFolder",
-								"Run_RemoveGroupFromUser",
-								"Run_DeleteGroup",
-								"Run_DeleteUser",
-								"Run_DeleteInstanceFolder",
-								"Run_End",
-								"GetTableNames"}
+	commands_list := [...]string{"Run_Sync:1:1",
+								"Run_StartBuildBranchInstance:1:1", 
+								"Run_NotStarted:1:1", 
+								"Run_Start:1:1",
+								"Run_CreateSourceFolder:1:1",
+								"Run_CreateDomainNameFolder:1:-1",
+								"Run_CreateRepositoryAccountFolder:1:1",
+								"Run_CreateRepositoryFolder:1:1",
+								"Run_CreateBranchesFolder:1:1",
+								"Run_CreateTagsFolder:1:1",
+								"Run_CreateBranchOrTagFolder:1:1",
+								"Run_CloneBranchOrTagFolder:1:1",
+								"Run_PullLatestBranchOrTagFolder:1:1",
+								"Run_CreateBranchInstancesFolder:1:1",
+								"Run_CreateTagInstancesFolder:1:1",
+								"Run_CopyToInstanceFolder:1:1",
+								"Run_CreateInstanceFolder:1:1",
+								"Run_CreateGroup:1:1",
+								"Run_CreateUser:1:1",
+								"Run_AssignGroupToUser:1:1",
+								"Run_AssignGroupToInstanceFolder:1:1",
+								"Run_Clean:1:-1",
+								"Run_Lint:1:-1",
+								"Run_Build:1:-1",
+								"Run_UnitTests:1:-1",
+								"Run_IntegrationTests:1:-1",
+								"Run_IntegrationTestSuite:1:-1",
+								"Run_RemoveGroupFromInstanceFolder:1:1",
+								"Run_RemoveGroupFromUser:1:1",
+								"Run_DeleteGroup:1:1",
+								"Run_DeleteUser:1:1",
+								"Run_DeleteInstanceFolder:1:1",
+								"Run_End:1:1",
+								"GetTableNames:1:1"}
 
 
 	for _, command := range commands_list {
-		processor, processor_errors := NewProcessor(client_manager, *domain_name, queue_port, command)
+		parts := strings.Split(command, ":")
+		if len(parts) != 3 {
+			errors = append(errors, fmt.Errorf("parts is not 3 for processor manager: " + command))
+			continue
+		}
+		
+		command_name := parts[0]
+
+		minimum_threads, minimum_threads_error := strconv.ParseInt(string(parts[1]), 10, 64)
+		if minimum_threads_error != nil {
+			errors = append(errors, minimum_threads_error)
+			continue
+		}
+
+		maximum_threads, maximum_threads_error := strconv.ParseInt(string(parts[2]), 10, 64)
+		if maximum_threads_error != nil {
+			errors = append(errors, maximum_threads_error)
+			continue
+		}
+
+		processor, processor_errors := NewProcessorManager(client_manager, *domain_name, queue_port, command_name, int(minimum_threads), int(maximum_threads))
 		if processor_errors != nil {
 			errors = append(errors, processor_errors...)
 		} else if processor != nil {
-			processors[command] = processor
+			processors[command_name] = processor
 		} else {
-			errors = append(errors, fmt.Errorf("failed to create processor: %s", command))
+			errors = append(errors, fmt.Errorf("failed to create processor: %s", command_name))
 		}
 
 		cpu_load, cpu_load_errors := monitoring.GetCPULoad()
