@@ -81,13 +81,20 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		fmt.Println("running " + *test_suite_name)
 		bashCommand := common.NewBashCommand()
 		command := fmt.Sprintf("cd %s && go test -timeout 7200s -outputdir= -json .%s", full_path_of_instance_directory, test_suite_relative_path)
-		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, std_callback, stderr_callback)
-		if bash_command_errors != nil {
-			errors = append(errors, bash_command_errors...)
+		stdout_lines, stderr_lines := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(command)
+		if stderr_lines != nil {
+			errors = append(errors, stderr_lines...)
 			fmt.Println("running " + *test_suite_name + " fail")
+			for _, stderr_line := range errors {
+				(*stderr_callback)(stderr_line)
+			}
 		} else {
 			fmt.Println("running " + *test_suite_name + " pass")
 		} 
+		
+		for _, stdout_line := range stdout_lines {
+			(*std_callback)(stdout_line)
+		}
 	} else {
 		fmt.Println("not found file " + *test_suite_name)
 	}
