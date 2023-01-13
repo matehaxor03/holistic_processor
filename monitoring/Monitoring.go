@@ -9,15 +9,25 @@ import (
 
 func GetCPULoad() (float64, []error) {
 	var errors []error
+	stdout := func(message string) {
+
+	}
+
+	stderr := func(message error) {
+
+	}
+	stdout("a")
+	stderr(fmt.Errorf("a"))
 	bashCommand := common.NewBashCommand()
-	shell_output, bash_errors := bashCommand.ExecuteUnsafeCommand("ps -A -o %cpu | awk '{cpu_count+=$1} END {print cpu_count}'", nil, nil)
+	shell_output, bash_errors := bashCommand.ExecuteUnsafeCommand("ps -A -o %cpu | awk '{cpu_count+=$1} END {print cpu_count}'", &stdout, &stderr)
 	
 	if bash_errors != nil && len(bash_errors) > 0 {
 		return 0.0, bash_errors
 	}
 
-	if len(*shell_output) != 1 {
-		errors = append(errors, fmt.Errorf("cpu output contained more than one line"))
+	fmt.Println(*shell_output)
+	if len(*shell_output) == 0 {
+		errors = append(errors, fmt.Errorf("cpu output contained did not contain any lines"))
 		return 0.0, errors
 	}
 
@@ -37,15 +47,26 @@ func GetCPULoad() (float64, []error) {
 
 func GetMemoryLoad() (float64, []error) {
 	var errors []error
+	stdout := func(message string) {
+
+	}
+
+	stderr := func(message error) {
+
+	}
+	stdout("a")
+	stderr(fmt.Errorf("a"))
+
 	bashCommand := common.NewBashCommand()
-	shell_output, bash_errors := bashCommand.ExecuteUnsafeCommand("ps -A -o %mem | awk '{memory_count+=$1} END {print memory_count}'", nil, nil)
+	shell_output, bash_errors := bashCommand.ExecuteUnsafeCommand("ps -A -o %mem | awk '{memory_count+=$1} END {print memory_count}'", &stdout, &stderr)
 	
 	if bash_errors != nil && len(bash_errors) > 0 {
 		return 0.0, bash_errors
 	}
 
-	if len(*shell_output) != 1 {
-		errors = append(errors, fmt.Errorf("memory output contained more than one line"))
+	fmt.Println(*shell_output)
+	if len(*shell_output) == 0 {
+		errors = append(errors, fmt.Errorf("memory output contained did not contain any lines"))
 		return 0.0, errors
 	}
 
