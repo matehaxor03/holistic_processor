@@ -21,14 +21,6 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 		return errors
 	}
 
-	std_callback := func(message string) {
-		fmt.Println(message)
-	}
-
-	stderr_callback := func(message error) {
-		fmt.Println(message)
-	}
-
 	instance_folder_parts := common.GetDataDirectory()
 	instance_folder_parts = append(instance_folder_parts, "src")
 	instance_folder_parts = append(instance_folder_parts, *domain_name)
@@ -49,7 +41,7 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 
 	if _, stat_error := os.Stat(full_path_of_instance_directory); !os.IsNotExist(stat_error) {
 		build_command := fmt.Sprintf("cd %s && go build", full_path_of_instance_directory)
-		_, build_bash_command_errors := bashCommand.ExecuteUnsafeCommand(build_command, &std_callback, &stderr_callback)
+		_, build_bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(build_command)
 		if build_bash_command_errors != nil {
 			errors = append(errors, build_bash_command_errors...)
 		} 
@@ -57,7 +49,7 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 
 	if _, stat_error := os.Stat(full_path_of_integration_tests_folder); !os.IsNotExist(stat_error) {
 		build_tests_command := fmt.Sprintf("cd %s && go clean -testcache | go test -c -outputdir= .%s", full_path_of_instance_directory, test_integration_relative_path)
-		_, build_tests_bash_command_errors := bashCommand.ExecuteUnsafeCommand(build_tests_command, &std_callback, &stderr_callback)
+		_, build_tests_bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(build_tests_command)
 		if build_tests_bash_command_errors != nil {
 			errors = append(errors, build_tests_bash_command_errors...)
 		} 

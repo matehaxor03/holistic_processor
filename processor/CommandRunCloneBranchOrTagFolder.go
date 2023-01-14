@@ -22,14 +22,6 @@ func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, r
 		return errors
 	}
 
-	std_callback := func(message string) {
-		fmt.Println(message)
-	}
-
-	stderr_callback := func(message error) {
-		fmt.Println(message)
-	}
-
 	// todo: validate directory names
 	directory_parts := common.GetDataDirectory()
 	directory_parts = append(directory_parts, "src")
@@ -45,7 +37,7 @@ func commandRunCloneBranchOrTagFolder(processor *Processor, request *json.Map, r
 	if _, stat_error := os.Stat("/" + full_path_of_directory); os.IsNotExist(stat_error) {
 		bashCommand := common.NewBashCommand()
 		command := fmt.Sprintf("git clone --branch %s git@%s:%s/%s.git %s", *branch_name, *domain_name, *repository_account_name, *repository_name, "/" + full_path_of_directory)
-		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
+		_, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(command)
 		if bash_command_errors != nil && len(bash_command_errors) > 0 {
 			if !strings.Contains(fmt.Sprintf("%s", bash_command_errors[0]), "Cloning into") {
 				errors = append(errors, bash_command_errors...)

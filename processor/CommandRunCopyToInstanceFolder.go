@@ -20,14 +20,6 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 		}
 		return errors
 	}
-
-	std_callback := func(message string) {
-		fmt.Println(message)
-	}
-
-	stderr_callback := func(message error) {
-		fmt.Println(message)
-	}
 	//depending if doing by branch or tag
 
 
@@ -56,7 +48,7 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 	bashCommand := common.NewBashCommand()
 	if _, stat_error := os.Stat(full_path_of_directory); !os.IsNotExist(stat_error) {
 		copy_command := fmt.Sprintf("rsync -r %s %s && touch %s", full_path_of_directory + "/",  full_path_of_instance_directory, full_path_of_instance_directory)
-		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(copy_command, &std_callback,  &stderr_callback)
+		_, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(copy_command)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
 		} 

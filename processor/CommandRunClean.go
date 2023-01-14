@@ -21,14 +21,6 @@ func commandRunClean(processor *Processor, request *json.Map, response_queue_res
 		return errors
 	}
 
-	std_callback := func(message string) {
-		fmt.Println(message)
-	}
-
-	stderr_callback := func(message error) {
-		fmt.Println(message)
-	}
-
 	instance_folder_parts := common.GetDataDirectory()
 	instance_folder_parts = append(instance_folder_parts, "src")
 	instance_folder_parts = append(instance_folder_parts, *domain_name)
@@ -43,7 +35,7 @@ func commandRunClean(processor *Processor, request *json.Map, response_queue_res
 	bashCommand := common.NewBashCommand()
 	if _, stat_error := os.Stat(full_path_of_instance_directory); !os.IsNotExist(stat_error) {
 		clean_command := fmt.Sprintf("cd %s && go clean", full_path_of_instance_directory)
-		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(clean_command, &std_callback, &stderr_callback)
+		_, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(clean_command)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
 		} 

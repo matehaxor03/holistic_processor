@@ -21,14 +21,6 @@ func commandRunPullLatestBranchOrTagFolder(processor *Processor, request *json.M
 		return errors
 	}
 
-	std_callback := func(message string) {
-		fmt.Println(message)
-	}
-
-	stderr_callback := func(message error) {
-		fmt.Println(message)
-	}
-
 	// todo: validate directory names
 	directory_parts := common.GetDataDirectory()
 	directory_parts = append(directory_parts, "src")
@@ -43,15 +35,15 @@ func commandRunPullLatestBranchOrTagFolder(processor *Processor, request *json.M
 
 	bashCommand := common.NewBashCommand()
 	command := fmt.Sprintf("cd %s && git pull", "/" + full_path_of_directory)
-	_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
+	_, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(command)
 	if bash_command_errors != nil {
 		for _, error_message := range bash_command_errors {
 			if !(strings.Contains(fmt.Sprintf("%s", error_message), "-> ") ||
-		   strings.Contains(fmt.Sprintf("%s", error_message), "file changed") ||
-		   strings.Contains(fmt.Sprintf("%s", error_message), "Updating") ||
-		   strings.Contains(fmt.Sprintf("%s", error_message), "From ") ||
-		   strings.Contains(fmt.Sprintf("%s", error_message), "Fast-forward") ||
-		   strings.Contains(fmt.Sprintf("%s", error_message), ".go ")) {
+				strings.Contains(fmt.Sprintf("%s", error_message), "file changed") ||
+				strings.Contains(fmt.Sprintf("%s", error_message), "Updating") ||
+				strings.Contains(fmt.Sprintf("%s", error_message), "From ") ||
+				strings.Contains(fmt.Sprintf("%s", error_message), "Fast-forward") ||
+				strings.Contains(fmt.Sprintf("%s", error_message), ".go ")) {
 			errors = append(errors, error_message)
 			}
 		}

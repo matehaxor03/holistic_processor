@@ -21,14 +21,6 @@ func commandRunDeleteInstanceFolder(processor *Processor, request *json.Map, res
 		return errors
 	}
 
-	std_callback := func(message string) {
-		fmt.Println(message)
-	}
-
-	stderr_callback := func(message error) {
-		fmt.Println(message)
-	}
-
 	// todo: validate directory names do things depending if branch or tag
 	directory_parts := common.GetDataDirectory()
 	directory_parts = append(directory_parts, "src")
@@ -42,7 +34,7 @@ func commandRunDeleteInstanceFolder(processor *Processor, request *json.Map, res
 	if _, stat_error := os.Stat(full_path_of_directory); !os.IsNotExist(stat_error) {
 		bashCommand := common.NewBashCommand()
 		command := fmt.Sprintf("rm -fr %s", full_path_of_directory)
-		_, bash_command_errors := bashCommand.ExecuteUnsafeCommand(command, &std_callback, &stderr_callback)
+		_, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(command)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
 		} 
