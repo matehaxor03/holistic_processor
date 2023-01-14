@@ -60,16 +60,58 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return errors
 	}
 
+	where_query_build_step_status_not_started := json.NewMap()
+	where_query_build_step_status_not_started.SetStringValue("name", "Not Started")
+	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil)
+	if records_not_started_step_status_errors != nil {
+		return records_not_started_step_status_errors
+	} else if len(*records_not_started_step_status) == 0 {
+		errors = append(errors, fmt.Errorf("did not find record for Not Started BuildStepStatus"))
+		return errors
+	}  else if len(*records_not_started_step_status) > 1 {
+		errors = append(errors, fmt.Errorf("found too many records for Not Started BuildStepStatus"))
+		return errors
+	}
+
+	not_started_build_step_status_id, not_started_build_step_status_id_errors := ((*records_not_started_step_status)[0]).GetUInt64("build_step_status_id")
+	if not_started_build_step_status_id_errors != nil {
+		return not_started_build_step_status_id_errors
+	}
+
+	where_query_build_step_status_running := json.NewMap()
+	where_query_build_step_status_running.SetStringValue("name", "Running")
+	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil)
+	if records_running_step_status_errors != nil {
+		return records_running_step_status_errors
+	} else if len(*records_running_step_status) == 0 {
+		errors = append(errors, fmt.Errorf("did not find record for Running BuildStepStatus"))
+		return errors
+	}  else if len(*records_running_step_status) > 1 {
+		errors = append(errors, fmt.Errorf("found too many records for Running BuildStepStatus"))
+		return errors
+	}
+
+	running_build_step_status_id, running_build_step_status_id_errors := ((*records_running_step_status)[0]).GetUInt64("build_step_status_id")
+	if running_build_step_status_id_errors != nil {
+		return running_build_step_status_id_errors
+	}
+
+	if *current_build_step_status_id != *not_started_build_step_status_id &&
+	   *current_build_step_status_id != *running_build_step_status_id {
+		fmt.Println("sync already completed")
+		return nil
+	}
+
 	where_query_build_step_status_passed := json.NewMap()
 	where_query_build_step_status_passed.SetStringValue("name", "Passed")
 	records_passed_step_status, records_passed_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_passed, nil, nil, nil, nil)
 	if records_passed_step_status_errors != nil {
 		return records_passed_step_status_errors
 	} else if len(*records_passed_step_status) == 0 {
-		errors = append(errors, fmt.Errorf("did not find record for passed BuildStepStatus"))
+		errors = append(errors, fmt.Errorf("did not find record for Passed BuildStepStatus"))
 		return errors
 	}  else if len(*records_passed_step_status) > 1 {
-		errors = append(errors, fmt.Errorf("found too many records for passed BuildStepStatus"))
+		errors = append(errors, fmt.Errorf("found too many records for Passed BuildStepStatus"))
 		return errors
 	}
 
@@ -78,21 +120,16 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return passed_build_step_status_id_errors
 	}
 
-	if *current_build_step_status_id == *passed_build_step_status_id {
-		fmt.Println("sync already completed with passed")
-		return nil
-	}
-
 	where_query_build_step_status_failed := json.NewMap()
 	where_query_build_step_status_failed.SetStringValue("name", "Failed")
 	records_failed_step_status, records_failed_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_failed, nil, nil, nil, nil)
 	if records_failed_step_status_errors != nil {
 		return records_failed_step_status_errors
 	} else if len(*records_failed_step_status) == 0 {
-		errors = append(errors, fmt.Errorf("did not find record for failed BuildStepStatus"))
+		errors = append(errors, fmt.Errorf("did not find record for Failed BuildStepStatus"))
 		return errors
 	}  else if len(*records_failed_step_status) > 1 {
-		errors = append(errors, fmt.Errorf("found too many records for failed BuildStepStatus"))
+		errors = append(errors, fmt.Errorf("found too many records for Failed BuildStepStatus"))
 		return errors
 	}
 
@@ -101,13 +138,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return failed_build_step_status_id_errors
 	}
 
-	if *current_build_step_status_id == *failed_build_step_status_id {
-		fmt.Println("sync already completed with failed")
-		return nil
-	}
 
-
-	// check if sync has been completed already
 
 	previous_read_record_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
 	previous_read_record_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&previous_read_record_build_branch_instance_step_select))
@@ -228,123 +259,12 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return errors
 	}
 
-	not_started_select := []string{"build_step_status_id"}
-	not_started_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&not_started_select))
-
-	not_started_where := map[string]interface{}{"name":"Not Started"}
-	not_started_where_map := json.NewMapOfValues(&not_started_where)
-
-	not_started_request := map[string]interface{}{"[queue]":"ReadRecords_BuildStepStatus", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
-	not_started_request_map := json.NewMapOfValues(&not_started_request)
-	not_started_request_map.SetArray("[select_fields]", not_started_select_array)
-	not_started_request_map.SetMap("[where_fields]", not_started_where_map)
-
-	read_records_build_step_status_not_started_response, read_records_build_step_status_not_started_response_errors := processor.SendMessageToQueue(not_started_request_map)
-	if read_records_build_step_status_not_started_response_errors != nil {
-		errors = append(errors, read_records_build_step_status_not_started_response_errors...)
-	} else if common.IsNil(read_records_build_step_status_not_started_response) {
-		errors = append(errors, fmt.Errorf("read_records_build_step_status_not_started_response is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	read_records_build_step_status_not_stated_array, read_records_build_step_status_not_stated_array_errors := read_records_build_step_status_not_started_response.GetArray("data")
-	if read_records_build_step_status_not_stated_array_errors != nil {
-		errors = append(errors, read_records_build_step_status_not_stated_array_errors...)
-	} else if common.IsNil(read_records_build_step_status_not_stated_array) {
-		errors = append(errors, fmt.Errorf("read_records_build_step_status_not_stated_array is nil"))
-	} else if len(*(read_records_build_step_status_not_stated_array.GetValues())) != 1 {
-		errors = append(errors, fmt.Errorf("read_records_build_step_status_not_stated_array did not return 1 record"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	build_step_status_not_started, build_step_status_not_started_errors :=  (*(read_records_build_step_status_not_stated_array.GetValues()))[0].GetMap()
-	if build_step_status_not_started_errors != nil {
-		errors = append(errors, build_step_status_not_started_errors...)
-	} else if common.IsNil(build_step_status_not_started) {
-		errors = append(errors, fmt.Errorf("build_step_status_not_started is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	build_step_status_not_started_id, build_step_status_not_started_id_errors := build_step_status_not_started.GetUInt64("build_step_status_id")
-	if build_step_status_not_started_id_errors != nil {
-		errors = append(errors, build_step_status_not_started_id_errors...)
-	} else if common.IsNil(build_step_status_not_started_id) {
-		errors = append(errors, fmt.Errorf("build_step_status_not_started_id is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	running_select := []string{"build_step_status_id"}
-	running_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&running_select))
-
-	running_where := map[string]interface{}{"name":"Running"}
-	running_where_map := json.NewMapOfValues(&running_where)
-
-	running_request := map[string]interface{}{"[queue]":"ReadRecords_BuildStepStatus", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
-	running_request_map := json.NewMapOfValues(&running_request)
-	running_request_map.SetArray("[select_fields]", running_select_array)
-	running_request_map.SetMap("[where_fields]", running_where_map)
-
-	read_records_build_step_status_running_response, read_records_build_step_status_running_response_errors := processor.SendMessageToQueue(running_request_map)
-	if read_records_build_step_status_running_response_errors != nil {
-		errors = append(errors, read_records_build_step_status_running_response_errors...)
-	} else if common.IsNil(read_records_build_step_status_running_response) {
-		errors = append(errors, fmt.Errorf("read_records_build_step_status_running_response is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	read_records_build_step_status_running_array, read_records_build_step_status_running_array_errors := read_records_build_step_status_running_response.GetArray("data")
-	if read_records_build_step_status_running_array_errors != nil {
-		errors = append(errors, read_records_build_step_status_running_array_errors...)
-	} else if common.IsNil(read_records_build_step_status_running_array) {
-		errors = append(errors, fmt.Errorf("read_records_build_step_status_running_array is nil"))
-	} else if len(*(read_records_build_step_status_running_array.GetValues())) != 1 {
-		errors = append(errors, fmt.Errorf("read_records_build_step_status_running_array did not return 1 record"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	build_step_status_running, build_step_status_running_errors := (*(read_records_build_step_status_running_array.GetValues()))[0].GetMap()
-	if build_step_status_running_errors != nil {
-		errors = append(errors, build_step_status_running_errors...)
-	} else if common.IsNil(build_step_status_running) {
-		errors = append(errors, fmt.Errorf("build_step_status_running is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
-
-	build_step_status_running_id, build_step_status_running_id_errors := build_step_status_running.GetUInt64("build_step_status_id")
-	if build_step_status_running_id_errors != nil {
-		errors = append(errors, build_step_status_running_id_errors...)
-	} else if common.IsNil(build_step_status_running_id) {
-		errors = append(errors, fmt.Errorf("build_step_status_running_id is nil"))
-	}
-
-	if len(errors) > 0 {
-		return errors
-	}
 
 	incomplete_steps_found := false
 	incomplete_steps_found_running_count := 0
 	incomplete_steps_found_not_started_count := 0
+	incomplete_steps_found_passed_count := 0
+	incomplete_steps_found_failed_count := 0
 	for _, previous_read_records_build_branch_instance_step := range *(previous_read_records_build_branch_instance_step_array.GetValues()) {
 		compare_step, compare_step_errors  := previous_read_records_build_branch_instance_step.GetMap()
 		if compare_step_errors != nil {
@@ -367,14 +287,22 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 			return errors
 		}
 
-		if *compare_step_build_step_status_id == *build_step_status_running_id {
+		if *compare_step_build_step_status_id == *running_build_step_status_id {
 			incomplete_steps_found = true
 			incomplete_steps_found_running_count++
 		}
 
-		if *compare_step_build_step_status_id == *build_step_status_not_started_id {
+		if *compare_step_build_step_status_id == *not_started_build_step_status_id {
 			incomplete_steps_found = true
 			incomplete_steps_found_not_started_count++
+		}
+
+		if *compare_step_build_step_status_id == *failed_build_step_status_id {
+			incomplete_steps_found_failed_count++
+		}
+
+		if *compare_step_build_step_status_id == *passed_build_step_status_id {
+			incomplete_steps_found_passed_count++
 		}
 	}
 
@@ -383,12 +311,13 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return nil
 	}
 
-	if len(errors) == 0 && !incomplete_steps_found {
-		// update sync as completed has been completed already to either passed or failed based on above for now just set passed
-		build_branch_instance_step_id_record.SetUInt64("build_step_status_id", passed_build_step_status_id)
+	if len(errors) == 0 && !incomplete_steps_found {		
+		if incomplete_steps_found_failed_count > 0 {
+			build_branch_instance_step_id_record.SetUInt64("build_step_status_id", failed_build_step_status_id)
+		} else {
+			build_branch_instance_step_id_record.SetUInt64("build_step_status_id", passed_build_step_status_id)
+		}
 		build_branch_instance_step_id_record.Update()
-
-
 
 		fmt.Println("all previous steps have completed... triggering next step")
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
