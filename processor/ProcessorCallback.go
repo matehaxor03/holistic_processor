@@ -23,7 +23,7 @@ type ProcessorCallback struct {
 	SendMessageToQueue func(*json.Map) (*json.Map, []error)
 }
 
-func NewProcessorCallback(domain_name dao.DomainName, port string) (*ProcessorCallback, []error) {	
+func NewProcessorCallback(complete_function (*func(json.Map) []error), domain_name dao.DomainName, port string) (*ProcessorCallback, []error) {	
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -71,6 +71,16 @@ func NewProcessorCallback(domain_name dao.DomainName, port string) (*ProcessorCa
 	}
 
 	sendMessageToQueue := func(message *json.Map) (*json.Map, []error) {
+		if complete_function != nil {
+			complete_errors := (*complete_function)(*message)
+			if complete_errors != nil {
+				return nil, complete_errors
+			} else {
+				return nil, nil
+			}
+		}
+		
+		
 		var errors []error
 		var json_payload_callback_builder strings.Builder
 		callback_payload_as_string_errors := message.ToJSONString(&json_payload_callback_builder)

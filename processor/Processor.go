@@ -28,7 +28,7 @@ type Processor struct {
 	WakeUp func()
 }
 
-func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
+func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -58,7 +58,7 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 	//retry_condition := sync.NewCond(retry_lock)
 	
 
-	processor_callback, processor_callback_errors := NewProcessorCallback(domain_name, port)
+	processor_callback, processor_callback_errors := NewProcessorCallback(complete_function, domain_name, port)
 	if processor_callback_errors != nil {
 		return nil, processor_callback_errors
 	} else if common.IsNil(processor_callback) {
@@ -221,6 +221,80 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 		return c.SendMessageToQueue(message)
 	}
 
+	process_message := func(request_json_payload json.Map) []error {
+		var errors []error
+		response_queue, response_queue_errors := request_json_payload.GetString("[queue]")
+		if response_queue_errors != nil {
+			errors = append(errors, response_queue_errors...)
+		} else if common.IsNil(response_queue) {
+			errors = append(errors, fmt.Errorf("response_queue is nil"))
+		}
+
+		message_trace_id, message_trace_id_errors := request_json_payload.GetString("[trace_id]")
+		if message_trace_id_errors != nil {
+			errors = append(errors, message_trace_id_errors...)
+		} else if message_trace_id == nil {
+			errors = append(errors, fmt.Errorf("message_trace_id is nil from fetching from queue"))
+		}
+
+		async, async_errors := request_json_payload.GetBool("[async]")
+		if async_errors != nil {
+			errors = append(errors, async_errors...)
+		} else if common.IsNil(async) {
+			errors = append(errors, fmt.Errorf("async is nil"))
+		}
+
+		if len(errors) > 0 {
+			return errors
+		}
+
+		request_json_payload.SetStringValue("[queue_mode]","complete")
+		request_json_payload.SetStringValue("[trace_id]", *message_trace_id)
+		result_map := map[string]interface{}{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
+		result := json.NewMapOfValues(&result_map)
+		//result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
+
+		if *response_queue == "empty" {
+			// todo get length
+			if  get_or_set_status("") == "running" {
+				wg.Add(1)
+				get_or_set_status("paused")
+				wg.Wait()
+				get_or_set_status("running")
+
+				
+
+				/*retry_lock.Lock()
+				(*retry_condition).Wait()
+				retry_lock.Unlock() */
+			}
+		}
+
+		if *response_queue == "empty" {
+			return nil
+		}
+
+		processor_errors := (*processor_function)(getProcessor(), &request_json_payload, result)
+		if processor_errors != nil {
+			errors = append(errors, processor_errors...)
+			result.SetNil("data")
+			fmt.Println(processor_errors)
+			result.SetErrors("[errors]", processor_errors)
+		} else {
+			result.SetNil("[errors]")
+		}
+
+		if !request_json_payload.IsBoolTrue("[async]") {
+			sendMessageToQueueFireAndForget(result)
+		}
+
+		if len(errors) > 0 {
+			return errors
+		}
+
+		return nil
+	}
+
 	x := Processor{
 		WakeUp: func() {
 			wakeup_lock.Lock()
@@ -260,6 +334,26 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 					get_or_set_status("running")
 					time.Sleep(1 * time.Nanosecond) 
 					trace_id := generate_trace_id()
+					if get_next_message_function != nil {
+						next_message, next_message_errors := (*get_next_message_function)(queue, trace_id)
+						if next_message_errors != nil {
+							fmt.Println(next_message_errors)
+							time.Sleep(10 * time.Second) 
+							continue
+						} else if common.IsNil(next_message) {
+							fmt.Println("next message is nil")
+							time.Sleep(10 * time.Second) 
+							continue
+						} else {
+							process_messsage_errors := process_message(next_message)
+							if process_messsage_errors != nil {
+								fmt.Println(process_messsage_errors)
+								time.Sleep(10 * time.Second) 
+								continue
+							}
+						}
+					} else {
+
 					request_payload_map := map[string]interface{}{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
 					request_payload := json.NewMapOfValues(&request_payload_map)
 					//request_payload := json.Map{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
@@ -306,8 +400,6 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 
 					
 						//fmt.Println("processing " + string(response_body_payload))
-
-
 						request_json_payload, request_json_payload_errors := json.Parse(string(response_body_payload))
 						if request_json_payload_errors != nil {
 							fmt.Println(request_json_payload_errors)
@@ -315,6 +407,9 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 							continue
 						}
 
+						process_message(*request_json_payload)
+
+						/*
 						response_queue, response_queue_errors := request_json_payload.GetString("[queue]")
 						if response_queue_errors != nil {
 							fmt.Println(response_queue_errors) 
@@ -360,7 +455,7 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 
 								/*retry_lock.Lock()
 								(*retry_condition).Wait()
-								retry_lock.Unlock() */
+								retry_lock.Unlock() 
 							}
 						}
 
@@ -380,7 +475,9 @@ func NewProcessor(client_manager *dao.ClientManager, domain_name dao.DomainName,
 						if !request_json_payload.IsBoolTrue("[async]") {
 							sendMessageToQueueFireAndForget(result)
 						}
+						*/
 					}
+				}
 				
 			}(queue_url, queue)
 		},
