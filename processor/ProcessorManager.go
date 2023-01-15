@@ -78,7 +78,7 @@ func NewProcessorManager(complete_function (*func(json.Map) []error), get_next_m
 	}*/
 
 	domain_name_value := domain_name.GetDomainName()
-	queue_url := fmt.Sprintf("https://%s:%s/", domain_name_value, port)
+	queue_url := fmt.Sprintf("https://%s:%s/queue_api", domain_name_value, port)
 	
 	/*transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},

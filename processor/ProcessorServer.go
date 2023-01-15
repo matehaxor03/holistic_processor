@@ -247,7 +247,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 				value.Start()
 			}
 
-			http.HandleFunc("/", processRequest)
+			http.HandleFunc("/processor_api", processRequest)
 
 			temp_port, temp_port_errors := getPort()
 			if temp_port_errors != nil {
