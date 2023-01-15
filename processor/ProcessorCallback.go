@@ -88,6 +88,15 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 			} else if common.IsNil(queue) {
 				errors = append(errors, fmt.Errorf("queue is nil"))
 			}
+
+			async, async_errors := message.GetBool("[async]")
+			if async_errors != nil {
+				errors = append(errors, async_errors...)
+			} else if common.IsNil(async) {
+				async_false := false
+				async = &async_false
+				message.SetBool("[async]", &async_false)
+			}
 			
 			if len(errors) > 0 {
 				return nil, errors
