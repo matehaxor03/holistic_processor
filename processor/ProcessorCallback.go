@@ -77,7 +77,9 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 			if queue_mode_errors != nil {
 				errors = append(errors, queue_mode_errors...)
 			} else if common.IsNil(queue_mode) {
-				*queue_mode = "PushBack"
+				temp_queue_mode := "PushBack"
+				message.SetString("[queue_mode]", &temp_queue_mode)
+				queue_mode = &temp_queue_mode
 			}
 
 			queue, queue_errors := message.GetString("[queue]")
