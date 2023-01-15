@@ -21,7 +21,7 @@ type ProcessorManager struct {
 	WakeUp func()
 }
 
-func NewProcessorManager(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string, minimum_threads int, maximum_threads int) (*ProcessorManager, []error) {
+func NewProcessorManager(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), push_back_function (*func(string,*json.Map) (*json.Map, []error)), client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string, minimum_threads int, maximum_threads int) (*ProcessorManager, []error) {
 	var errors []error
 	var threads []*Processor
 
@@ -174,7 +174,7 @@ func NewProcessorManager(complete_function (*func(json.Map) []error), get_next_m
 						difference := minimum_threads - current_number_of_threads
 						current_count := 0
 						for current_count < difference {
-							new_processor, new_processor_errors := NewProcessor(complete_function, get_next_message_function, getClientManager(), getDomainName(), getPort(), getQueue())
+							new_processor, new_processor_errors := NewProcessor(complete_function, get_next_message_function, push_back_function, getClientManager(), getDomainName(), getPort(), getQueue())
 							if new_processor_errors != nil { 
 								fmt.Println(new_processor_errors)
 								break
@@ -196,7 +196,7 @@ func NewProcessorManager(complete_function (*func(json.Map) []error), get_next_m
 
 					current_number_of_threads = len(threads)
 					if maximum_threads == -1 && current_number_of_threads < 10 {
-						new_processor, new_processor_errors := NewProcessor(complete_function, get_next_message_function, getClientManager(), getDomainName(), getPort(), getQueue())
+						new_processor, new_processor_errors := NewProcessor(complete_function, get_next_message_function, push_back_function, getClientManager(), getDomainName(), getPort(), getQueue())
 						if new_processor_errors != nil { 
 							fmt.Println(new_processor_errors)
 							break

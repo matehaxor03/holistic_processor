@@ -19,7 +19,7 @@ type ProcessorServer struct {
 	Start   func() ([]error)
 }
 
-func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
+func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), push_back_function (*func(string,*json.Map) (*json.Map, []error)), port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
 	var errors []error
 	verify := validate.NewValidator()
 
@@ -280,35 +280,35 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 
 
 	for _, table_name := range table_names {
-		create_processor, create_processor_errors := NewProcessorManager(complete_function, get_next_message_function, client_manager, *domain_name, queue_port, "CreateRecords_" + table_name, 1, -1)
+		create_processor, create_processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, "CreateRecords_" + table_name, 1, -1)
 		if create_processor_errors != nil {
 			errors = append(errors, create_processor_errors...)
 		} else if create_processor != nil {
 			processors["CreateRecords_" + table_name] = create_processor
 		}
 
-		create_record_processor, create_record_processor_errors := NewProcessorManager(complete_function, get_next_message_function, client_manager, *domain_name, queue_port, "CreateRecord_" + table_name, 1, -1)
+		create_record_processor, create_record_processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, "CreateRecord_" + table_name, 1, -1)
 		if create_record_processor_errors != nil {
 			errors = append(errors, create_record_processor_errors...)
 		} else if create_record_processor != nil {
 			processors["CreateRecord_" + table_name] = create_record_processor
 		}
 
-		read_processor, read_processor_errors := NewProcessorManager(complete_function, get_next_message_function, client_manager, *domain_name, queue_port, "ReadRecords_" + table_name, 1, -1)
+		read_processor, read_processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, "ReadRecords_" + table_name, 1, -1)
 		if read_processor_errors != nil {
 			errors = append(errors, read_processor_errors...)
 		} else if read_processor != nil {
 			processors["ReadRecords_" + table_name] = read_processor
 		}
 
-		update_processor, update_processor_errors := NewProcessorManager(complete_function, get_next_message_function, client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name, 1, 1)
+		update_processor, update_processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name, 1, 1)
 		if update_processor_errors != nil {
 			errors = append(errors, update_processor_errors...)
 		} else if update_processor != nil {
 			processors["UpdateRecords_" + table_name] = update_processor
 		}
 
-		update_record_processor, update_record_processor_errors := NewProcessorManager(complete_function, get_next_message_function, client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name, 1, 1)
+		update_record_processor, update_record_processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name, 1, 1)
 		if update_record_processor_errors != nil {
 			errors = append(errors, update_record_processor_errors...)
 		} else if update_record_processor != nil {
@@ -323,7 +323,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			processors["DeleteRecords_" + table_name] = delete_processor
 		}*/
 
-		get_schema_processor, get_schema_processor_errors := NewProcessorManager(complete_function, get_next_message_function, client_manager, *domain_name, queue_port, "GetSchema_" + table_name, 1, -1)
+		get_schema_processor, get_schema_processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, "GetSchema_" + table_name, 1, -1)
 		if get_schema_processor_errors != nil {
 			errors = append(errors, get_schema_processor_errors...)
 		} else if get_schema_processor != nil {
@@ -388,7 +388,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			continue
 		}
 
-		processor, processor_errors := NewProcessorManager(complete_function, get_next_message_function, client_manager, *domain_name, queue_port, command_name, int(minimum_threads), int(maximum_threads))
+		processor, processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, command_name, int(minimum_threads), int(maximum_threads))
 		if processor_errors != nil {
 			errors = append(errors, processor_errors...)
 		} else if processor != nil {

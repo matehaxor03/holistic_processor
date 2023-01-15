@@ -23,7 +23,7 @@ type ProcessorCallback struct {
 	SendMessageToQueue func(*json.Map) (*json.Map, []error)
 }
 
-func NewProcessorCallback(complete_function (*func(json.Map) []error), domain_name dao.DomainName, port string) (*ProcessorCallback, []error) {	
+func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back_function (*func(string,*json.Map) (*json.Map, []error)), domain_name dao.DomainName, port string) (*ProcessorCallback, []error) {	
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -71,21 +71,43 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), domain_na
 	}
 
 	sendMessageToQueue := func(message *json.Map) (*json.Map, []error) {
+		var errors []error
 		if complete_function != nil {
-			queue_modee, queue_modee_errors := message.GetString("[queue_mode]")
-			fmt.Println(*queue_modee)
-			fmt.Println(queue_modee_errors)
+			queue_mode, queue_mode_errors := message.GetString("[queue_mode]")
+			if queue_mode_errors != nil {
+				errors = append(errors, queue_mode_errors...)
+			} else if common.IsNil(queue_mode) {
+				errors = append(errors, fmt.Errorf("queue_mode is nil"))
+			}
+
+			queue, queue_errors := message.GetString("[queue]")
+			if queue_errors != nil {
+				errors = append(errors, queue_errors...)
+			} else if common.IsNil(queue) {
+				errors = append(errors, fmt.Errorf("queue is nil"))
+			}
 			
-			complete_errors := (*complete_function)(*message)
-			if complete_errors != nil {
-				return nil, complete_errors
+			if len(errors) > 0 {
+				return nil, errors
+			} 
+			
+			if *queue_mode == "complete" {
+				complete_errors := (*complete_function)(*message)
+				if complete_errors != nil {
+					return nil, complete_errors
+				} else {
+					return nil, nil
+				}
+			} else if *queue_mode == "PushBack" {
+				return (*push_back_function)(*queue, message)
 			} else {
-				return nil, nil
+				errors = append(errors, fmt.Errorf("mode not supported %s", *queue_mode))
+				return nil, errors
 			}
 		}
 		
 		
-		var errors []error
+	
 		var json_payload_callback_builder strings.Builder
 		callback_payload_as_string_errors := message.ToJSONString(&json_payload_callback_builder)
 		if callback_payload_as_string_errors != nil {

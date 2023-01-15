@@ -28,7 +28,7 @@ type Processor struct {
 	WakeUp func()
 }
 
-func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
+func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), push_back_function (*func(string,*json.Map) (*json.Map, []error)), client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -58,7 +58,7 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 	//retry_condition := sync.NewCond(retry_lock)
 	
 
-	processor_callback, processor_callback_errors := NewProcessorCallback(complete_function, domain_name, port)
+	processor_callback, processor_callback_errors := NewProcessorCallback(complete_function, push_back_function, domain_name, port)
 	if processor_callback_errors != nil {
 		return nil, processor_callback_errors
 	} else if common.IsNil(processor_callback) {
