@@ -72,6 +72,10 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), domain_na
 
 	sendMessageToQueue := func(message *json.Map) (*json.Map, []error) {
 		if complete_function != nil {
+			queue_modee, queue_modee_errors := message.GetString("[queue_mode]")
+			fmt.Println(queue_modee)
+			fmt.Println(queue_modee_errors)
+			
 			complete_errors := (*complete_function)(*message)
 			if complete_errors != nil {
 				return nil, complete_errors
