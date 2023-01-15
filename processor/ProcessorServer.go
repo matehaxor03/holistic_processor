@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"strconv"
+	"sync"
 	common "github.com/matehaxor03/holistic_common/common"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
@@ -17,11 +18,14 @@ import (
 
 type ProcessorServer struct {
 	Start   func() ([]error)
+	GetWakeupProcessorFunction func() *func(request json.Map) (json.Map, []error)
 }
 
 func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), push_back_function (*func(string,*json.Map) (*json.Map, []error)), port string, server_crt_path string, server_key_path string, queue_domain_name string, queue_port string) (*ProcessorServer, []error) {
 	var errors []error
 	verify := validate.NewValidator()
+	wakeup_processor_lock := &sync.RWMutex{}
+
 
 	client_manager, client_manager_errors := dao.NewClientManager()
 	if client_manager_errors != nil {
@@ -139,6 +143,87 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 		return this_holisic_queue_server
 	}*/
 
+	wakeup_processor_function := func(request json.Map) (json.Map, []error){
+		wakeup_processor_lock.Lock()
+		defer wakeup_processor_lock.Unlock()
+
+		result_map := map[string]interface{}{}
+		result := *(json.NewMapOfValues(&result_map))
+
+		var errors []error
+		queue, queue_errors := request.GetString("[queue]")
+		if queue_errors != nil {
+			errors = append(errors, queue_errors...)
+		}
+		
+		if common.IsNil(queue) {
+			errors = append(errors, fmt.Errorf("[queue] is nil"))
+			result.SetStringValue("[queue]", "unknown")
+		} else {
+			result.SetString("[queue]", queue)
+		}
+
+		queue_mode, queue_mode_errors := request.GetString("[queue_mode]")
+
+		if queue_mode_errors != nil {
+			errors = append(errors, queue_mode_errors...)
+		} 
+		
+		if common.IsNil(queue_mode) {
+			errors = append(errors, fmt.Errorf("[queue_mode] is nil"))
+			result.SetStringValue("[queue_mode]", "unknown")
+		} else if *queue_mode != "WakeUp" {
+			errors = append(errors, fmt.Errorf("[queue_mode] is not supported: %s",  *queue_mode))
+			result.SetString("[queue_mode]", queue_mode)
+		} else {
+			result.SetString("[queue_mode]", queue_mode)
+		}
+
+		trace_id, trace_id_errors := request.GetString("[trace_id]")
+
+		if trace_id_errors != nil {
+			errors = append(errors, trace_id_errors...)
+		} 
+		
+		if common.IsNil(trace_id) {
+			errors = append(errors, fmt.Errorf("[trace_id] is nil"))
+			result.SetStringValue("[trace_id]", "unknown")
+		} else {
+			result.SetString("[trace_id]", trace_id)
+		}
+
+		if len(errors) > 0 {
+			result.SetErrors("[errors]", errors)
+			result.SetNil("data")
+			return result, errors
+		}
+
+		processor, ok := processors[*queue]
+		if !ok {
+			errors = append(errors, fmt.Errorf("prcoessor: %s does not exist", *queue))
+		}
+
+		if len(errors) > 0 {
+			result.SetErrors("[errors]", errors)
+			result.SetNil("data")
+			return result, errors
+		}
+
+		
+		processor.WakeUp()
+
+		if len(errors) > 0 {
+			result.SetNil("[errors]")
+			result.SetNil("data")
+		}
+
+		if len(errors) > 0 {
+			return result, errors
+		}
+
+		return result, nil
+	}
+
 	processRequest := func(w http.ResponseWriter, req *http.Request) {
 		var errors []error
 
@@ -173,6 +258,22 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			return
 		}
 
+		queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
+
+		if queue_mode_errors != nil {
+			errors = append(errors, queue_mode_errors...)
+		} 
+		
+		if common.IsNil(queue_mode) {
+			errors = append(errors, fmt.Errorf("[queue_mode] is nil"))
+		}
+
+		if len(errors) > 0 {
+			http_extension.WriteResponse(w, *json_payload, errors)
+			return
+		}
+
+		/*
 		queue, queue_errors := json_payload.GetString("[queue]")
 		if queue_errors != nil {
 			http_extension.WriteResponse(w, dummy_result, queue_errors)
@@ -181,22 +282,26 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			queue_errors = append(queue_errors, fmt.Errorf("[queue] is nil"))
 			http_extension.WriteResponse(w, dummy_result, queue_errors)
 			return
-		}
+		}*/
 
+		/*
 		processor, ok := processors[*queue]
 		if !ok {
 			errors = append(errors, fmt.Errorf("prcoessor: %s does not exist", *queue))
 		}
+		*/
 
+		/*
 		if len(errors) > 0 {
 			http_extension.WriteResponse(w, dummy_result, errors)
 			return
-		}
+		}*/
 
+		var result *json.Map
+		//result_map := map[string]interface{}{"[queue]":*queue}
+		//result := json.NewMapOfValues(&result_map)
 
-		result_map := map[string]interface{}{"[queue]":*queue}
-		result := json.NewMapOfValues(&result_map)
-
+		/*
 		queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
 
 		if queue_mode_errors != nil {
@@ -228,10 +333,15 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 		if len(errors) > 0 {
 			http_extension.WriteResponse(w, *result, errors)
 			return
-		}
+		}*/
 
 		if *queue_mode == "WakeUp" {
-			processor.WakeUp()
+			result_wakeup, result_errors := wakeup_processor_function(*json_payload)
+			if result_errors != nil {
+				errors = append(errors, result_errors...)
+			}
+			result = &result_wakeup
+			//processor.WakeUp()
 		} else {
 			errors = append(errors, fmt.Errorf("[queue_mode] is not supported: %s",  *queue_mode))
 		}
@@ -240,6 +350,10 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 	}
 
 	x := ProcessorServer{
+		GetWakeupProcessorFunction: func() *func(request json.Map) (json.Map, []error) {
+			function := wakeup_processor_function
+			return &function
+		},
 		Start: func() []error {
 			var errors []error
 
