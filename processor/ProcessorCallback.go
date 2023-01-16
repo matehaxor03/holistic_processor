@@ -248,13 +248,6 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 			}(queue_url)
 		},
 	}
-	/*
-	heart_beat := func() {
-		for range time.Tick(time.Second * 60) {
-			x.WakeUp()
-		}
-	}
-	go heart_beat()*/
 
 	return &x, nil
 }

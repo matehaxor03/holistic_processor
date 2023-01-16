@@ -234,7 +234,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	previous_instance_steps_request_map.SetMap("[where_fields_logic]", previous_instance_steps_where_logic_map)
 	previous_instance_steps_request_map.SetArray("[order_by]", previous_instance_steps_order_by_array)
 
-	//previous_read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_step_status_id"}, "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id, "order":*previous_order}, "[where_fields_logic]":json.Map{"order":"="}}
 	previous_read_records_build_branch_instance_step_response, previous_read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(previous_instance_steps_request_map)
 	if previous_read_records_build_branch_instance_step_response_errors != nil {
 		errors = append(errors, previous_read_records_build_branch_instance_step_response_errors...)

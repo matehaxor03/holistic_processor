@@ -54,10 +54,6 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 		return queue
 	}
 
-	//retry_lock := &sync.Mutex{}
-	//retry_condition := sync.NewCond(retry_lock)
-	
-
 	processor_callback, processor_callback_errors := NewProcessorCallback(complete_function, push_back_function, domain_name, port)
 	if processor_callback_errors != nil {
 		return nil, processor_callback_errors
@@ -252,21 +248,13 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 		request_json_payload.SetStringValue("[trace_id]", *message_trace_id)
 		result_map := map[string]interface{}{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
 		result := json.NewMapOfValues(&result_map)
-		//result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
 
 		if *response_queue == "empty" {
-			// todo get length
 			if  get_or_set_status("") == "running" {
 				wg.Add(1)
 				get_or_set_status("paused")
 				wg.Wait()
 				get_or_set_status("running")
-
-				
-
-				/*retry_lock.Lock()
-				(*retry_condition).Wait()
-				retry_lock.Unlock() */
 			}
 		}
 
@@ -300,7 +288,6 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 			wakeup_lock.Lock()
 			defer wakeup_lock.Unlock()
 			if get_or_set_status("")  == "paused" {
-				//(*retry_condition).Signal()
 				get_or_set_status("try again") 
 				wg.Done()
 			} else {
@@ -356,7 +343,7 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 
 					request_payload_map := map[string]interface{}{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
 					request_payload := json.NewMapOfValues(&request_payload_map)
-					//request_payload := json.Map{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
+
 					var json_payload_builder strings.Builder
 					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
 
@@ -374,8 +361,6 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 						fmt.Println(request_error)
 						time.Sleep(10 * time.Second) 
 						continue
-						//todo: go to sleep permantly
-						// continue
 					}
 					
 					request.Header.Set("Content-Type", "application/json")
@@ -384,8 +369,6 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 						fmt.Println(http_response_error)
 						time.Sleep(10 * time.Second) 
 						continue
-						//todo: go to sleep permantly
-						// continue
 					}
 
 					response_body_payload, response_body_payload_error := ioutil.ReadAll(http_response.Body)
@@ -394,12 +377,9 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 						fmt.Println(response_body_payload_error)
 						time.Sleep(10 * time.Second) 
 						continue
-						//todo: go to sleep permantly
-						// continue
 					}
 
 					
-						//fmt.Println("processing " + string(response_body_payload))
 						request_json_payload, request_json_payload_errors := json.Parse(string(response_body_payload))
 						if request_json_payload_errors != nil {
 							fmt.Println(request_json_payload_errors)
@@ -408,74 +388,6 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 						}
 
 						process_message(*request_json_payload)
-
-						/*
-						response_queue, response_queue_errors := request_json_payload.GetString("[queue]")
-						if response_queue_errors != nil {
-							fmt.Println(response_queue_errors) 
-							continue
-						} else if common.IsNil(response_queue) {
-							fmt.Println("response_queue is nil")
-							continue
-						}
-
-						message_trace_id, message_trace_id_errors := request_json_payload.GetString("[trace_id]")
-						if message_trace_id_errors != nil {
-							fmt.Println(message_trace_id_errors) 
-							continue
-						} else if message_trace_id == nil {
-							fmt.Println("message_trace_id is nil from fetching from queue")
-							continue
-						}
-
-						async, async_errors := request_json_payload.GetBool("[async]")
-						if async_errors != nil {
-							fmt.Println(message_trace_id_errors) 
-							continue
-						} else if common.IsNil(async) {
-							fmt.Println("async is nil") 
-							continue
-						}
-
-						(*request_json_payload).SetStringValue("[queue_mode]","complete")
-						(*request_json_payload).SetStringValue("[trace_id]", *message_trace_id)
-						result_map := map[string]interface{}{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
-						result := json.NewMapOfValues(&result_map)
-						//result := json.Map{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
-				
-						if *response_queue == "empty" {
-							// todo get length
-							if  get_or_set_status("") == "running" {
-								wg.Add(1)
-								get_or_set_status("paused")
-								wg.Wait()
-								get_or_set_status("running")
-
-								
-
-								/*retry_lock.Lock()
-								(*retry_condition).Wait()
-								retry_lock.Unlock() 
-							}
-						}
-
-						if *response_queue == "empty" {
-							continue
-						}
-
-						processor_errors := (*processor_function)(getProcessor(), request_json_payload, result)
-						if processor_errors != nil {
-							result.SetNil("data")
-							fmt.Println(processor_errors)
-							result.SetErrors("[errors]", processor_errors)
-						} else {
-							result.SetNil("[errors]")
-						}
-
-						if !request_json_payload.IsBoolTrue("[async]") {
-							sendMessageToQueueFireAndForget(result)
-						}
-						*/
 					}
 				}
 				
@@ -488,14 +400,6 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 	if len(errors) > 0 {
 		return nil, errors
 	}
-	
-	/*
-	heart_beat := func() {
-		for range time.Tick(time.Second * 60) {
-			x.WakeUp()
-		}
-	}
-	go heart_beat()*/
 
 	return &x, nil
 }

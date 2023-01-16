@@ -51,11 +51,6 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		return errors
 	}
 
-	/*
-	 `build_branch_instance_step_id` BIGINT UNSIGNED NOT NULL comment '{"foreign_key":{"table_name":"BuildBranchInstanceStep","column_name":"build_branch_instance_step_id","type":"uint64"}}',
-    `log` VARCHAR(1024) NOT NULL DEFAULT '',
-    `stdout` BOOLEAN DEFAULT 1,*/
-
 	std_callback := getStdoutCallbackFunctionBranch(processor, *command_name, *build_branch_id, *build_branch_instance_step_id, *test_suite_name)
 	stderr_callback := getStderrCallbackFunctionBranch(processor, *command_name, *build_branch_id, *build_branch_instance_step_id, *test_suite_name)
 

@@ -133,7 +133,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		}
 
 		build_branch_instance_step :=  map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*build_step_id, "order":*order}
-		//build_branch_instance_step := json.Map{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*build_step_id, "order":*order}
 		build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
 	}
 	
@@ -170,7 +169,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_build_branch_instance_step_request_map.SetMap("[where_fields]", read_records_build_branch_instance_step_where_map)
 	read_records_build_branch_instance_step_request_map.SetArray("[order_by]", read_records_build_branch_instance_step_where_order_by_array)
 
-	//read_records_build_branch_instance_step_request := json.Map{"[queue]":"ReadRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[select_fields]": json.Array{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"},  "[where_fields]":json.Map{"build_branch_instance_id":*build_branch_instance_id}, "[limit]":1, "[order_by]":json.Array{json.Map{"order":"ascending"}}}
 	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(read_records_build_branch_instance_step_request_map)
 	if read_records_build_branch_instance_step_response_errors != nil {
 		errors = append(errors, read_records_build_branch_instance_step_response_errors...)
@@ -229,7 +227,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_build_step_request_map.SetArray("[select_fields]", read_records_build_step_select_array)
 	read_records_build_step_request_map.SetMap("[where_fields]", read_records_build_step_where_map)
 
-	//read_records_build_step_request := json.Map{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_step_id":*desired_build_step_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
 	read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(read_records_build_step_request_map)
 	if read_records_build_step_response_errors != nil {
 		errors = append(errors, read_records_build_step_response_errors...)
@@ -287,7 +284,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_build_branch_request_map.SetArray("[select_fields]", read_records_build_branch_array)
 	read_records_build_branch_request_map.SetMap("[where_fields]",read_records_build_branch_where_map)
 
-	//read_records_build_branch_request := json.Map{"[queue]":"ReadRecords_BuildBranch", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_branch_id":*build_branch_id}, "[select_fields]": json.Array{"build_id", "branch_id"}, "[limit]":1}
 	build_branch_records_response, build_branch_records_response_errors := processor.SendMessageToQueue(read_records_build_branch_request_map)
 	if build_branch_records_response_errors != nil {
 		errors = append(errors, build_branch_records_response_errors...)
@@ -352,7 +348,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_branch_request_map.SetArray("[select_fields]", read_records_branch_array)
 	read_records_branch_request_map.SetMap("[where_fields]",read_records_branch_where_map)
 
-	//read_records_branch_request := json.Map{"[queue]":"ReadRecords_Branch", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"branch_id":*branch_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
 	read_records_branch_response, read_records_branch_response_errors := processor.SendMessageToQueue(read_records_branch_request_map)
 	if read_records_branch_response_errors != nil {
 		errors = append(errors, read_records_branch_response_errors...)
@@ -407,7 +402,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_build_request_map.SetArray("[select_fields]", read_records_build_array)
 	read_records_build_request_map.SetMap("[where_fields]",read_records_build_where_map)
 
-	//read_records_build_request := json.Map{"[queue]":"ReadRecords_Build", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"build_id":*build_id}, "[select_fields]": json.Array{"domain_name_id", "repository_account_id", "repository_id"}, "[limit]":1}
 	read_records_build_response, read_records_build_response_errors := processor.SendMessageToQueue(read_records_build_request_map)
 	if read_records_build_response_errors != nil {
 		errors = append(errors, read_records_build_response_errors...)
@@ -479,7 +473,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_domain_name_request_map.SetArray("[select_fields]", read_records_domain_name_array)
 	read_records_domain_name_request_map.SetMap("[where_fields]",read_records_domain_name_where_map)
 
-	//read_records_domain_name_request := json.Map{"[queue]":"ReadRecords_DomainName", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"domain_name_id":*domain_name_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
 	read_records_domain_name_response, read_records_domain_name_response_errors := processor.SendMessageToQueue(read_records_domain_name_request_map)
 	if read_records_domain_name_response_errors != nil {
 		errors = append(errors, read_records_domain_name_response_errors...)
@@ -537,7 +530,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_repository_account_name_request_map.SetArray("[select_fields]", read_records_repository_account_name_array)
 	read_records_repository_account_name_request_map.SetMap("[where_fields]", read_records_repository_account_name_where_map)
 
-	//read_records_repository_account_name_request := json.Map{"[queue]":"ReadRecords_RepositoryAccount", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"repository_account_id":*repository_account_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
 	read_records_repository_account_name_response, read_records_repository_account_name_response_errors := processor.SendMessageToQueue(read_records_repository_account_name_request_map)
 	if read_records_repository_account_name_response_errors != nil {
 		errors = append(errors, read_records_repository_account_name_response_errors...)
@@ -595,7 +587,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	read_records_repository_name_request_map.SetArray("[select_fields]", read_records_repository_name_array)
 	read_records_repository_name_request_map.SetMap("[where_fields]", read_records_repository_name_where_map)
 
-	//read_records_repository_name_request := json.Map{"[queue]":"ReadRecords_Repository", "[trace_id]":processor.GenerateTraceId(), "[where_fields]":json.Map{"repository_id":*repository_id}, "[select_fields]": json.Array{"name"}, "[limit]":1}
 	read_records_repository_name_request_response, read_records_repository_name_request_response_errors := processor.SendMessageToQueue(read_records_repository_name_request_map)
 	if read_records_repository_name_request_response_errors != nil {
 		errors = append(errors, read_records_repository_name_request_response_errors...)
@@ -655,7 +646,6 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 	next_command_map := json.NewMapOfValues(&next_command)
 	next_command_map.SetMap("data", first_build_step)
 	
-	//next_command := json.Map{"[queue]":*name_of_next_step, "data":first_build_step,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":processor.GenerateTraceId()}
 	_, message_errors := processor.SendMessageToQueue(next_command_map)
 	if message_errors != nil {
 		return message_errors

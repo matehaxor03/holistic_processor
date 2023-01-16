@@ -50,17 +50,6 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 		return nil, domain_name_errors
 	}
 
-	/*
-	transport_config := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	http_client := http.Client{
-		Timeout: 120 * time.Second,
-		Transport: transport_config,
-	}*/
-
-	
 	data := json.NewMapValue()
 	data.SetMapValue("[fields]", json.NewMapValue())
 	data.SetMapValue("[schema]", json.NewMapValue())
@@ -72,8 +61,6 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 	map_system_fields.SetObjectForMap("[queue_port]", queue_port)
 	map_system_fields.SetObjectForMap("[queue_domain_name]", queue_domain_name)
 	data.SetMapValue("[system_fields]", map_system_fields)
-
-	///
 
 	//todo: add filters to fields
 
@@ -132,16 +119,6 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 	validate := func() []error {
 		return dao.ValidateData(getData(), "ProcessorServer")
 	}
-
-	/*
-	setHolisticQueueServer := func(holisic_queue_server *HolisticQueueServer) {
-		this_holisic_queue_server = holisic_queue_server
-	}*/
-
-	/*
-	getHolisticQueueServer := func() *HolisticQueueServer {
-		return this_holisic_queue_server
-	}*/
 
 	wakeup_processor_function := func(request json.Map) (json.Map, []error){
 		wakeup_processor_lock.Lock()
@@ -273,67 +250,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			return
 		}
 
-		/*
-		queue, queue_errors := json_payload.GetString("[queue]")
-		if queue_errors != nil {
-			http_extension.WriteResponse(w, dummy_result, queue_errors)
-			return
-		} else if common.IsNil(queue) {
-			queue_errors = append(queue_errors, fmt.Errorf("[queue] is nil"))
-			http_extension.WriteResponse(w, dummy_result, queue_errors)
-			return
-		}*/
-
-		/*
-		processor, ok := processors[*queue]
-		if !ok {
-			errors = append(errors, fmt.Errorf("prcoessor: %s does not exist", *queue))
-		}
-		*/
-
-		/*
-		if len(errors) > 0 {
-			http_extension.WriteResponse(w, dummy_result, errors)
-			return
-		}*/
-
 		var result *json.Map
-		//result_map := map[string]interface{}{"[queue]":*queue}
-		//result := json.NewMapOfValues(&result_map)
-
-		/*
-		queue_mode, queue_mode_errors := json_payload.GetString("[queue_mode]")
-
-		if queue_mode_errors != nil {
-			errors = append(errors, queue_mode_errors...)
-		} 
-		
-		if common.IsNil(queue_mode) {
-			errors = append(errors, fmt.Errorf("[queue_mode] is nil"))
-		}
-
-		if !(common.IsNil(queue_mode)) {
-			result.SetStringValue("[queue_mode]", *queue_mode)
-		}
-
-		trace_id, trace_id_errors := json_payload.GetString("[trace_id]")
-
-		if trace_id_errors != nil {
-			errors = append(errors, trace_id_errors...)
-		} 
-		
-		if common.IsNil(trace_id) {
-			errors = append(errors, fmt.Errorf("[trace_id] is nil"))
-		}
-
-		if !(common.IsNil(trace_id)) {
-			result.SetStringValue("[trace_id]", *trace_id)
-		}
-		
-		if len(errors) > 0 {
-			http_extension.WriteResponse(w, *result, errors)
-			return
-		}*/
 
 		if *queue_mode == "WakeUp" {
 			result_wakeup, result_errors := wakeup_processor_function(*json_payload)
@@ -341,7 +258,6 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 				errors = append(errors, result_errors...)
 			}
 			result = &result_wakeup
-			//processor.WakeUp()
 		} else {
 			errors = append(errors, fmt.Errorf("[queue_mode] is not supported: %s",  *queue_mode))
 		}
@@ -390,7 +306,6 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			return nil
 		},
 	}
-	//setHolisticQueueServer(&x)
 
 
 	for _, table_name := range table_names {
@@ -428,14 +343,6 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 		} else if update_record_processor != nil {
 			processors["UpdateRecord_" + table_name] = update_record_processor
 		}
-
-		/*
-		delete_processor, delete_processor_errors := NewProcessor(client_manager, *domain_name, queue_port, "DeleteRecords_" + table_name)
-		if delete_processor_errors != nil {
-			errors = append(errors, delete_processor_errors...)
-		} else if delete_processor != nil {
-			processors["DeleteRecords_" + table_name] = delete_processor
-		}*/
 
 		get_schema_processor, get_schema_processor_errors := NewProcessorManager(complete_function, get_next_message_function, push_back_function, client_manager, *domain_name, queue_port, "GetSchema_" + table_name, 1, -1)
 		if get_schema_processor_errors != nil {

@@ -22,7 +22,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		callback_payload := json.NewMapOfValues(&callback_payload_map)
 		callback_payload.SetMap("data", callback_payload_data)
 
-		//callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":message,"stdout":true},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
 		go this_processor.SendMessageToQueueFireAndForget(callback_payload)
 
 		if this_command_name != "Run_IntegrationTestSuite" {
@@ -88,7 +87,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		read_records_test_suite_request_map := json.NewMapOfValues(&read_records_test_suite_request)
 		read_records_test_suite_request_map.SetMap("[where_fields]", read_records_test_suite_where_map)
 
-		//select_test_suite_payload := json.Map{"[queue]":"ReadRecords_TestSuiteBuildBranch", "[where_fields]":json.Map{"build_branch_id":this_build_branch_id,"name":this_label}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
 		test_suite_response, test_suite_response_errors := this_processor.SendMessageToQueue(read_records_test_suite_request_map)
 		if test_suite_response_errors != nil {
 			fmt.Println(test_suite_response_errors)
@@ -116,7 +114,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			create_test_suite_payload := json.NewMapOfValues(&create_test_suite_payload_map)
 			create_test_suite_payload.SetMap("data", create_test_suite_payload_data)
 			
-			//create_test_suite_payload := json.Map{"[queue]":"CreateRecord_TestSuiteBuildBranch", "data":json.Map{"build_branch_id":this_build_branch_id,"name":this_label},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 			create_suite_response, create_suite_response_errors := this_processor.SendMessageToQueue(create_test_suite_payload)
 			if create_suite_response_errors != nil {
 				if !(len(create_suite_response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", create_suite_response_errors[0]), "Duplicate entry")) { 
@@ -195,8 +192,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		read_records_test_request_map := json.NewMapOfValues(&read_records_test_request)
 		read_records_test_request_map.SetMap("[where_fields]", read_records_test_where_map)
 
-
-		//select_test_payload := json.Map{"[queue]":"ReadRecords_TestBuildBranch", "[where_fields]":json.Map{"test_suite_build_branch_id":*test_suite_build_branch_id,"name":*test_value}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 		test_response, test_response_errors := this_processor.SendMessageToQueue(read_records_test_request_map)
 		if test_response_errors != nil {
 			fmt.Println(test_response_errors)
@@ -224,7 +219,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			create_test_payload := json.NewMapOfValues(&create_test_payload_map)
 			create_test_payload.SetMap("data", create_test_payload_data)
 
-			//create_test_payload := json.Map{"[queue]":"CreateRecord_TestBuildBranch", "data":json.Map{"test_suite_build_branch_id":test_suite_build_branch_id,"name":*test_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 			create_test_response, create_test_response_errors := this_processor.SendMessageToQueue(create_test_payload)
 			if create_test_response_errors != nil {
 				if !(len(create_test_response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", create_test_response_errors[0]), "Duplicate entry")) { 
@@ -300,7 +294,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	select_test_result_request_map := json.NewMapOfValues(&select_test_result_request)
 	select_test_result_request_map.SetMap("[where_fields]", select_test_result_where_map)
 
-	//select_test_result_payload := json.Map{"[queue]":"ReadRecords_TestResult", "[where_fields]":json.Map{"name":*test_result_value}, "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 	test_result_response, test_result_response_errors := this_processor.SendMessageToQueue(select_test_result_request_map)
 	if test_result_response_errors != nil {
 		fmt.Println(test_result_response_errors)
@@ -351,7 +344,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	create_test_log_payload := json.NewMapOfValues(&create_test_log_payload_map)
 	create_test_log_payload.SetMap("data", create_test_log_payload_data)
 
-	//create_test_log_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult", "data":json.Map{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value},"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 	go this_processor.SendMessageToQueueFireAndForget(create_test_log_payload)
 	
 	
@@ -361,8 +353,6 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 
 func getStderrCallbackFunctionBranch(processor *Processor, command_name string, build_branch_id uint64, build_branch_instance_step_id uint64, label string) (*func(message error)) {
 	this_processor := processor
-	//this_command_name := command_name
-	//this_build_branch_id := build_branch_id
 	this_build_branch_instance_step_id := build_branch_instance_step_id
 	
 	
@@ -374,7 +364,6 @@ func getStderrCallbackFunctionBranch(processor *Processor, command_name string, 
 		callback_payload := json.NewMapOfValues(&callback_payload_map)
 		callback_payload.SetMap("data", callback_payload_data)
 
-		//callback_payload := json.Map{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "data":json.Map{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false},"[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
 		go this_processor.SendMessageToQueueFireAndForget(callback_payload)
 	}
 	return &function

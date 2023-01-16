@@ -2,8 +2,6 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
-	//common "github.com/matehaxor03/holistic_common/common"
-	//"fmt"
 )
 
 func commandRunNotStarted(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
