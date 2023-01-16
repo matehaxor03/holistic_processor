@@ -208,10 +208,8 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			errors = append(errors, fmt.Errorf("request method not supported: " + req.Method))
 		}
 
-		dummy_result := json.NewMapValue()
-
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, dummy_result, errors)
+			http_extension.WriteResponse(w, json.NewMap(), errors)
 			return
 		}
 
@@ -221,7 +219,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 		} 
 
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, dummy_result, errors)
+			http_extension.WriteResponse(w, json.NewMap(), errors)
 			return
 		}
 		
@@ -231,7 +229,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 		} 
 
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, dummy_result, errors)
+			http_extension.WriteResponse(w, json.NewMap(), errors)
 			return
 		}
 
@@ -246,7 +244,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 		}
 
 		if len(errors) > 0 {
-			http_extension.WriteResponse(w, *json_payload, errors)
+			http_extension.WriteResponse(w, json_payload, errors)
 			return
 		}
 
@@ -262,7 +260,7 @@ func NewProcessorServer(complete_function (*func(json.Map) []error), get_next_me
 			errors = append(errors, fmt.Errorf("[queue_mode] is not supported: %s",  *queue_mode))
 		}
 
-		http_extension.WriteResponse(w, *result, errors)
+		http_extension.WriteResponse(w, result, errors)
 	}
 
 	x := ProcessorServer{
