@@ -8,7 +8,7 @@ import (
 
 func main() {
 	var errors []error
-	processor_server, processor_server_errors := processor.NewProcessorServer(nil, nil, nil, "5002", "server.crt", "server.key", "127.0.0.1", "5000")
+	processor_server, processor_server_errors := processor.NewProcessorServer("5002", "server.crt", "server.key", "127.0.0.1", "5000")
 	if processor_server_errors != nil {
 		errors = append(errors, processor_server_errors...)	
 	} else {

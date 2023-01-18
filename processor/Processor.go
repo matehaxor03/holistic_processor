@@ -21,18 +21,21 @@ type Processor struct {
 	SendMessageToQueue func(message *json.Map) (*json.Map, []error)
 	SendMessageToQueueFireAndForget func(message *json.Map) 
 	GetProcessor func() *Processor
+	GetProcessorManager func() *ProcessorManager
 	GetClientRead func() *dao.Client
 	GetClientWrite func() *dao.Client
-	GetQueue func() string
+	GetQueueName func() string
 	GenerateTraceId func() string
 	WakeUp func()
 }
 
-func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_function (*func(string, string) (json.Map, []error)), push_back_function (*func(string,*json.Map) (*json.Map, []error)), client_manager *dao.ClientManager, domain_name dao.DomainName, port string, queue string) (*Processor, []error) {
+func NewProcessor(client_manager *dao.ClientManager, processor_manager *ProcessorManager, queue_domain_name dao.DomainName, queue_port string, queue_name string) (*Processor, []error) {
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
 	wakeup_lock := &sync.Mutex{}
+
+	var queue_get_next_message_function (*func(string) (*json.Map, []error))
 
 	var this_processor *Processor
 	var errors []error
@@ -50,26 +53,33 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 		return this_processor
 	}
 
-	getQueue := func() string {
-		return queue
+	getProcessorManager := func() *ProcessorManager {
+		return processor_manager
+	}	
+
+	getQueueName := func() string {
+		return queue_name
 	}
 
-	processor_callback, processor_callback_errors := NewProcessorCallback(complete_function, push_back_function, domain_name, port)
+	getQueuePort := func() string {
+		return queue_port
+	}
+
+	processor_callback, processor_callback_errors := NewProcessorCallback(queue_domain_name, getQueuePort())
 	if processor_callback_errors != nil {
 		return nil, processor_callback_errors
 	} else if common.IsNil(processor_callback) {
 		errors = append(errors, fmt.Errorf("callback processor is nil"))
 		return nil, errors
 	}
-	processor_callback.Start()
 
-	getCallbackProcessor := func() *ProcessorCallback {
+	get_processor_callback := func() *ProcessorCallback {
 		return processor_callback
 	}
 
-	domain_name_value := domain_name.GetDomainName()
+	domain_name_value := queue_domain_name.GetDomainName()
 
-	queue_url := fmt.Sprintf("https://%s:%s/queue_api", domain_name_value, port)
+	queue_url := fmt.Sprintf("https://%s:%s/queue_api/" + getQueueName(), domain_name_value, getQueuePort())
 	transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -89,88 +99,88 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 		return nil, write_database_client_errors
 	}
 
-	if queue == "GetTableNames" {
+	if queue_name == "GetTableNames" {
 		processor_function = commandGetTableNamesFunc()
-	} else if strings.HasPrefix(queue, "GetSchema_") {
+	} else if strings.HasPrefix(queue_name, "GetSchema_") {
 		processor_function = commandGetSchemaFunc()
-	} else if strings.HasPrefix(queue, "ReadRecords_") {
+	} else if strings.HasPrefix(queue_name, "ReadRecords_") {
 		processor_function = commandReadRecordsFunc()
-	} else if strings.HasPrefix(queue, "UpdateRecords_") {
+	} else if strings.HasPrefix(queue_name, "UpdateRecords_") {
 		processor_function = commandUpdateRecordsFunc()
-	} else if strings.HasPrefix(queue, "UpdateRecord_") {
+	} else if strings.HasPrefix(queue_name, "UpdateRecord_") {
 		processor_function = commandUpdateRecordFunc()
-	} else if strings.HasPrefix(queue, "CreateRecords_") {
+	} else if strings.HasPrefix(queue_name, "CreateRecords_") {
 		processor_function = commandCreateRecordsFunc()
-	} else if strings.HasPrefix(queue, "CreateRecord_") {
+	} else if strings.HasPrefix(queue_name, "CreateRecord_") {
 		processor_function = commandCreateRecordFunc()
-	} else if queue == "Run_StartBuildBranchInstance" {
+	} else if queue_name == "Run_StartBuildBranchInstance" {
 		processor_function = commandRunStartBuildBranchInstanceFunc()
-	} else if queue == "Run_NotStarted" {
+	} else if queue_name == "Run_NotStarted" {
 		processor_function = commandRunNotStartedFunc()
-	} else if queue == "Run_Start" {
+	} else if queue_name == "Run_Start" {
 		processor_function = commandRunStartFunc()
-	} else if queue == "Run_CreateSourceFolder" {
+	} else if queue_name == "Run_CreateSourceFolder" {
 		processor_function = commandRunCreateSourceFolderFunc()
-	} else if queue == "Run_CreateDomainNameFolder" {
+	} else if queue_name == "Run_CreateDomainNameFolder" {
 		processor_function = commandRunCreateDomainNameFolderFunc()
-	} else if queue == "Run_CreateRepositoryAccountFolder" {
+	} else if queue_name == "Run_CreateRepositoryAccountFolder" {
 		processor_function = commandRunCreateRepositoryAccountFolderFunc()
-	} else if queue == "Run_CreateRepositoryFolder" {
+	} else if queue_name == "Run_CreateRepositoryFolder" {
 		processor_function = commandRunCreateRepositoryFolderFunc()
-	} else if queue == "Run_CreateBranchesFolder" {
+	} else if queue_name == "Run_CreateBranchesFolder" {
 		processor_function = commandRunCreateBranchesFolderFunc()
-	} else if queue == "Run_CreateTagsFolder" {
+	} else if queue_name == "Run_CreateTagsFolder" {
 		processor_function = commandRunCreateTagsFolderFunc()
-	} else if queue == "Run_CreateBranchOrTagFolder" {
+	} else if queue_name == "Run_CreateBranchOrTagFolder" {
 		processor_function = commandRunCreateBranchOrTagFolderFunc()
-	} else if queue == "Run_CloneBranchOrTagFolder" {
+	} else if queue_name == "Run_CloneBranchOrTagFolder" {
 		processor_function = commandRunCloneBranchOrTagFolderFunc()
-	} else if queue == "Run_PullLatestBranchOrTagFolder" {
+	} else if queue_name == "Run_PullLatestBranchOrTagFolder" {
 		processor_function = commandRunPullLatestBranchOrTagFolderFunc()
-	} else if queue == "Run_CreateBranchInstancesFolder" {
+	} else if queue_name == "Run_CreateBranchInstancesFolder" {
 		processor_function = commandRunCreateBranchInstancesFolderFunc()
-	} else if queue == "Run_CreateTagInstancesFolder" {
+	} else if queue_name == "Run_CreateTagInstancesFolder" {
 		processor_function = commandRunCreateTagInstancesFolderFunc()
-	} else if queue == "Run_CopyToInstanceFolder" {
+	} else if queue_name == "Run_CopyToInstanceFolder" {
 		processor_function = commandRunCopyToInstanceFolderFunc()
-	} else if queue == "Run_CreateInstanceFolder" {
+	} else if queue_name == "Run_CreateInstanceFolder" {
 		processor_function = commandRunCreateInstanceFolderFunc()
-	} else if queue == "Run_CreateGroup" {
+	} else if queue_name == "Run_CreateGroup" {
 		processor_function = commandRunCreateGroupFunc()
-	} else if queue == "Run_CreateUser" {
+	} else if queue_name == "Run_CreateUser" {
 		processor_function = commandRunCreateUserFunc()
-	} else if queue == "Run_DeleteUser" {
+	} else if queue_name == "Run_DeleteUser" {
 		processor_function = commandRunCreateUserFunc()
-	}  else if queue == "Run_DeleteGroup" {
+	}  else if queue_name == "Run_DeleteGroup" {
 		processor_function = commandRunDeleteGroupFunc()
-	} else if queue == "Run_DeleteInstanceFolder" {
+	} else if queue_name == "Run_DeleteInstanceFolder" {
 		processor_function = commandRunDeleteInstanceFolderFunc()
-	} else if queue == "Run_End" {
+	} else if queue_name == "Run_End" {
 		processor_function = commandRunEndFunc()
-	} else if queue == "Run_Clean" {
+	} else if queue_name == "Run_Clean" {
 		processor_function = commandRunCleanFunc()
-	} else if queue == "Run_Lint" {
+	} else if queue_name == "Run_Lint" {
 		processor_function = commandRunLintFunc()
-	} else if queue == "Run_RemoveGroupFromInstanceFolder" {
+	} else if queue_name == "Run_RemoveGroupFromInstanceFolder" {
 		processor_function = commandRunRemoveGroupFromInstanceFolderFunc()
-	} else if queue == "Run_RemoveGroupFromUser" {
+	} else if queue_name == "Run_RemoveGroupFromUser" {
 		processor_function = commandRunRemoveGroupFromUserFunc()
-	} else if queue == "Run_UnitTests" {
+	} else if queue_name == "Run_UnitTests" {
 		processor_function = commandRunUnitTestsFunc()
-	} else if queue == "Run_IntegrationTests" {
+	} else if queue_name == "Run_IntegrationTests" {
 		processor_function = commandRunIntegrationTestsFunc()
-	} else if queue == "Run_IntegrationTestSuite" {
+	} else if queue_name == "Run_IntegrationTestSuite" {
 		processor_function = commandRunIntegrationTestSuiteFunc()
-	} else if queue == "Run_Build" {
+	} else if queue_name == "Run_Build" {
 		processor_function = commandRunBuildFunc()
-	} else if queue == "Run_AssignGroupToUser" {
+	} else if queue_name == "Run_AssignGroupToUser" {
 		processor_function = commandRunAssignGroupToUserFunc()
-	} else if queue == "Run_AssignGroupToInstanceFolder" {
+	} else if queue_name == "Run_AssignGroupToInstanceFolder" {
 		processor_function = commandRunAssignGroupToInstanceFolderFunc()
-	} else if queue == "Run_Sync" {
+	} else if queue_name == "Run_Sync" {
 		processor_function = commandRunSyncFunc()
 	} else {
-		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue))
+		errors = append(errors, fmt.Errorf("queue %s processor mapping does not exist", queue_name))
 		return nil, errors
 	}
 
@@ -206,14 +216,14 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 	sendMessageToQueueFireAndForget := func (message *json.Map) {
 		callbackLock.Lock()
 		defer callbackLock.Unlock()
-		c := getCallbackProcessor()
+		c := get_processor_callback()
 		c.SendMessageToQueueFireAndForget(message)
 	}
 
 	sendMessageToQueue := func(message *json.Map) (*json.Map, []error) {
 		callbackLock.Lock()
 		defer callbackLock.Unlock()
-		c := getCallbackProcessor()
+		c := get_processor_callback()
 		return c.SendMessageToQueue(message)
 	}
 
@@ -294,8 +304,8 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 				get_or_set_status("try again") 
 			}
 		},
-		GetQueue: func() string {
-			return getQueue()
+		GetQueueName: func() string {
+			return getQueueName()
 		},
 		GenerateTraceId: func() string {
 			return generate_trace_id()
@@ -309,6 +319,9 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 		GetProcessor: func() *Processor {
 			return getProcessor()
 		},
+		GetProcessorManager: func() *ProcessorManager {
+			return getProcessorManager()
+		},
 		SendMessageToQueueFireAndForget: func(message *json.Map) {
 			sendMessageToQueueFireAndForget(message)
 		},
@@ -316,13 +329,18 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 			return sendMessageToQueue(message)
 		},
 		Start: func() {
+			get_processor_callback().SetProcessor(getProcessor())
+			queue_get_next_message_function = getProcessor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueueGetNextMessageFunction(getQueueName())
+
+			get_processor_callback().Start()
+
 			go func(queue_url string, queue string) {
 				for {
 					get_or_set_status("running")
 					time.Sleep(1 * time.Nanosecond) 
 					trace_id := generate_trace_id()
-					if get_next_message_function != nil {
-						next_message, next_message_errors := (*get_next_message_function)(queue, trace_id)
+					if queue_get_next_message_function != nil {
+						next_message, next_message_errors := (*queue_get_next_message_function)(trace_id)
 						if next_message_errors != nil {
 							fmt.Println(next_message_errors)
 							time.Sleep(10 * time.Second) 
@@ -332,7 +350,7 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 							time.Sleep(10 * time.Second) 
 							continue
 						} else {
-							process_messsage_errors := process_message(next_message)
+							process_messsage_errors := process_message(*next_message)
 							if process_messsage_errors != nil {
 								fmt.Println(process_messsage_errors)
 								time.Sleep(10 * time.Second) 
@@ -379,7 +397,6 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 						continue
 					}
 
-					
 						request_json_payload, request_json_payload_errors := json.Parse(string(response_body_payload))
 						if request_json_payload_errors != nil {
 							fmt.Println(request_json_payload_errors)
@@ -391,7 +408,7 @@ func NewProcessor(complete_function (*func(json.Map) []error), get_next_message_
 					}
 				}
 				
-			}(queue_url, queue)
+			}(queue_url, queue_name)
 		},
 	}
 	setProcessor(&x)

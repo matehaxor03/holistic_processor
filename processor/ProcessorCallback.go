@@ -21,9 +21,12 @@ type ProcessorCallback struct {
 	WakeUp func()
 	SendMessageToQueueFireAndForget func(message *json.Map)
 	SendMessageToQueue func(*json.Map) (*json.Map, []error)
+	SetProcessor func(*Processor)
+	GetProcessor func() *Processor
 }
 
-func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back_function (*func(string,*json.Map) (*json.Map, []error)), domain_name dao.DomainName, port string) (*ProcessorCallback, []error) {	
+func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*ProcessorCallback, []error) {	
+	var processor *Processor
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -33,7 +36,11 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 
 	domain_name_value := domain_name.GetDomainName()
 
-	queue_url := fmt.Sprintf("https://%s:%s/queue_api", domain_name_value, port)
+	get_queue_port := func() string {
+		return queue_port
+	}
+
+	queue_url := fmt.Sprintf("https://%s:%s/queue_api/", domain_name_value, get_queue_port())
 	transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -59,6 +66,14 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 		return callback_queue.Len()
 	}
 
+	set_processor := func(value *Processor) {
+		processor = value
+	}
+
+	get_processor := func() *Processor {
+		return processor
+	}
+
 	get_or_set_status := func(s string) string {
 		status_lock.Lock()
 		defer status_lock.Unlock()
@@ -72,7 +87,20 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 
 	sendMessageToQueue := func(message *json.Map) (*json.Map, []error) {
 		var errors []error
-		if complete_function != nil {
+		queue_name, queue_name_errors := message.GetString("[queue]")
+		if queue_name_errors != nil {
+			errors = append(errors, queue_name_errors...)
+		} else if common.IsNil(queue_name) {
+			errors = append(errors, fmt.Errorf("[queue] is nil"))
+		}
+
+		if len(errors) > 0 {
+			return nil, errors
+		}
+
+		complete_function := get_processor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueueCompleteFunction(*queue_name)
+		push_back_function := get_processor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueuePushBackFunction(*queue_name)
+		if complete_function != nil && push_back_function != nil {
 			queue_mode, queue_mode_errors := message.GetString("[queue_mode]")
 			if queue_mode_errors != nil {
 				errors = append(errors, queue_mode_errors...)
@@ -110,7 +138,7 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 					return nil, nil
 				}
 			} else if *queue_mode == "PushBack" {
-				return (*push_back_function)(*queue, message)
+				return (*push_back_function)(message)
 			} else {
 				errors = append(errors, fmt.Errorf("mode not supported %s", *queue_mode))
 				return nil, errors
@@ -129,7 +157,7 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 		callback_json_bytes_string := json_payload_callback_builder.String()
 		callback_json_bytes := []byte(callback_json_bytes_string)
 		callback_json_reader := bytes.NewReader(callback_json_bytes)
-		callback_request, callback_request_error := http.NewRequest(http.MethodPost, queue_url, callback_json_reader)
+		callback_request, callback_request_error := http.NewRequest(http.MethodPost, queue_url + *queue_name, callback_json_reader)
 
 		if callback_request_error != nil {
 			errors = append(errors, callback_request_error)
@@ -216,6 +244,12 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 		SendMessageToQueue: func(message *json.Map) (*json.Map, []error) {
 			return sendMessageToQueue(message)
 		},
+		SetProcessor: func(value *Processor) {
+			set_processor(value)
+		},
+		GetProcessor: func() *Processor {
+			return get_processor()
+		},
 		Start: func() {
 			go func(queue_url string) {
 				for {
@@ -247,7 +281,7 @@ func NewProcessorCallback(complete_function (*func(json.Map) []error), push_back
 				}
 			}(queue_url)
 		},
-	}
+	}	
 
 	return &x, nil
 }
