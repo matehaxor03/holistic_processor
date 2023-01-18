@@ -35,6 +35,9 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 	callback_queue := thread_safe.NewQueue()
 
 	domain_name_value := domain_name.GetDomainName()
+	cached_complete_functions := make(map[string](*func(json.Map) []error))
+	cached_push_back_functions := make(map[string](*func(json.Map) (*json.Map, []error)))
+
 
 	get_queue_port := func() string {
 		return queue_port
@@ -98,8 +101,22 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 			return nil, errors
 		}
 
-		complete_function := get_processor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueueCompleteFunction(*queue_name)
-		push_back_function := get_processor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueuePushBackFunction(*queue_name)
+		complete_function, complete_function_found := cached_complete_functions[*queue_name]
+		if !complete_function_found {
+			complete_function = get_processor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueueCompleteFunction(*queue_name)
+			if complete_function != nil {
+				cached_complete_functions[*queue_name] = complete_function
+			}
+		}
+
+		push_back_function, push_back_function_found := cached_push_back_functions[*queue_name]
+		if !push_back_function_found {
+			push_back_function = get_processor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueuePushBackFunction(*queue_name)
+			if push_back_function != nil {
+				cached_push_back_functions[*queue_name] = push_back_function
+			}
+		}
+
 		if complete_function != nil && push_back_function != nil {
 			queue_mode, queue_mode_errors := message.GetString("[queue_mode]")
 			if queue_mode_errors != nil {
