@@ -340,7 +340,7 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	create_test_log_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value}
 	create_test_log_payload_data := json.NewMapOfValues(&create_test_log_payload_map_data)
 
-	create_test_log_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult","[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+	create_test_log_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult","[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
 	create_test_log_payload := json.NewMapOfValues(&create_test_log_payload_map)
 	create_test_log_payload.SetMap("data", create_test_log_payload_data)
 

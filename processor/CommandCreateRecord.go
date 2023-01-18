@@ -43,25 +43,44 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 		return errors
 	}
 
-	new_record, create_record_errors := table.CreateRecord(*data_map)
-	if create_record_errors != nil {
-		return create_record_errors
-	} else if common.IsNil(new_record) {
-		errors = append(errors, fmt.Errorf("created record %s is nil", unsafe_table_name))
-		return errors
-	} else {
-		new_record_fields, new_record_fields_errors := new_record.GetFields()
-		if new_record_fields_errors != nil {
-			return new_record_fields_errors
+	async, async_errors := request.GetBool("[async]")
+	if async_errors != nil {
+		return async_errors
+	} else if common.IsNil(async) {
+		temp_async := false
+		async = &temp_async
+		request.SetBool("[async]", async)
+	}
+	
+	if !*async {
+		new_record, create_record_errors := table.CreateRecord(*data_map)
+		if create_record_errors != nil {
+			return create_record_errors
+		} else if common.IsNil(new_record) {
+			errors = append(errors, fmt.Errorf("created record %s is nil", unsafe_table_name))
+			return errors
 		} else {
-			response_queue_result.SetMap("data", new_record_fields)	
+			new_record_fields, new_record_fields_errors := new_record.GetFields()
+			if new_record_fields_errors != nil {
+				return new_record_fields_errors
+			} else {
+				response_queue_result.SetMap("data", new_record_fields)	
 
-			if *queue_name == "CreateRecord_BuildBranchInstance" {
-				callback_payload_map := map[string]interface{}{"[queue]":"Run_StartBuildBranchInstance", "data":new_record_fields,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
-				go processor.SendMessageToQueueFireAndForget(json.NewMapOfValues(&callback_payload_map))
+				if *queue_name == "CreateRecord_BuildBranchInstance" {
+					callback_payload_map := map[string]interface{}{"[queue]":"Run_StartBuildBranchInstance", "data":new_record_fields,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
+					go processor.SendMessageToQueueFireAndForget(json.NewMapOfValues(&callback_payload_map))
+				}
 			}
 		}
+	} else {
+		response_queue_result.SetMap("data", nil)	
+		create_record_errors := table.CreateRecordAsync(*data_map)
+		if create_record_errors != nil {
+			errors = append(errors, create_record_errors...)
+			return errors
+		} 
 	}
+	
 
 	if len(errors) > 0 {
 		return errors
