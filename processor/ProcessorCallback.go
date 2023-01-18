@@ -138,7 +138,7 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 					return nil, nil
 				}
 			} else if *queue_mode == "PushBack" {
-				return (*push_back_function)(message)
+				return (*push_back_function)(*message)
 			} else {
 				errors = append(errors, fmt.Errorf("mode not supported %s", *queue_mode))
 				return nil, errors

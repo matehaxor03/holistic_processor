@@ -17,10 +17,10 @@ type ProcessorServer struct {
 	Start   func() ([]error)
 	SetQueueCompleteFunctions func(map[string](*func(json.Map) []error))
 	GetQueueCompleteFunction func(queue string) (*func(json.Map) []error)
-	SetQueuePushBackFunctions func(map[string](*func(*json.Map) (*json.Map, []error)))
-	GetQueuePushBackFunction func(queue string) (*func(*json.Map) (*json.Map, []error))
-	SetQueueGetNextMessageFunctions func(map[string](*func(string) (*json.Map, []error)))
-	GetQueueGetNextMessageFunction func(queue string) (*func(string) (*json.Map, []error))
+	SetQueuePushBackFunctions func(map[string](*func(json.Map) (*json.Map, []error)))
+	GetQueuePushBackFunction func(queue string) (*func(json.Map) (*json.Map, []error))
+	SetQueueGetNextMessageFunctions func(map[string](*func(string) (json.Map, []error)))
+	GetQueueGetNextMessageFunction func(queue string) (*func(string) (json.Map, []error))
 	GetControllers func() (map[string](*ProcessorController))
 	GetControllerByName func(controller_name string) (*ProcessorController, error)
 	GetControllerNames func() []string
@@ -37,8 +37,8 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	get_queue_get_next_message_lock := &sync.RWMutex{}
 
 	var queue_complete_functions map[string](*func(json.Map) []error)
-	var queue_push_back_functions map[string](*func(*json.Map) (*json.Map, []error))
-	var queue_get_next_message_functions map[string](*func(string) (*json.Map, []error))
+	var queue_push_back_functions map[string](*func(json.Map) (*json.Map, []error))
+	var queue_get_next_message_functions map[string](*func(string) (json.Map, []error))
 
 	set_queue_complete_functions := func(functions map[string](*func(json.Map) []error)) {
 		queue_complete_functions = functions
@@ -48,19 +48,19 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		return queue_complete_functions
 	}
 
-	set_queue_push_back_functions := func(functions map[string](*func(*json.Map) (*json.Map, []error))) {
+	set_queue_push_back_functions := func(functions map[string](*func(json.Map) (*json.Map, []error))) {
 		queue_push_back_functions = functions
 	}
 
-	get_queue_push_back_functions := func() map[string](*func(*json.Map) (*json.Map, []error)) {
+	get_queue_push_back_functions := func() map[string](*func(json.Map) (*json.Map, []error)) {
 		return queue_push_back_functions
 	}
 
-	set_queue_get_next_message_functions := func(functions map[string](*func(string) (*json.Map, []error))) {
+	set_queue_get_next_message_functions := func(functions map[string](*func(string) (json.Map, []error))) {
 		queue_get_next_message_functions = functions
 	}
 
-	get_queue_get_next_message_functions := func() map[string](*func(string) (*json.Map, []error)) {
+	get_queue_get_next_message_functions := func() map[string](*func(string) (json.Map, []error)) {
 		return queue_get_next_message_functions
 	}
 
@@ -280,10 +280,10 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			}
 			return function
  		},
-		SetQueuePushBackFunctions: func(functions map[string](*func(*json.Map) (*json.Map, []error))) {
+		SetQueuePushBackFunctions: func(functions map[string](*func(json.Map) (*json.Map, []error))) {
 			set_queue_push_back_functions(functions)
 		},
-		GetQueuePushBackFunction: func(queue_name string) (*func(*json.Map) (*json.Map, []error)) {
+		GetQueuePushBackFunction: func(queue_name string) (*func(json.Map) (*json.Map, []error)) {
 			get_queue_push_back_lock.Lock()
 			defer get_queue_push_back_lock.Unlock()
 
@@ -297,10 +297,10 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			}
 			return function
 		},
-		SetQueueGetNextMessageFunctions: func(functions map[string](*func(string) (*json.Map, []error))) {
+		SetQueueGetNextMessageFunctions: func(functions map[string](*func(string) (json.Map, []error))) {
 			set_queue_get_next_message_functions(functions)
 		},
-		GetQueueGetNextMessageFunction: func(queue_name string) (*func(string) (*json.Map, []error)) {
+		GetQueueGetNextMessageFunction: func(queue_name string) (*func(string) (json.Map, []error)) {
 			get_queue_get_next_message_lock.Lock()
 			defer get_queue_get_next_message_lock.Unlock()
 			functions := get_queue_get_next_message_functions()

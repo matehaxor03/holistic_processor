@@ -35,7 +35,7 @@ func NewProcessor(client_manager *dao.ClientManager, processor_manager *Processo
 	var wg sync.WaitGroup
 	wakeup_lock := &sync.Mutex{}
 
-	var queue_get_next_message_function (*func(string) (*json.Map, []error))
+	var queue_get_next_message_function (*func(string) (json.Map, []error))
 
 	var this_processor *Processor
 	var errors []error
@@ -350,7 +350,7 @@ func NewProcessor(client_manager *dao.ClientManager, processor_manager *Processo
 							time.Sleep(10 * time.Second) 
 							continue
 						} else {
-							process_messsage_errors := process_message(*next_message)
+							process_messsage_errors := process_message(next_message)
 							if process_messsage_errors != nil {
 								fmt.Println(process_messsage_errors)
 								time.Sleep(10 * time.Second) 
