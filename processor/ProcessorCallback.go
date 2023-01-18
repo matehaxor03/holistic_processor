@@ -117,36 +117,45 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 			}
 		}
 
+		queue_mode, queue_mode_errors := message.GetString("[queue_mode]")
+		if queue_mode_errors != nil {
+			errors = append(errors, queue_mode_errors...)
+		} else if common.IsNil(queue_mode) {
+			temp_queue_mode := "PushBack"
+			message.SetString("[queue_mode]", &temp_queue_mode)
+			queue_mode = &temp_queue_mode
+		}
+
+		queue, queue_errors := message.GetString("[queue]")
+		if queue_errors != nil {
+			errors = append(errors, queue_errors...)
+		} else if common.IsNil(queue) {
+			errors = append(errors, fmt.Errorf("queue is nil"))
+		}
+
+		async, async_errors := message.GetBool("[async]")
+		if async_errors != nil {
+			errors = append(errors, async_errors...)
+		} else if common.IsNil(async) {
+			async_false := false
+			async = &async_false
+			message.SetBool("[async]", &async_false)
+		}
+
+		trace_id, trace_id_errors := message.GetString("[trace_id]")
+		if trace_id_errors != nil {
+			errors = append(errors, trace_id_errors...)
+		} else if common.IsNil(trace_id) {
+			temp_trace_id := processor.GenerateTraceId()
+			trace_id = &temp_trace_id
+			message.SetString("[trace_id]", &temp_trace_id)
+		}
+		
+		if len(errors) > 0 {
+			return nil, errors
+		} 
+
 		if complete_function != nil && push_back_function != nil {
-			queue_mode, queue_mode_errors := message.GetString("[queue_mode]")
-			if queue_mode_errors != nil {
-				errors = append(errors, queue_mode_errors...)
-			} else if common.IsNil(queue_mode) {
-				temp_queue_mode := "PushBack"
-				message.SetString("[queue_mode]", &temp_queue_mode)
-				queue_mode = &temp_queue_mode
-			}
-
-			queue, queue_errors := message.GetString("[queue]")
-			if queue_errors != nil {
-				errors = append(errors, queue_errors...)
-			} else if common.IsNil(queue) {
-				errors = append(errors, fmt.Errorf("queue is nil"))
-			}
-
-			async, async_errors := message.GetBool("[async]")
-			if async_errors != nil {
-				errors = append(errors, async_errors...)
-			} else if common.IsNil(async) {
-				async_false := false
-				async = &async_false
-				message.SetBool("[async]", &async_false)
-			}
-			
-			if len(errors) > 0 {
-				return nil, errors
-			} 
-			
 			if *queue_mode == "complete" {
 				complete_errors := (*complete_function)(*message)
 				if complete_errors != nil {
@@ -161,8 +170,6 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 				return nil, errors
 			}
 		}
-		
-		
 	
 		var json_payload_callback_builder strings.Builder
 		callback_payload_as_string_errors := message.ToJSONString(&json_payload_callback_builder)
@@ -209,18 +216,18 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 			return nil, errors
 		}	
 
-		message_trace_id, message_trace_id_errors := callback_response_json_payload.GetString("[trace_id]")
-		if message_trace_id_errors != nil {
-			errors = append(errors, message_trace_id_errors...)
-		} else if common.IsNil(message_trace_id) {
-			errors = append(errors, fmt.Errorf("message_trace_id is nil from callback"))
+		response_message_trace_id, response_message_trace_id_errors := callback_response_json_payload.GetString("[trace_id]")
+		if response_message_trace_id_errors != nil {
+			errors = append(errors, response_message_trace_id_errors...)
+		} else if common.IsNil(response_message_trace_id) {
+			errors = append(errors, fmt.Errorf("response_message_trace_id is nil from callback"))
 		}
 
-		async, async_errors := callback_response_json_payload.GetBool("[async]")
-		if async_errors != nil {
-			errors = append(errors, async_errors...)
-		} else if common.IsNil(async) {
-			errors = append(errors, fmt.Errorf("async is nil"))
+		response_async, response_async_errors := callback_response_json_payload.GetBool("[async]")
+		if response_async_errors != nil {
+			errors = append(errors, response_async_errors...)
+		} else if common.IsNil(response_async) {
+			errors = append(errors, fmt.Errorf("response_async is nil"))
 		}
 
 		callback_errors, callback_errors_errors := callback_response_json_payload.GetErrors("[errors]")

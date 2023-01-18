@@ -9,7 +9,6 @@ import (
 	"time"
 	"sync"
 	"strings"
-	"crypto/rand"
 	common "github.com/matehaxor03/holistic_common/common"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
@@ -202,15 +201,8 @@ func NewProcessor(client_manager *dao.ClientManager, processor_manager *Processo
 		return messageCount
 	}
 
-	generate_guid := func() string {
-		byte_array := make([]byte, 16)
-		rand.Read(byte_array)
-		guid := fmt.Sprintf("%X-%X-%X-%X-%X", byte_array[0:4], byte_array[4:6], byte_array[6:8], byte_array[8:10], byte_array[10:])
-		return guid
-	}
-
 	generate_trace_id := func() string {
-		return fmt.Sprintf("%v-%s-%d", time.Now().UnixNano(), generate_guid(), incrementMessageCount())
+		return common.GenerateTraceId(incrementMessageCount(), fmt.Sprintf("%s", getProcessor()))
 	}
 
 	sendMessageToQueueFireAndForget := func (message *json.Map) {
