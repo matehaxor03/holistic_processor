@@ -24,6 +24,7 @@ type ProcessorManager struct {
 }
 
 func NewProcessorManager(client_manager *dao.ClientManager, domain_name dao.DomainName, queue_port string, queue_name string, minimum_threads int, maximum_threads int) (*ProcessorManager, []error) {
+	wakeup_thread_index := 0
 	var this_processor_manager *ProcessorManager
 	var processsor_controller *ProcessorController
 	var errors []error
@@ -65,8 +66,24 @@ func NewProcessorManager(client_manager *dao.ClientManager, domain_name dao.Doma
 		WakeUp: func() {
 			wakeup_lock.Lock()
 			defer wakeup_lock.Unlock()
-			for _, current_processor := range threads {
+			number_of_threads := len(threads)
+			if number_of_threads == 0 {
+				return
+			}
+
+			for true {
+				if wakeup_thread_index >= number_of_threads {
+					wakeup_thread_index = 0
+				}
+
+				current_processor := threads[wakeup_thread_index]
 				current_processor.WakeUp()
+				
+				wakeup_thread_index++
+				if wakeup_thread_index >= number_of_threads {
+					wakeup_thread_index = 0
+				}
+				return
 			}
 		},
 		SetQueueCompleteFunction: func(function *func(json.Map) []error) {
