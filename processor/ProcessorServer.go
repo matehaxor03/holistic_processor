@@ -10,7 +10,6 @@ import (
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 	validate "github.com/matehaxor03/holistic_validator/validate"
-	monitoring "github.com/matehaxor03/holistic_processor/monitoring"
 )
 
 type ProcessorServer struct {
@@ -113,42 +112,42 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	for _, table_name := range table_names {
-		create_processor, create_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "CreateRecords_" + table_name, 1, -1)
+		create_processor, create_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "CreateRecords_" + table_name, 1, -1)
 		if create_processor_errors != nil {
 			errors = append(errors, create_processor_errors...)
 		} else if create_processor != nil {
 			controllers["CreateRecords_" + table_name] = create_processor
 		}
 
-		create_record_processor, create_record_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "CreateRecord_" + table_name, 1, -1)
+		create_record_processor, create_record_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "CreateRecord_" + table_name, 1, -1)
 		if create_record_processor_errors != nil {
 			errors = append(errors, create_record_processor_errors...)
 		} else if create_record_processor != nil {
 			controllers["CreateRecord_" + table_name] = create_record_processor
 		}
 
-		read_processor, read_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "ReadRecords_" + table_name, 1, -1)
+		read_processor, read_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "ReadRecords_" + table_name, 1, -1)
 		if read_processor_errors != nil {
 			errors = append(errors, read_processor_errors...)
 		} else if read_processor != nil {
 			controllers["ReadRecords_" + table_name] = read_processor
 		}
 
-		update_processor, update_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name, 1, -1)
+		update_processor, update_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name, 1, -1)
 		if update_processor_errors != nil {
 			errors = append(errors, update_processor_errors...)
 		} else if update_processor != nil {
 			controllers["UpdateRecords_" + table_name] = update_processor
 		}
 
-		update_record_processor, update_record_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name, 1, -1)
+		update_record_processor, update_record_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name, 1, -1)
 		if update_record_processor_errors != nil {
 			errors = append(errors, update_record_processor_errors...)
 		} else if update_record_processor != nil {
 			controllers["UpdateRecord_" + table_name] = update_record_processor
 		}
 
-		get_schema_processor, get_schema_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "GetSchema_" + table_name, 1, -1)
+		get_schema_processor, get_schema_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "GetSchema_" + table_name, 1, -1)
 		if get_schema_processor_errors != nil {
 			errors = append(errors, get_schema_processor_errors...)
 		} else if get_schema_processor != nil {
@@ -213,7 +212,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			continue
 		}
 
-		processor, processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, command_name, int(minimum_threads), int(maximum_threads))
+		processor, processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, command_name, int(minimum_threads), int(maximum_threads))
 		if processor_errors != nil {
 			errors = append(errors, processor_errors...)
 		} else if processor != nil {
@@ -221,23 +220,6 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 		} else {
 			errors = append(errors, fmt.Errorf("failed to create processor: %s", command_name))
 		}
-
-		cpu_load, cpu_load_errors := monitoring.GetCPULoad()
-		if cpu_load_errors != nil {
-			fmt.Println(cpu_load_errors)
-		} else {
-			fmt.Println(cpu_load)
-		}
-
-		memory_load, memory_load_errors := monitoring.GetMemoryLoad()
-		if memory_load_errors != nil {
-			fmt.Println(memory_load_errors)
-		} else {
-			fmt.Println(memory_load)
-		}
-
-		cpu_cores := monitoring.GetCPUVirtualCores()
-		fmt.Println(cpu_cores)
 	}
 
 	get_controller_by_name := func(contoller_name string) (*ProcessorController, error) {

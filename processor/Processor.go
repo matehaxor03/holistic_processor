@@ -12,6 +12,7 @@ import (
 	common "github.com/matehaxor03/holistic_common/common"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
+	validate "github.com/matehaxor03/holistic_validator/validate"	
 )
 
 
@@ -26,9 +27,10 @@ type Processor struct {
 	GetQueueName func() string
 	GenerateTraceId func() string
 	WakeUp func()
+	GetValidator func() validate.Validator
 }
 
-func NewProcessor(client_manager *dao.ClientManager, processor_manager *ProcessorManager, queue_domain_name dao.DomainName, queue_port string, queue_name string) (*Processor, []error) {
+func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, processor_manager *ProcessorManager, queue_domain_name dao.DomainName, queue_port string, queue_name string) (*Processor, []error) {
 	status := "not started"
 	status_lock := &sync.Mutex{}
 	var wg sync.WaitGroup
@@ -319,6 +321,9 @@ func NewProcessor(client_manager *dao.ClientManager, processor_manager *Processo
 		},
 		SendMessageToQueue: func(message *json.Map) (*json.Map, []error) {
 			return sendMessageToQueue(message)
+		},
+		GetValidator: func() validate.Validator {
+			return verify
 		},
 		Start: func() {
 			get_processor_callback().SetProcessor(getProcessor())

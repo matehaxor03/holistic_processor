@@ -9,6 +9,7 @@ import (
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 	http_extension "github.com/matehaxor03/holistic_http/http_extension"
+	validate "github.com/matehaxor03/holistic_validator/validate"
 )
 
 type ProcessorController struct {
@@ -19,14 +20,14 @@ type ProcessorController struct {
 	Start func() []error
 }
 
-func NewProcessorController(client_manager *dao.ClientManager, queue_domain_name dao.DomainName, queue_port string, queue_name string, minimum_threads int, maximum_threads int) (*ProcessorController, []error) {
+func NewProcessorController(verify validate.Validator, client_manager *dao.ClientManager, queue_domain_name dao.DomainName, queue_port string, queue_name string, minimum_threads int, maximum_threads int) (*ProcessorController, []error) {
 	var errors []error
 	var this_processsor_controller *ProcessorController
 	var processor_server *ProcessorServer
 	started := false
 	wakeup_processor_lock := &sync.RWMutex{}
 	
-	processor_manager, processor_manager_errors := NewProcessorManager(client_manager, queue_domain_name, queue_port, queue_name, minimum_threads, maximum_threads)
+	processor_manager, processor_manager_errors := NewProcessorManager(verify, client_manager, queue_domain_name, queue_port, queue_name, minimum_threads, maximum_threads)
 	if processor_manager_errors != nil {
 		errors = append(errors, processor_manager_errors...)
 	} else if common.IsNil(processor_manager) {

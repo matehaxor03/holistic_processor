@@ -11,6 +11,7 @@ import (
 )
 
 func commandRunIntegrationTests(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	verify := processor.GetValidator()
 	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
@@ -34,6 +35,18 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
 	full_path_of_integration_tests_folder := full_path_of_instance_directory + "/tests/integration"
 
+	directory_parts := strings.Split(full_path_of_integration_tests_folder, "/")
+	for index, directory_part := range directory_parts {
+		if index == 0 {
+			continue
+		}
+
+		directory_errors := verify.ValidateDirectoryName(directory_part)
+		if directory_errors != nil {
+			errors = append(errors, directory_errors...)
+		}
+	}
+
 	var suite_names []string
 	if _, stat_error := os.Stat(full_path_of_integration_tests_folder); !os.IsNotExist(stat_error) {
 		files, files_error := ioutil.ReadDir(full_path_of_integration_tests_folder)
@@ -52,7 +65,12 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		for _, file := range files {
 			filename := file.Name()
 			if strings.HasSuffix(filename, "test.go") {
-				suite_names = append(suite_names, filename)
+				file_name_errors := verify.ValidateFileName(filename) 
+				if file_name_errors != nil {
+					errors = append(errors, file_name_errors...)
+				} else {
+					suite_names = append(suite_names, filename)
+				}
 			}
 		}
 
