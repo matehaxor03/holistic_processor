@@ -72,7 +72,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		parts := strings.Split(full_path_of_test_suite, "/")
 		var part_errors []error
 		for index, part := range parts {
-			if index == 0 {
+			if index == 0 && part == "" {
 				continue
 			}
 

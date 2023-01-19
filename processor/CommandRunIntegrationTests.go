@@ -63,7 +63,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				parts := strings.Split(check_file, "/")
 				var part_errors []error
 				for index, part := range parts {
-					if index == 0 {
+					if index == 0 && part == "" {
 						continue
 					}
 
