@@ -81,10 +81,8 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				}
 
 				if len(part_errors) == 0 {
-					fmt.Println("valid " + check_file)
 					suite_names = append(suite_names, strings.TrimPrefix(check_file, full_path_of_instance_directory))
 				} else {
-					fmt.Println("invalid " + check_file)
 					errors = append(errors, part_errors...)
 				}
 			}

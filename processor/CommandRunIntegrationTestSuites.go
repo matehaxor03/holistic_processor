@@ -6,9 +6,11 @@ import (
     "path/filepath"
 	"os"
 	"fmt"
+	"strings"
 )
 
 func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
+	verify := processor.GetValidator()
 	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
@@ -64,14 +66,31 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
 
-	/*
-	test_suite_parts := []string{}
-	test_suite_parts = append(test_suite_parts, "tests")
-	test_suite_parts = append(test_suite_parts, "integration")
-	test_suite_parts = append(test_suite_parts, *test_suite_name)
-	test_suite_relative_path := "/" + filepath.Join(test_suite_parts...)*/
-
 	full_path_of_test_suite := full_path_of_instance_directory + *test_suite_name
+
+	if strings.HasSuffix(full_path_of_test_suite, "Integration_test.go") {
+		parts := strings.Split(full_path_of_test_suite, "/")
+		var part_errors []error
+		for index, part := range parts {
+			if index == 0 {
+				continue
+			}
+
+			if index == len(parts) - 1 {
+				file_name_errors := verify.ValidateFileName(part) 
+				if file_name_errors != nil {
+					part_errors = append(part_errors, file_name_errors...)
+				} 
+			} else {
+				directory_name_errors := verify.ValidateDirectoryName(part) 
+				if directory_name_errors != nil {
+					part_errors = append(part_errors, directory_name_errors...)
+				}
+			}
+		}
+	} else {
+		errors = append(errors, fmt.Errorf("integration test file does not end with Integration_test.go"))
+	}
 
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		fmt.Println("running " + *test_suite_name)
