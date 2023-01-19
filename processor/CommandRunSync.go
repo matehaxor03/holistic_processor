@@ -7,7 +7,7 @@ import (
 )
 
 func commandRunSync(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(request)
+	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors
@@ -31,19 +31,20 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return errors
 	}
 
-	where_query := json.NewMap()
-	where_query.SetUInt64("build_branch_instance_step_id", build_branch_instance_step_id)
-	records, records_errors := table_BuildBranchInstanceStep.ReadRecords(nil, where_query, nil, nil, nil, nil)
-	if records_errors != nil {
-		return records_errors
-	} else if len(*records) == 0 {
-		errors = append(errors, fmt.Errorf("did not find record for build_branch_instance_step_id"))
+	where_query_current_build_branch_instance_step := json.NewMap()
+	where_query_current_build_branch_instance_step.SetUInt64("build_branch_instance_step_id", build_branch_instance_step_id)
+	curent_build_branch_instanace_step_records, curent_build_branch_instanace_step_records_errors := table_BuildBranchInstanceStep.ReadRecords(nil, where_query_current_build_branch_instance_step, nil, nil, nil, nil)
+	if curent_build_branch_instanace_step_records_errors != nil {
+		return curent_build_branch_instanace_step_records_errors
+	} else if len(*curent_build_branch_instanace_step_records) == 0 {
+		errors = append(errors, fmt.Errorf("did not find record for curent_build_branch_instanace_step_records"))
 		return errors
-	}  else if len(*records) > 1 {
-		errors = append(errors, fmt.Errorf("found too many records for build_branch_instance_step_id"))
+	}  else if len(*curent_build_branch_instanace_step_records) > 1 {
+		errors = append(errors, fmt.Errorf("found too many records for curent_build_branch_instanace_step_records"))
 		return errors
 	}
-	build_branch_instance_step_id_record := (*records)[0]
+	
+	build_branch_instance_step_id_record := (*curent_build_branch_instanace_step_records)[0]
 	current_build_step_status_id, current_build_step_status_id_errors := build_branch_instance_step_id_record.GetUInt64("build_step_status_id")
 	if current_build_step_status_id_errors != nil {
 		return current_build_step_status_id_errors
@@ -96,9 +97,9 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return running_build_step_status_id_errors
 	}
 
-	if *current_build_step_status_id != *not_started_build_step_status_id &&
-	   *current_build_step_status_id != *running_build_step_status_id {
-		fmt.Println("sync already completed")
+	if !(*current_build_step_status_id == *not_started_build_step_status_id || 
+		 *current_build_step_status_id == *running_build_step_status_id) {
+		fmt.Println("sync already completed skipping")
 		return nil
 	}
 
@@ -137,8 +138,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	if failed_build_step_status_id_errors != nil {
 		return failed_build_step_status_id_errors
 	}
-
-
 
 	previous_read_record_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
 	previous_read_record_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&previous_read_record_build_branch_instance_step_select))
@@ -311,13 +310,6 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	}
 
 	if len(errors) == 0 && !incomplete_steps_found {		
-		if incomplete_steps_found_failed_count > 0 {
-			build_branch_instance_step_id_record.SetUInt64("build_step_status_id", failed_build_step_status_id)
-		} else {
-			build_branch_instance_step_id_record.SetUInt64("build_step_status_id", passed_build_step_status_id)
-		}
-		build_branch_instance_step_id_record.Update()
-
 		fmt.Println("all previous steps have completed... triggering next step")
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {

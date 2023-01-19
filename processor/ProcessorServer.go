@@ -134,14 +134,14 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			controllers["ReadRecords_" + table_name] = read_processor
 		}
 
-		update_processor, update_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name, 1, 1)
+		update_processor, update_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "UpdateRecords_" + table_name, 1, -1)
 		if update_processor_errors != nil {
 			errors = append(errors, update_processor_errors...)
 		} else if update_processor != nil {
 			controllers["UpdateRecords_" + table_name] = update_processor
 		}
 
-		update_record_processor, update_record_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name, 1, 1)
+		update_record_processor, update_record_processor_errors := NewProcessorController(client_manager, *domain_name, queue_port, "UpdateRecord_" + table_name, 1, -1)
 		if update_record_processor_errors != nil {
 			errors = append(errors, update_record_processor_errors...)
 		} else if update_record_processor != nil {

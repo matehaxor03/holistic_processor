@@ -25,6 +25,7 @@ type ProcessorManager struct {
 
 func NewProcessorManager(client_manager *dao.ClientManager, domain_name dao.DomainName, queue_port string, queue_name string, minimum_threads int, maximum_threads int) (*ProcessorManager, []error) {
 	wakeup_thread_index := 0
+	wakeup_minimum_thread_count := 2
 	var this_processor_manager *ProcessorManager
 	var processsor_controller *ProcessorController
 	var errors []error
@@ -71,13 +72,15 @@ func NewProcessorManager(client_manager *dao.ClientManager, domain_name dao.Doma
 				return
 			}
 
-			for true {
+			current_count := 0
+			for true && current_count < wakeup_minimum_thread_count{
 				if wakeup_thread_index >= number_of_threads {
 					wakeup_thread_index = 0
 				}
 
 				current_processor := threads[wakeup_thread_index]
 				current_processor.WakeUp()
+				current_count++
 				
 				wakeup_thread_index++
 				if wakeup_thread_index >= number_of_threads {

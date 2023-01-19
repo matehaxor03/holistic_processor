@@ -5,7 +5,7 @@ import (
 )
 
 func commandRunCreateGroup(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(request)
+	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors

@@ -10,20 +10,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 	if command_name == nil {
 		errors = append(errors, fmt.Errorf("current command_name is nil"))
 	} 
-
-	lookup_name := ""
-	if len(errors) > 0 {
-		lookup_name = "Failed"
-	} else {
-		lookup_name = "Passed"
-	}
-
-	build_step_status_select := []string{"build_step_status_id"}
-	build_step_status_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&build_step_status_select))
-
-	build_step_status_where := map[string]interface{}{"name":lookup_name}
-	build_step_status_where_map := json.NewMapOfValues(&build_step_status_where)
-
+	one_record := uint64(1)
 	write_client := processor.GetClientWrite()
 	database := write_client.GetDatabase()
 	table_BuildStepStatus, table_BuildStepStatus_errors := database.GetTable("BuildStepStatus")
@@ -35,28 +22,40 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return errors
 	}
 
-	one_record := uint64(1)
-
-	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_map, nil, nil, &one_record, nil)
-	if lookup_buildstep_records_errors != nil {
-		errors = append(errors, lookup_buildstep_records_errors...)
+	where_query_build_step_status_not_started := json.NewMap()
+	where_query_build_step_status_not_started.SetStringValue("name", "Not Started")
+	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil)
+	if records_not_started_step_status_errors != nil {
+		return records_not_started_step_status_errors
+	} else if len(*records_not_started_step_status) == 0 {
+		errors = append(errors, fmt.Errorf("did not find record for Not Started BuildStepStatus"))
 		return errors
-	} else if common.IsNil(lookup_buildstep_records) {
-		errors = append(errors, fmt.Errorf("lookup_buildstep_records is nil"))
-		return errors
-	} else if len(*lookup_buildstep_records) != 1 {
-		errors = append(errors, fmt.Errorf("lookup_buildstep_records did not return 1 record"))
+	}  else if len(*records_not_started_step_status) > 1 {
+		errors = append(errors, fmt.Errorf("found too many records for Not Started BuildStepStatus"))
 		return errors
 	}
 
-	build_step_status :=  (*lookup_buildstep_records)[0]
-	build_step_status_id, build_step_status_id_errors := build_step_status.GetUInt64("build_step_status_id")
-	if build_step_status_id_errors != nil {
-		errors = append(errors, build_step_status_id_errors...)
+	not_started_build_step_status_id, not_started_build_step_status_id_errors := ((*records_not_started_step_status)[0]).GetUInt64("build_step_status_id")
+	if not_started_build_step_status_id_errors != nil {
+		return not_started_build_step_status_id_errors
+	}
+
+	where_query_build_step_status_running := json.NewMap()
+	where_query_build_step_status_running.SetStringValue("name", "Running")
+	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil)
+	if records_running_step_status_errors != nil {
+		return records_running_step_status_errors
+	} else if len(*records_running_step_status) == 0 {
+		errors = append(errors, fmt.Errorf("did not find record for Running BuildStepStatus"))
 		return errors
-	} else if common.IsNil(build_step_status_id) {
-		errors = append(errors, fmt.Errorf("build_step_status_id is nil"))
+	}  else if len(*records_running_step_status) > 1 {
+		errors = append(errors, fmt.Errorf("found too many records for Running BuildStepStatus"))
 		return errors
+	}
+
+	running_build_step_status_id, running_build_step_status_id_errors := ((*records_running_step_status)[0]).GetUInt64("build_step_status_id")
+	if running_build_step_status_id_errors != nil {
+		return running_build_step_status_id_errors
 	}
 
 	table_BuildBranchInstanceStep, table_BuildBranchInstanceStep_errors := database.GetTable("BuildBranchInstanceStep")
@@ -82,14 +81,65 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		errors = append(errors, fmt.Errorf("update_records len is not 1"))
 		return errors
 	}
-
+	
 	update_record := (*update_records)[0]
+	current_build_step_status_id, current_build_step_status_id_errors := update_record.GetUInt64("build_step_status_id")
+	if current_build_step_status_id_errors != nil {
+		errors = append(errors, current_build_step_status_id_errors...)
+		return errors
+	} else if common.IsNil(current_build_step_status_id) {
+		errors = append(errors, fmt.Errorf("current_build_step_status_id is nil"))
+		return errors
+	}
+
+	if !(*current_build_step_status_id == *running_build_step_status_id ||
+	   *current_build_step_status_id == *not_started_build_step_status_id) {
+		fmt.Println("already synced")
+		return nil
+	}
+
+
+	lookup_name := ""
+	if len(errors) > 0 {
+		lookup_name = "Failed"
+	} else {
+		lookup_name = "Passed"
+	}
+
+	build_step_status_select := []string{"build_step_status_id"}
+	build_step_status_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&build_step_status_select))
+
+	build_step_status_where := map[string]interface{}{"name":lookup_name}
+	build_step_status_where_map := json.NewMapOfValues(&build_step_status_where)
+
+	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_map, nil, nil, &one_record, nil)
+	if lookup_buildstep_records_errors != nil {
+		errors = append(errors, lookup_buildstep_records_errors...)
+		return errors
+	} else if common.IsNil(lookup_buildstep_records) {
+		errors = append(errors, fmt.Errorf("lookup_buildstep_records is nil"))
+		return errors
+	} else if len(*lookup_buildstep_records) != 1 {
+		errors = append(errors, fmt.Errorf("lookup_buildstep_records did not return 1 record"))
+		return errors
+	}
+
+	build_step_status :=  (*lookup_buildstep_records)[0]
+	build_step_status_id, build_step_status_id_errors := build_step_status.GetUInt64("build_step_status_id")
+	if build_step_status_id_errors != nil {
+		errors = append(errors, build_step_status_id_errors...)
+		return errors
+	} else if common.IsNil(build_step_status_id) {
+		errors = append(errors, fmt.Errorf("build_step_status_id is nil"))
+		return errors
+	}
+
 	update_record.SetUInt64Value("build_step_status_id", *build_step_status_id)
 	update_errors := update_record.Update()
 	if update_errors != nil {
 		errors = append(errors, update_errors...)
 		return errors
-	}
+	} 
 
 	build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}
 	build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&build_branch_instance_step_select))
