@@ -3,7 +3,6 @@ package processor
 import (
 	json "github.com/matehaxor03/holistic_json/json"
 	common "github.com/matehaxor03/holistic_common/common"
-	"io/ioutil"
     "path/filepath"
 	"os"
 	"fmt"
@@ -33,43 +32,60 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *build_branch_instance_id))
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
-	full_path_of_integration_tests_folder := full_path_of_instance_directory + "/tests/integration"
+	//full_path_of_integration_tests_folder := full_path_of_instance_directory + "/tests/integration"
+	check_files := make([]string, 0)
 
-	directory_parts := strings.Split(full_path_of_integration_tests_folder, "/")
-	for index, directory_part := range directory_parts {
-		if index == 0 {
-			continue
+	file_error := filepath.Walk(full_path_of_instance_directory,
+	func(file_path string, info os.FileInfo, file_error error) error {
+		if file_error != nil {
+			return file_error
 		}
+		check_files = append(check_files, file_path)
+		return nil
+	})
+	
+	if file_error != nil {
+		errors = append(errors, file_error)
+	}
 
-		directory_errors := verify.ValidateDirectoryName(directory_part)
-		if directory_errors != nil {
-			errors = append(errors, directory_errors...)
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
 		}
+		return errors
 	}
 
 	var suite_names []string
-	if _, stat_error := os.Stat(full_path_of_integration_tests_folder); !os.IsNotExist(stat_error) {
-		files, files_error := ioutil.ReadDir(full_path_of_integration_tests_folder)
-		if files_error != nil {
-			errors = append(errors, files_error)
-		}
+	if _, stat_error := os.Stat(full_path_of_instance_directory); !os.IsNotExist(stat_error) {
+		for _, check_file := range check_files {
+			if strings.HasSuffix(check_file, "Integration_test.go") {
+				parts := strings.Split(check_file, "/")
+				var part_errors []error
+				for index, part := range parts {
+					if index == 0 {
+						continue
+					}
 
-		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
-			if trigger_next_run_command_errors != nil {
-				errors = append(errors, trigger_next_run_command_errors...)
-			}
-			return errors
-		}
+					if index == len(parts) - 1 {
+						file_name_errors := verify.ValidateFileName(part) 
+						if file_name_errors != nil {
+							part_errors = append(part_errors, file_name_errors...)
+						} 
+					} else {
+						directory_name_errors := verify.ValidateDirectoryName(part) 
+						if directory_name_errors != nil {
+							part_errors = append(part_errors, directory_name_errors...)
+						}
+					}
+				}
 
-		for _, file := range files {
-			filename := file.Name()
-			if strings.HasSuffix(filename, "test.go") {
-				file_name_errors := verify.ValidateFileName(filename) 
-				if file_name_errors != nil {
-					errors = append(errors, file_name_errors...)
+				if len(part_errors) == 0 {
+					fmt.Println("valid " + check_file)
+					suite_names = append(suite_names, strings.TrimPrefix(check_file, full_path_of_instance_directory))
 				} else {
-					suite_names = append(suite_names, filename)
+					fmt.Println("invalid " + check_file)
+					errors = append(errors, part_errors...)
 				}
 			}
 		}
@@ -277,7 +293,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 		
 	} else {
-		fmt.Println("not found " + full_path_of_integration_tests_folder)
+		errors = append(errors, fmt.Errorf("not found " + full_path_of_instance_directory))
 	}
 	
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)

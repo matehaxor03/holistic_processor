@@ -64,18 +64,19 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
 
+	/*
 	test_suite_parts := []string{}
 	test_suite_parts = append(test_suite_parts, "tests")
 	test_suite_parts = append(test_suite_parts, "integration")
 	test_suite_parts = append(test_suite_parts, *test_suite_name)
-	test_suite_relative_path := "/" + filepath.Join(test_suite_parts...)
+	test_suite_relative_path := "/" + filepath.Join(test_suite_parts...)*/
 
-	full_path_of_test_suite := full_path_of_instance_directory + test_suite_relative_path
+	full_path_of_test_suite := full_path_of_instance_directory + *test_suite_name
 
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		fmt.Println("running " + *test_suite_name)
 		bashCommand := common.NewBashCommand()
-		command := fmt.Sprintf("cd %s && go test -timeout 7200s -outputdir= -json .%s", full_path_of_instance_directory, test_suite_relative_path)
+		command := fmt.Sprintf("cd %s && go test -timeout 7200s -outputdir= -json .%s", full_path_of_instance_directory, *test_suite_name)
 		stdout_lines, stderr_lines := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(command)
 		if stderr_lines != nil {
 			errors = append(errors, stderr_lines...)
@@ -91,7 +92,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 			(*std_callback)(stdout_line)
 		}
 	} else {
-		fmt.Println("not found file " + *test_suite_name)
+		errors = append(errors, fmt.Errorf("not found file " + *test_suite_name))
 	}
 
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
