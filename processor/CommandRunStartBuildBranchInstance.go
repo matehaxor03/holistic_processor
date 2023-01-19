@@ -128,7 +128,8 @@ func commandRunStartBuildBranchInstance(processor *Processor, request *json.Map,
 		}
 
 		//determine this later
-		if *name == "Run_IntegrationTestSuite" {
+		if *name == "Run_IntegrationTestSuite" ||
+		   *name == "Run_Sync" {
 			continue
 		}
 

@@ -176,10 +176,12 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
-	update_records_build_branch_instance_step_data_map :=  map[string]interface{}{"build_branch_instance_step_id":build_branch_instance_step_id}
-	update_records_build_branch_instance_step_data :=  json.NewMapOfValues(&update_records_build_branch_instance_step_data_map)
+	update_records_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
+	update_records_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&update_records_build_branch_instance_step_select))
+	update_records_build_branch_instance_step_where :=  map[string]interface{}{"build_branch_instance_step_id":build_branch_instance_step_id}
+	update_records_build_branch_instance_step_where_map :=  json.NewMapOfValues(&update_records_build_branch_instance_step_where)
 
-	update_records, update_records_errors := table_BuildBranchInstanceStep.ReadRecords(nil, update_records_build_branch_instance_step_data, nil, nil, &one_record, nil)
+	update_records, update_records_errors := table_BuildBranchInstanceStep.ReadRecords(update_records_build_branch_instance_step_select_array, update_records_build_branch_instance_step_where_map, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 	} else if common.IsNil(update_records) {

@@ -147,6 +147,78 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			return errors
 		}
 
+		///
+		read_records_build_step_sync_request_select_fields := []string{"build_step_id"}
+		read_records_build_step_sync_request_select_fields_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_sync_request_select_fields))
+		read_records_build_step_sync_request_where_fields := map[string]interface{}{"name":"Run_Sync"}
+		read_records_build_step_sync_request_where_fields_map := json.NewMapOfValues(&read_records_build_step_sync_request_where_fields)
+		read_records_build_step_sync_request_map := map[string]interface{}{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
+		read_records_build_step_sync_request := json.NewMapOfValues(&read_records_build_step_sync_request_map)
+		read_records_build_step_sync_request.SetMap("[where_fields]", read_records_build_step_sync_request_where_fields_map)
+		read_records_build_step_sync_request.SetArray("[select_fields]", read_records_build_step_sync_request_select_fields_array)
+
+		read_records_build_step_sync_response, read_records_build_step_sync_response_errors := processor.SendMessageToQueue(read_records_build_step_sync_request)
+		if read_records_build_step_sync_response_errors != nil {
+			errors = append(errors, read_records_build_step_sync_response_errors...)
+		} else if common.IsNil(read_records_build_step_sync_response) {
+			errors = append(errors, fmt.Errorf("read_records_build_step_sync_response is nil"))
+		}
+
+		if len(errors) > 0 {
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			if trigger_next_run_command_errors != nil {
+				errors = append(errors, trigger_next_run_command_errors...)
+			}
+			return errors
+		}
+
+		lookup_build_step_sync_array, lookup_build_step_sync_array_errors := read_records_build_step_sync_response.GetArray("data")
+		if lookup_build_step_sync_array_errors != nil {
+			errors = append(errors, lookup_build_step_sync_array_errors...)
+		} else if common.IsNil(lookup_build_step_sync_array) {
+			errors = append(errors, fmt.Errorf("lookup_build_step_sync_array is nil"))
+		} else if len(*(lookup_build_step_sync_array.GetValues())) != 1 {
+			errors = append(errors, fmt.Errorf("lookup_build_step_sync_array does not have one element"))
+		}
+
+		if len(errors) > 0 {
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			if trigger_next_run_command_errors != nil {
+				errors = append(errors, trigger_next_run_command_errors...)
+			}
+			return errors
+		}
+		
+		sync_build_step, sync_build_step_errors := (*(lookup_build_step_sync_array.GetValues()))[0].GetMap()
+		if sync_build_step_errors != nil {
+			errors = append(errors, sync_build_step_errors...)
+		} else if common.IsNil(build_step) {
+			errors = append(errors, fmt.Errorf("sync_build_step is nil"))
+		}
+		
+		if len(errors) > 0 {
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			if trigger_next_run_command_errors != nil {
+				errors = append(errors, trigger_next_run_command_errors...)
+			}
+			return errors
+		}
+
+		sync_build_step_id, sync_build_step_id_errors := sync_build_step.GetUInt64("build_step_id")
+		if sync_build_step_id_errors != nil {
+			errors = append(errors, sync_build_step_id_errors...)
+		} else if common.IsNil(sync_build_step_id) {
+			errors = append(errors, fmt.Errorf("sync_build_step_id is nil"))
+		}
+
+		if len(errors) > 0 {
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			if trigger_next_run_command_errors != nil {
+				errors = append(errors, trigger_next_run_command_errors...)
+			}
+			return errors
+		}
+
 		build_branch_instance_steps := json.NewArray()
 		for _, suite_name := range suite_names {
 			paramters_map := json.NewMap()
@@ -172,13 +244,20 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			return errors
 		}
 
-		create_instance_steps_request := map[string]interface{}{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(),"data":build_branch_instance_steps, "[async]":false}
-		create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(json.NewMapOfValues(&create_instance_steps_request))
-		if create_instance_steps_response_errors != nil {
-			errors = append(errors, create_instance_steps_response_errors...)
-		} else if common.IsNil(create_instance_steps_response) {
-			errors = append(errors, fmt.Errorf("create_instance_steps_response is nil"))
+		if build_branch_instance_steps.Len() > 0 {
+			build_branch_instance_step := map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*sync_build_step_id, "order":(*run_integration_test_suite_build_step_id_order+1)}
+			build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
+
+
+			create_instance_steps_request := map[string]interface{}{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(),"data":build_branch_instance_steps, "[async]":false}
+			create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(json.NewMapOfValues(&create_instance_steps_request))
+			if create_instance_steps_response_errors != nil {
+				errors = append(errors, create_instance_steps_response_errors...)
+			} else if common.IsNil(create_instance_steps_response) {
+				errors = append(errors, fmt.Errorf("create_instance_steps_response is nil"))
+			}
 		}
+		
 	} else {
 		fmt.Println("not found " + full_path_of_integration_tests_folder)
 	}
