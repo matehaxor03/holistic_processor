@@ -7,18 +7,18 @@ import (
 	"fmt"
 )
 
-func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, build_branch_id uint64, build_branch_instance_step_id uint64, label string) (*func(message string)) {
+func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, branch_instance_step_id uint64, branch_id uint64, label string) (*func(message string)) {
 	this_processor := processor
 	this_command_name := command_name
-	this_build_branch_id := build_branch_id
-	this_build_branch_instance_step_id := build_branch_instance_step_id
+	this_branch_instance_step_id := branch_instance_step_id
+	this_branch_id := branch_id
 	this_label := label
 	
 	function := func(message string) {
-		callback_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":message,"stdout":true}
+		callback_payload_map_data :=  map[string]interface{}{"branch_instance_step_id":this_branch_instance_step_id,"log":message,"stdout":true}
 		callback_payload_data :=  json.NewMapOfValues(&callback_payload_map_data)
 
-		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
 		callback_payload := json.NewMapOfValues(&callback_payload_map)
 		callback_payload.SetMap("data", callback_payload_data)
 
@@ -80,10 +80,10 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			return
 		}
 
-		read_records_test_suite_where := map[string]interface{}{"build_branch_id":this_build_branch_id,"name":this_label}
+		read_records_test_suite_where := map[string]interface{}{"branch_id":this_branch_id,"name":this_label}
 		read_records_test_suite_where_map := json.NewMapOfValues(&read_records_test_suite_where)
 
-		read_records_test_suite_request := map[string]interface{}{"[queue]":"ReadRecords_TestSuiteBuildBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
+		read_records_test_suite_request := map[string]interface{}{"[queue]":"ReadRecords_TestSuiteBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
 		read_records_test_suite_request_map := json.NewMapOfValues(&read_records_test_suite_request)
 		read_records_test_suite_request_map.SetMap("[where_fields]", read_records_test_suite_where_map)
 
@@ -107,10 +107,10 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 
 		var test_suite_map json.Map
 		if len(*(test_suite_response_array.GetValues())) == 0 {
-			create_test_suite_payload_map_data :=  map[string]interface{}{"build_branch_id":this_build_branch_id,"name":this_label}
+			create_test_suite_payload_map_data :=  map[string]interface{}{"branch_id":this_branch_id,"name":this_label}
 			create_test_suite_payload_data :=  json.NewMapOfValues(&create_test_suite_payload_map_data)
 
-			create_test_suite_payload_map := map[string]interface{}{"[queue]":"CreateRecord_TestSuiteBuildBranch", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+			create_test_suite_payload_map := map[string]interface{}{"[queue]":"CreateRecord_TestSuiteBranch", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
 			create_test_suite_payload := json.NewMapOfValues(&create_test_suite_payload_map)
 			create_test_suite_payload.SetMap("data", create_test_suite_payload_data)
 			
@@ -176,19 +176,19 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			return
 		}
 
-		test_suite_build_branch_id, test_suite_build_branch_id_errors := test_suite_map.GetUInt64("test_suite_build_branch_id")
-		if test_suite_build_branch_id_errors != nil {
-			fmt.Println(test_suite_build_branch_id_errors)
+		test_suite_branch_id, test_suite_branch_id_errors := test_suite_map.GetUInt64("test_suite_branch_id")
+		if test_suite_branch_id_errors != nil {
+			fmt.Println(test_suite_branch_id_errors)
 			return
-		} else if common.IsNil(test_suite_build_branch_id) {
-			fmt.Println("test_suite_build_branch_id is nil")
+		} else if common.IsNil(test_suite_branch_id) {
+			fmt.Println("test_suite_branch_id is nil")
 			return
 		}
 
-		read_records_test_where := map[string]interface{}{"test_suite_build_branch_id":*test_suite_build_branch_id,"name":*test_value}
+		read_records_test_where := map[string]interface{}{"test_suite_branch_id":*test_suite_branch_id,"name":*test_value}
 		read_records_test_where_map := json.NewMapOfValues(&read_records_test_where)
 
-		read_records_test_request := map[string]interface{}{"[queue]":"ReadRecords_TestBuildBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+		read_records_test_request := map[string]interface{}{"[queue]":"ReadRecords_TestBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 		read_records_test_request_map := json.NewMapOfValues(&read_records_test_request)
 		read_records_test_request_map.SetMap("[where_fields]", read_records_test_where_map)
 
@@ -212,10 +212,10 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 
 		var test_map json.Map
 		if len(*(test_response_array.GetValues())) == 0 {
-			create_test_payload_map_data :=  map[string]interface{}{"test_suite_build_branch_id":test_suite_build_branch_id,"name":*test_value}
+			create_test_payload_map_data :=  map[string]interface{}{"test_suite_branch_id":test_suite_branch_id,"name":*test_value}
 			create_test_payload_data := json.NewMapOfValues(&create_test_payload_map_data)
 
-			create_test_payload_map := map[string]interface{}{"[queue]":"CreateRecord_TestBuildBranch","[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
+			create_test_payload_map := map[string]interface{}{"[queue]":"CreateRecord_TestBranch","[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 			create_test_payload := json.NewMapOfValues(&create_test_payload_map)
 			create_test_payload.SetMap("data", create_test_payload_data)
 
@@ -278,12 +278,12 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		return
 	}
 
-	test_build_branch_id, test_build_branch_id_errors := test_map.GetUInt64("test_build_branch_id")
-	if test_build_branch_id_errors != nil {
-		fmt.Println(test_build_branch_id_errors)
+	test_branch_id, test_branch_id_errors := test_map.GetUInt64("test_branch_id")
+	if test_branch_id_errors != nil {
+		fmt.Println(test_branch_id_errors)
 		return
-	} else if common.IsNil(test_build_branch_id) {
-		fmt.Println("test_build_branch_id is nil")
+	} else if common.IsNil(test_branch_id) {
+		fmt.Println("test_branch_id is nil")
 		return
 	}
 
@@ -337,10 +337,10 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		return
 	}
 
-	create_test_log_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":build_branch_instance_step_id,"test_build_branch_id":*test_build_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value}
+	create_test_log_payload_map_data :=  map[string]interface{}{"branch_instance_step_id":branch_instance_step_id,"test_branch_id":*test_branch_id, "test_result_id":*test_result_id, "duration":*elapsed_value}
 	create_test_log_payload_data := json.NewMapOfValues(&create_test_log_payload_map_data)
 
-	create_test_log_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepTestResult","[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+	create_test_log_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BranchInstanceStepTestResult","[queue_mode]":"PushBack","[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
 	create_test_log_payload := json.NewMapOfValues(&create_test_log_payload_map)
 	create_test_log_payload.SetMap("data", create_test_log_payload_data)
 
@@ -351,16 +351,16 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	return &function
 }
 
-func getStderrCallbackFunctionBranch(processor *Processor, command_name string, build_branch_id uint64, build_branch_instance_step_id uint64, label string) (*func(message error)) {
+func getStderrCallbackFunctionBranch(processor *Processor, command_name string, branch_instance_step_id uint64, branch_id uint64, label string) (*func(message error)) {
 	this_processor := processor
-	this_build_branch_instance_step_id := build_branch_instance_step_id
+	this_branch_instance_step_id := branch_instance_step_id
 	
 	
 	function := func(message error) {
-		callback_payload_map_data :=  map[string]interface{}{"build_branch_instance_step_id":this_build_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false}
+		callback_payload_map_data :=  map[string]interface{}{"branch_instance_step_id":this_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false}
 		callback_payload_data :=  json.NewMapOfValues(&callback_payload_map_data)
 
-		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BuildBranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
+		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
 		callback_payload := json.NewMapOfValues(&callback_payload_map)
 		callback_payload.SetMap("data", callback_payload_data)
 

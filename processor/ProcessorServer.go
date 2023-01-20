@@ -156,7 +156,7 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	}
 
 	commands_list := [...]string{"Run_Sync:1:1",
-								"Run_StartBuildBranchInstance:1:1", 
+								"Run_StartBranchInstance:1:1", 
 								"Run_NotStarted:1:1", 
 								"Run_Start:1:1",
 								"Run_CreateSourceFolder:1:1",

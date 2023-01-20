@@ -30,32 +30,32 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 		errors = append(errors, fmt.Errorf("command_name is nil"))
 	}
 
-	build_branch_instance_step_id, build_branch_instance_step_id_errors := request_data.GetUInt64("build_branch_instance_step_id")
-	if build_branch_instance_step_id_errors != nil {
-		errors = append(errors, build_branch_instance_step_id_errors...) 
-	} else if common.IsNil(build_branch_instance_step_id) {
-		errors = append(errors, fmt.Errorf("build_branch_instance_step_id is nil"))
+	branch_instance_step_id, branch_instance_step_id_errors := request_data.GetUInt64("branch_instance_step_id")
+	if branch_instance_step_id_errors != nil {
+		errors = append(errors, branch_instance_step_id_errors...) 
+	} else if common.IsNil(branch_instance_step_id) {
+		errors = append(errors, fmt.Errorf("branch_instance_step_id is nil"))
 	}
 
-	build_branch_instance_id, build_branch_instance_id_errors := request_data.GetUInt64("build_branch_instance_id")
-	if build_branch_instance_id_errors != nil {
-		errors = append(errors, build_branch_instance_id_errors...) 
-	} else if common.IsNil(build_branch_instance_id) {
-		errors = append(errors, fmt.Errorf("build_branch_instance_id is nil"))
+	branch_instance_id, branch_instance_id_errors := request_data.GetUInt64("branch_instance_id")
+	if branch_instance_id_errors != nil {
+		errors = append(errors, branch_instance_id_errors...) 
+	} else if common.IsNil(branch_instance_id) {
+		errors = append(errors, fmt.Errorf("branch_instance_id is nil"))
+	}
+
+	branch_id, branch_id_errprs := request_data.GetUInt64("branch_id")
+	if branch_id_errprs != nil {
+		errors = append(errors, branch_id_errprs...) 
+	} else if common.IsNil(branch_id) {
+		errors = append(errors, fmt.Errorf("branch_id is nil"))
 	}
 
 	build_step_id, build_step_id_errors := request_data.GetUInt64("build_step_id")
 	if build_step_id_errors != nil {
-		errors = append(errors, build_branch_instance_id_errors...) 
+		errors = append(errors, build_step_id_errors...) 
 	} else if common.IsNil(build_step_id) {
 		errors = append(errors, fmt.Errorf("build_step_id is nil"))
-	}
-
-	build_branch_id, build_branch_id_errors := request_data.GetUInt64("build_branch_id")
-	if build_branch_id_errors != nil {
-		errors = append(errors, build_branch_id_errors...) 
-	} else if common.IsNil(build_branch_id) {
-		errors = append(errors, fmt.Errorf("build_branch_id is nil"))
 	}
 
 	order, order_errors := request_data.GetInt64("order")
@@ -101,7 +101,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}	
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	table_BuildStepStatus, table_BuildStepStatus_errors := database.GetTable("BuildStepStatus")
@@ -112,7 +112,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	where_query_build_step_status_not_started := json.NewMap()
@@ -127,7 +127,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	not_started_build_step_status_id, not_started_build_step_status_id_errors := ((*records_not_started_step_status)[0]).GetUInt64("build_step_status_id")
@@ -136,7 +136,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	where_query_build_step_status_running := json.NewMap()
@@ -151,7 +151,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	running_build_step_status_id, running_build_step_status_id_errors := ((*records_running_step_status)[0]).GetUInt64("build_step_status_id")
@@ -162,26 +162,26 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
-	table_BuildBranchInstanceStep, table_BuildBranchInstanceStep_errors := database.GetTable("BuildBranchInstanceStep")
-	if table_BuildBranchInstanceStep_errors != nil {
-		errors = append(errors, table_BuildBranchInstanceStep_errors...)
-	} else if common.IsNil(table_BuildBranchInstanceStep) {
-		errors = append(errors, fmt.Errorf("validate run command: table_BuildBranchInstanceStep is nil"))
+	table_BranchInstanceStep, table_BranchInstanceStep_errors := database.GetTable("BranchInstanceStep")
+	if table_BranchInstanceStep_errors != nil {
+		errors = append(errors, table_BranchInstanceStep_errors...)
+	} else if common.IsNil(table_BranchInstanceStep) {
+		errors = append(errors, fmt.Errorf("validate run command: table_BranchInstanceStep is nil"))
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
-	update_records_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
-	update_records_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&update_records_build_branch_instance_step_select))
-	update_records_build_branch_instance_step_where :=  map[string]interface{}{"build_branch_instance_step_id":build_branch_instance_step_id}
-	update_records_build_branch_instance_step_where_map :=  json.NewMapOfValues(&update_records_build_branch_instance_step_where)
+	update_records_branch_instance_step_select := []string{"branch_instance_step_id", "build_step_status_id"}
+	update_records_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&update_records_branch_instance_step_select))
+	update_records_branch_instance_step_where :=  map[string]interface{}{"branch_instance_step_id":branch_instance_step_id}
+	update_records_branch_instance_step_where_map :=  json.NewMapOfValues(&update_records_branch_instance_step_where)
 
-	update_records, update_records_errors := table_BuildBranchInstanceStep.ReadRecords(update_records_build_branch_instance_step_select_array, update_records_build_branch_instance_step_where_map, nil, nil, &one_record, nil)
+	update_records, update_records_errors := table_BranchInstanceStep.ReadRecords(update_records_branch_instance_step_select_array, update_records_branch_instance_step_where_map, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 	} else if common.IsNil(update_records) {
@@ -191,7 +191,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	update_record := (*update_records)[0]
@@ -203,7 +203,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	if *update_record_build_step_status_id == *not_started_build_step_status_id {
@@ -215,8 +215,8 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil,nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
-	return command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, nil
+	return command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, nil
 }

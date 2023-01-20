@@ -11,12 +11,12 @@ import (
 
 func commandRunIntegrationTests(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	verify := processor.GetValidator()
-	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
+	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors
 	} else if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -29,7 +29,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	instance_folder_parts = append(instance_folder_parts, *repository_account_name)
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	instance_folder_parts = append(instance_folder_parts, "branch_instances")
-	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *build_branch_instance_id))
+	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *branch_instance_id))
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
 	//full_path_of_integration_tests_folder := full_path_of_instance_directory + "/tests/integration"
@@ -49,7 +49,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	}
 
 	if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -89,7 +89,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if len(suite_names) == 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -118,7 +118,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -135,7 +135,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -150,7 +150,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 		
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -172,7 +172,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -197,7 +197,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -214,7 +214,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -229,7 +229,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 		
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -244,7 +244,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -264,12 +264,12 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				continue
 			}
 
-			build_branch_instance_step := map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*run_integration_test_suite_build_step_id, "order":*run_integration_test_suite_build_step_id_order, "parameters":parameters_builder.String()}
+			build_branch_instance_step := map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*run_integration_test_suite_build_step_id, "order":*run_integration_test_suite_build_step_id_order, "parameters":parameters_builder.String()}
 			build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
 		}
 
 		if len(errors) > 0 {
-			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
 				errors = append(errors, trigger_next_run_command_errors...)
 			}
@@ -277,11 +277,11 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if build_branch_instance_steps.Len() > 0 {
-			build_branch_instance_step := map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "build_step_id":*sync_build_step_id, "order":(*run_integration_test_suite_build_step_id_order+1)}
+			build_branch_instance_step := map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*sync_build_step_id, "order":(*run_integration_test_suite_build_step_id_order+1)}
 			build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
 
 
-			create_instance_steps_request := map[string]interface{}{"[queue]":"CreateRecords_BuildBranchInstanceStep", "[trace_id]":processor.GenerateTraceId(),"data":build_branch_instance_steps, "[async]":false}
+			create_instance_steps_request := map[string]interface{}{"[queue]":"CreateRecords_BranchInstanceStep", "[trace_id]":processor.GenerateTraceId(),"data":build_branch_instance_steps, "[async]":false}
 			create_instance_steps_response, create_instance_steps_response_errors := processor.SendMessageToQueue(json.NewMapOfValues(&create_instance_steps_request))
 			if create_instance_steps_response_errors != nil {
 				errors = append(errors, create_instance_steps_response_errors...)
@@ -294,7 +294,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		errors = append(errors, fmt.Errorf("not found " + full_path_of_instance_directory))
 	}
 	
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}

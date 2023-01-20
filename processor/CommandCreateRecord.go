@@ -66,8 +66,8 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 			} else {
 				response_queue_result.SetMap("data", new_record_fields)	
 
-				if *queue_name == "CreateRecord_BuildBranchInstance" {
-					callback_payload_map := map[string]interface{}{"[queue]":"Run_StartBuildBranchInstance", "data":new_record_fields,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
+				if *queue_name == "CreateRecord_BranchInstance" {
+					callback_payload_map := map[string]interface{}{"[queue]":"Run_StartBranchInstance", "data":new_record_fields,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
 					go processor.SendMessageToQueueFireAndForget(json.NewMapOfValues(&callback_payload_map))
 				}
 			}

@@ -5,12 +5,12 @@ import (
 )
 
 func commandRunUnitTests(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
+	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors
 	} else if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -21,7 +21,7 @@ func commandRunUnitTests(processor *Processor, request *json.Map, response_queue
 
 	
 
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, build_branch_id, build_branch_instance_step_id, build_branch_instance_id, build_step_id, order, domain_name, repository_account_name,repository_name, branch_name, parameters, errors, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}

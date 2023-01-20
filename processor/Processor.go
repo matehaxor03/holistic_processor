@@ -114,8 +114,8 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		processor_function = commandCreateRecordsFunc()
 	} else if strings.HasPrefix(queue_name, "CreateRecord_") {
 		processor_function = commandCreateRecordFunc()
-	} else if queue_name == "Run_StartBuildBranchInstance" {
-		processor_function = commandRunStartBuildBranchInstanceFunc()
+	} else if queue_name == "Run_StartBranchInstance" {
+		processor_function = commandRunStartBranchInstanceFunc()
 	} else if queue_name == "Run_NotStarted" {
 		processor_function = commandRunNotStartedFunc()
 	} else if queue_name == "Run_Start" {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func triggerNextRunCommand(processor *Processor, command_name *string, build_branch_id *uint64, build_branch_instance_step_id *uint64, build_branch_instance_id *uint64, build_step_id  *uint64, order  *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, parameters *string, errors []error, request *json.Map) ([]error) {
+func triggerNextRunCommand(processor *Processor, command_name *string, branch_instance_step_id *uint64, branch_instance_id *uint64, branch_id *uint64, build_step_id *uint64, order *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, parameters *string, errors []error, request *json.Map) ([]error) {
 	if command_name == nil {
 		errors = append(errors, fmt.Errorf("current command_name is nil"))
 	} 
@@ -58,21 +58,21 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return running_build_step_status_id_errors
 	}
 
-	table_BuildBranchInstanceStep, table_BuildBranchInstanceStep_errors := database.GetTable("BuildBranchInstanceStep")
-	if table_BuildBranchInstanceStep_errors != nil {
-		errors = append(errors, table_BuildBranchInstanceStep_errors...)
+	table_BranchInstanceStep, table_BranchInstanceStep_errors := database.GetTable("BranchInstanceStep")
+	if table_BranchInstanceStep_errors != nil {
+		errors = append(errors, table_BranchInstanceStep_errors...)
 		return errors
-	} else if common.IsNil(table_BuildBranchInstanceStep) {
-		errors = append(errors, fmt.Errorf("table_BuildBranchInstanceStep is nil"))
+	} else if common.IsNil(table_BranchInstanceStep) {
+		errors = append(errors, fmt.Errorf("table_BranchInstanceStep is nil"))
 		return errors
 	}
 
-	update_records_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
+	update_records_build_branch_instance_step_select := []string{"branch_instance_step_id", "build_step_status_id"}
 	update_records_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&update_records_build_branch_instance_step_select))
-	update_records_build_branch_instance_step_where :=  map[string]interface{}{"build_branch_instance_step_id":*build_branch_instance_step_id}
+	update_records_build_branch_instance_step_where :=  map[string]interface{}{"branch_instance_step_id":*branch_instance_step_id}
 	update_records_build_branch_instance_step_where_map :=  json.NewMapOfValues(&update_records_build_branch_instance_step_where)
 
-	update_records, update_records_errors := table_BuildBranchInstanceStep.ReadRecords(update_records_build_branch_instance_step_select_array, update_records_build_branch_instance_step_where_map, nil, nil, &one_record, nil)
+	update_records, update_records_errors := table_BranchInstanceStep.ReadRecords(update_records_build_branch_instance_step_select_array, update_records_build_branch_instance_step_where_map, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 		return errors
@@ -143,21 +143,21 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return errors
 	} 
 
-	build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order"}
-	build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&build_branch_instance_step_select))
+	branch_instance_step_select := []string{"branch_instance_step_id", "branch_instance_id", "build_step_id", "order"}
+	branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&branch_instance_step_select))
 
-	build_branch_instance_step_where := map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "order":*order}
-	build_branch_instance_step_where_map := json.NewMapOfValues(&build_branch_instance_step_where)
+	branch_instance_step_where := map[string]interface{}{"branch_instance_id":*branch_instance_id, "order":*order}
+	branch_instance_step_where_map := json.NewMapOfValues(&branch_instance_step_where)
 
-	build_branch_instance_step_where_logic := map[string]interface{}{"order":">"}
-	build_branch_instance_step_where_logic_map := json.NewMapOfValues(&build_branch_instance_step_where_logic)
+	branch_instance_step_where_logic := map[string]interface{}{"order":">"}
+	branch_instance_step_where_logic_map := json.NewMapOfValues(&branch_instance_step_where_logic)
 
-	build_branch_instance_step_order_by := map[string]interface{}{"order":"ascending"}
-	build_branch_instance_step_order_by_map := json.NewMapOfValues(&build_branch_instance_step_order_by)
+	branch_instance_step_order_by := map[string]interface{}{"order":"ascending"}
+	branch_instance_step_order_by_map := json.NewMapOfValues(&branch_instance_step_order_by)
 	order_by_array := json.NewArray()
-	order_by_array.AppendMap(build_branch_instance_step_order_by_map)
+	order_by_array.AppendMap(branch_instance_step_order_by_map)
 
-	next_branch_instance_steps, next_branch_instance_steps_errors := table_BuildBranchInstanceStep.ReadRecords(build_branch_instance_step_select_array, build_branch_instance_step_where_map, build_branch_instance_step_where_logic_map, order_by_array, nil, nil)
+	next_branch_instance_steps, next_branch_instance_steps_errors := table_BranchInstanceStep.ReadRecords(branch_instance_step_select_array, branch_instance_step_where_map, branch_instance_step_where_logic_map, order_by_array, nil, nil)
 	if next_branch_instance_steps_errors != nil {
 		errors = append(errors, next_branch_instance_steps_errors...)
 		return errors
@@ -182,16 +182,16 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		return errors
 	}
 
-	next_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_branch_instance_id", "build_step_id", "order", "parameters"}
+	next_build_branch_instance_step_select := []string{"branch_instance_step_id", "branch_instance_id", "build_step_id", "order", "parameters"}
 	next_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&next_build_branch_instance_step_select))
 
-	next_build_branch_instance_step_where := map[string]interface{}{"build_branch_instance_id":*build_branch_instance_id, "order":*new_order}
+	next_build_branch_instance_step_where := map[string]interface{}{"branch_instance_id":*branch_instance_id, "order":*new_order}
 	next_build_branch_instance_step_where_map := json.NewMapOfValues(&next_build_branch_instance_step_where)
 
 	next_build_branch_instance_step_where_logic := map[string]interface{}{"order":"="}
 	next_build_branch_instance_step_where_logic_map := json.NewMapOfValues(&next_build_branch_instance_step_where_logic)
 	
-	next_branch_instance_steps_array, next_branch_instance_steps_array_errors := table_BuildBranchInstanceStep.ReadRecords(next_build_branch_instance_step_select_array, next_build_branch_instance_step_where_map, next_build_branch_instance_step_where_logic_map, nil, nil, nil)
+	next_branch_instance_steps_array, next_branch_instance_steps_array_errors := table_BranchInstanceStep.ReadRecords(next_build_branch_instance_step_select_array, next_build_branch_instance_step_where_map, next_build_branch_instance_step_where_logic_map, nil, nil, nil)
 	if next_branch_instance_steps_array_errors != nil {
 		errors = append(errors, next_branch_instance_steps_array_errors...)
 	} else if common.IsNil(next_branch_instance_steps_array) {
@@ -259,7 +259,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, build_bra
 		next_build_step_map.SetString("repository_name", repository_name)
 		next_build_step_map.SetString("branch_name", branch_name)
 		next_build_step_map.SetString("command_name", name_of_next_step)
-		next_build_step_map.SetUInt64("build_branch_id", build_branch_id)
+		next_build_step_map.SetUInt64("branch_id", branch_id)
 
 		next_command := map[string]interface{}{"[queue]":*name_of_next_step,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
 		next_command_map := json.NewMapOfValues(&next_command)
