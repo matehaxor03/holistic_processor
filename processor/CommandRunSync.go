@@ -139,7 +139,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return failed_build_step_status_id_errors
 	}
 
-	previous_read_record_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
+	previous_read_record_build_branch_instance_step_select := []string{"branch_instance_step_id", "build_step_status_id", "order"}
 	previous_read_record_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&previous_read_record_build_branch_instance_step_select))
 
 	previous_read_record_build_branch_instance_step_where := map[string]interface{}{"branch_instance_id":*branch_instance_id, "order":*order}
@@ -212,7 +212,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 		return errors
 	}
 
-	previous_instance_steps_select := []string{"build_branch_instance_step_id", "build_step_status_id"}
+	previous_instance_steps_select := []string{"branch_instance_step_id", "build_step_status_id"}
 	previous_instance_steps_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&previous_instance_steps_select))
 
 	previous_instance_steps_where := map[string]interface{}{"branch_instance_id":*branch_instance_id, "order":*previous_order}

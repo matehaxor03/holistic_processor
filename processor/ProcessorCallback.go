@@ -294,8 +294,12 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 						if len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "Duplicate entry") {
 							fmt.Println("Duplicate entry found")
 							fmt.Println(response_errors)
-						} else {
-							fmt.Println("no retry error detected")
+						} else if len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "You have an error in your SQL syntax") {
+							fmt.Println("Syntax error found")
+							fmt.Println(response_errors)
+						} else if len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "connect: connection reset by peer") ||
+															   strings.Contains(fmt.Sprintf("%s", response_errors[0]), "connect: connection refused") {
+							fmt.Println("retry error detected")
 							fmt.Println(fmt.Sprintf("%s", response_errors))
 							pushFront(result)
 							time.Sleep(10 * time.Second) 

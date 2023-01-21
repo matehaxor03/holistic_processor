@@ -153,7 +153,7 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	}
 
 
-	read_records_build_branch_instance_step_select := []string{"build_branch_instance_step_id", "branch_instance_id", "build_step_id", "order"}
+	read_records_build_branch_instance_step_select := []string{"branch_instance_step_id", "branch_instance_id", "build_step_id", "order"}
 	read_records_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_branch_instance_step_select))
 
 	read_records_build_branch_instance_step_where := map[string]interface{}{"branch_instance_id":*branch_instance_id}
@@ -403,7 +403,7 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 		return errors
 	}
 
-	read_records_repository_account_select := []string{"doman_name_id", "name"}
+	read_records_repository_account_select := []string{"domain_name_id", "name"}
 	read_records_repository_account_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_repository_account_select))
 
 	read_records_repository_account_where := map[string]interface{}{"repository_account_id":*repository_account_id}

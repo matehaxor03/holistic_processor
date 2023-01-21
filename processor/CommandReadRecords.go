@@ -100,6 +100,8 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		if _, found := (*non_identify_fields)[ "name"]; found {
 			select_fields_actual.AppendStringValue("name")
 		}
+	} else if !common.IsNil(select_fields) {
+		select_fields_actual = select_fields
 	} 
 
 	order_by_actual := json.NewArray()
