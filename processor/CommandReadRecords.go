@@ -104,6 +104,14 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		select_fields_actual = select_fields
 	} 
 
+	group_by_actual := json.NewArray()
+	group_by_fields, group_by_fields_errors := request.GetArray("[group_by]")
+	if group_by_fields_errors != nil {
+		return group_by_fields_errors
+	} else if !common.IsNil(group_by_fields) {
+		group_by_actual = group_by_fields
+	}
+
 	order_by_actual := json.NewArray()
 	order_by_fields, order_by_fields_errors := request.GetArray("[order_by]")
 	if order_by_fields_errors != nil {
@@ -120,7 +128,7 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		limit_actual = limit_value
 	}
 
-	records, records_errors := table.ReadRecords(select_fields_actual, where_fields_actual, where_fields_logic_actual, order_by_actual, limit_actual, nil)
+	records, records_errors := table.ReadRecords(select_fields_actual, where_fields_actual, where_fields_logic_actual, group_by_actual, order_by_actual, limit_actual, nil)
 	if records_errors != nil {
 		return records_errors
 	} else if common.IsNil(records) {

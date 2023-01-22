@@ -24,7 +24,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 
 	where_query_build_step_status_not_started := json.NewMap()
 	where_query_build_step_status_not_started.SetStringValue("name", "Not Started")
-	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil)
+	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil, nil)
 	if records_not_started_step_status_errors != nil {
 		return records_not_started_step_status_errors
 	} else if len(*records_not_started_step_status) == 0 {
@@ -42,7 +42,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 
 	where_query_build_step_status_running := json.NewMap()
 	where_query_build_step_status_running.SetStringValue("name", "Running")
-	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil)
+	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil, nil)
 	if records_running_step_status_errors != nil {
 		return records_running_step_status_errors
 	} else if len(*records_running_step_status) == 0 {
@@ -72,7 +72,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 	update_records_build_branch_instance_step_where :=  map[string]interface{}{"branch_instance_step_id":*branch_instance_step_id}
 	update_records_build_branch_instance_step_where_map :=  json.NewMapOfValues(&update_records_build_branch_instance_step_where)
 
-	update_records, update_records_errors := table_BranchInstanceStep.ReadRecords(update_records_build_branch_instance_step_select_array, update_records_build_branch_instance_step_where_map, nil, nil, &one_record, nil)
+	update_records, update_records_errors := table_BranchInstanceStep.ReadRecords(update_records_build_branch_instance_step_select_array, update_records_build_branch_instance_step_where_map, nil, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 		return errors
@@ -114,7 +114,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 	build_step_status_where := map[string]interface{}{"name":lookup_name}
 	build_step_status_where_map := json.NewMapOfValues(&build_step_status_where)
 
-	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_map, nil, nil, &one_record, nil)
+	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_map, nil, nil, nil, &one_record, nil)
 	if lookup_buildstep_records_errors != nil {
 		errors = append(errors, lookup_buildstep_records_errors...)
 		return errors
@@ -157,7 +157,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 	order_by_array := json.NewArray()
 	order_by_array.AppendMap(branch_instance_step_order_by_map)
 
-	next_branch_instance_steps, next_branch_instance_steps_errors := table_BranchInstanceStep.ReadRecords(branch_instance_step_select_array, branch_instance_step_where_map, branch_instance_step_where_logic_map, order_by_array, nil, nil)
+	next_branch_instance_steps, next_branch_instance_steps_errors := table_BranchInstanceStep.ReadRecords(branch_instance_step_select_array, branch_instance_step_where_map, branch_instance_step_where_logic_map, nil, order_by_array, nil, nil)
 	if next_branch_instance_steps_errors != nil {
 		errors = append(errors, next_branch_instance_steps_errors...)
 		return errors
@@ -191,7 +191,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 	next_build_branch_instance_step_where_logic := map[string]interface{}{"order":"="}
 	next_build_branch_instance_step_where_logic_map := json.NewMapOfValues(&next_build_branch_instance_step_where_logic)
 	
-	next_branch_instance_steps_array, next_branch_instance_steps_array_errors := table_BranchInstanceStep.ReadRecords(next_build_branch_instance_step_select_array, next_build_branch_instance_step_where_map, next_build_branch_instance_step_where_logic_map, nil, nil, nil)
+	next_branch_instance_steps_array, next_branch_instance_steps_array_errors := table_BranchInstanceStep.ReadRecords(next_build_branch_instance_step_select_array, next_build_branch_instance_step_where_map, next_build_branch_instance_step_where_logic_map, nil, nil, nil, nil)
 	if next_branch_instance_steps_array_errors != nil {
 		errors = append(errors, next_branch_instance_steps_array_errors...)
 	} else if common.IsNil(next_branch_instance_steps_array) {
@@ -223,7 +223,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 			return errors
 		}
 		
-		lookup_build_step_array, lookup_build_step_array_errors := table_BuildStep.ReadRecords(next_build_steps_select_array, next_build_steps_where_map, nil, nil, nil, nil)
+		lookup_build_step_array, lookup_build_step_array_errors := table_BuildStep.ReadRecords(next_build_steps_select_array, next_build_steps_where_map, nil, nil, nil, nil, nil)
 		if lookup_build_step_array_errors != nil {
 			errors = append(errors, lookup_build_step_array_errors...)
 			return errors

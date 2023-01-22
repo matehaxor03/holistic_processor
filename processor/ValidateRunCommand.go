@@ -117,7 +117,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 
 	where_query_build_step_status_not_started := json.NewMap()
 	where_query_build_step_status_not_started.SetStringValue("name", "Not Started")
-	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil)
+	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil, nil)
 	if records_not_started_step_status_errors != nil {
 		errors = append(errors, records_not_started_step_status_errors...)
 	} else if len(*records_not_started_step_status) == 0 {
@@ -141,7 +141,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 
 	where_query_build_step_status_running := json.NewMap()
 	where_query_build_step_status_running.SetStringValue("name", "Running")
-	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil)
+	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil, nil)
 	if records_running_step_status_errors != nil {
 		errors = append(errors, records_running_step_status_errors...)
 	} else if len(*records_running_step_status) == 0 {
@@ -181,7 +181,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	update_records_branch_instance_step_where :=  map[string]interface{}{"branch_instance_step_id":branch_instance_step_id}
 	update_records_branch_instance_step_where_map :=  json.NewMapOfValues(&update_records_branch_instance_step_where)
 
-	update_records, update_records_errors := table_BranchInstanceStep.ReadRecords(update_records_branch_instance_step_select_array, update_records_branch_instance_step_where_map, nil, nil, &one_record, nil)
+	update_records, update_records_errors := table_BranchInstanceStep.ReadRecords(update_records_branch_instance_step_select_array, update_records_branch_instance_step_where_map, nil, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 	} else if common.IsNil(update_records) {

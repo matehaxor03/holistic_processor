@@ -33,7 +33,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 
 	where_query_current_build_branch_instance_step := json.NewMap()
 	where_query_current_build_branch_instance_step.SetUInt64("branch_instance_step_id", branch_instance_step_id)
-	curent_build_branch_instanace_step_records, curent_build_branch_instanace_step_records_errors := table_BranchInstanceStep.ReadRecords(nil, where_query_current_build_branch_instance_step, nil, nil, nil, nil)
+	curent_build_branch_instanace_step_records, curent_build_branch_instanace_step_records_errors := table_BranchInstanceStep.ReadRecords(nil, where_query_current_build_branch_instance_step, nil, nil, nil, nil, nil)
 	if curent_build_branch_instanace_step_records_errors != nil {
 		return curent_build_branch_instanace_step_records_errors
 	} else if len(*curent_build_branch_instanace_step_records) == 0 {
@@ -63,7 +63,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 
 	where_query_build_step_status_not_started := json.NewMap()
 	where_query_build_step_status_not_started.SetStringValue("name", "Not Started")
-	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil)
+	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil, nil)
 	if records_not_started_step_status_errors != nil {
 		return records_not_started_step_status_errors
 	} else if len(*records_not_started_step_status) == 0 {
@@ -81,7 +81,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 
 	where_query_build_step_status_running := json.NewMap()
 	where_query_build_step_status_running.SetStringValue("name", "Running")
-	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil)
+	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil, nil)
 	if records_running_step_status_errors != nil {
 		return records_running_step_status_errors
 	} else if len(*records_running_step_status) == 0 {
@@ -105,7 +105,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 
 	where_query_build_step_status_passed := json.NewMap()
 	where_query_build_step_status_passed.SetStringValue("name", "Passed")
-	records_passed_step_status, records_passed_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_passed, nil, nil, nil, nil)
+	records_passed_step_status, records_passed_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_passed, nil, nil, nil, nil, nil)
 	if records_passed_step_status_errors != nil {
 		return records_passed_step_status_errors
 	} else if len(*records_passed_step_status) == 0 {
@@ -123,7 +123,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 
 	where_query_build_step_status_failed := json.NewMap()
 	where_query_build_step_status_failed.SetStringValue("name", "Failed")
-	records_failed_step_status, records_failed_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_failed, nil, nil, nil, nil)
+	records_failed_step_status, records_failed_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_failed, nil, nil, nil, nil, nil)
 	if records_failed_step_status_errors != nil {
 		return records_failed_step_status_errors
 	} else if len(*records_failed_step_status) == 0 {

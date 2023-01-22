@@ -47,7 +47,7 @@ func commandRunEnd(processor *Processor, request *json.Map, response_queue_resul
 	build_step_status_where := map[string]interface{}{"name":lookup_name}
 	build_step_status_where_map := json.NewMapOfValues(&build_step_status_where)
 
-	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_map, nil, nil, &one_record, nil)
+	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_map, nil, nil, nil, &one_record, nil)
 	if lookup_buildstep_records_errors != nil {
 		errors = append(errors, lookup_buildstep_records_errors...)
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
@@ -111,7 +111,7 @@ func commandRunEnd(processor *Processor, request *json.Map, response_queue_resul
 	update_records_branch_instance_where :=  map[string]interface{}{"branch_instance_id":*branch_instance_id}
 	update_records_branch_instance_where_map :=  json.NewMapOfValues(&update_records_branch_instance_where)
 
-	update_records, update_records_errors := table_BranchInstance.ReadRecords(update_records_branch_instance_select_array, update_records_branch_instance_where_map, nil, nil, &one_record, nil)
+	update_records, update_records_errors := table_BranchInstance.ReadRecords(update_records_branch_instance_select_array, update_records_branch_instance_where_map, nil, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
