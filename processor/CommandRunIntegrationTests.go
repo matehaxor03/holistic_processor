@@ -101,7 +101,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			}
 		}
 
-		read_records_build_step_request_select_fields := []string{"build_step_id", "order"}
+		read_records_build_step_request_select_fields := []string{"build_step_id", "build_step_group_id", "order"}
 		read_records_build_step_request_select_fields_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_request_select_fields))
 		read_records_build_step_request_where_fields := map[string]interface{}{"name":"Run_IntegrationTestSuite"}
 		read_records_build_step_request_where_fields_map := json.NewMapOfValues(&read_records_build_step_request_where_fields)
@@ -164,6 +164,13 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			errors = append(errors, fmt.Errorf("build_step_id is nil"))
 		}
 
+		run_integration_test_suite_build_step_group_id, run_integration_test_suite_build_step_group_id_errors := build_step.GetUInt64("build_step_group_id")
+		if run_integration_test_suite_build_step_group_id_errors != nil {
+			errors = append(errors, run_integration_test_suite_build_step_group_id_errors...)
+		} else if common.IsNil(run_integration_test_suite_build_step_group_id) {
+			errors = append(errors, fmt.Errorf("build_step_group_id is nil"))
+		}
+
 		run_integration_test_suite_build_step_id_order, run_integration_test_suite_build_step_id_order_errors := build_step.GetInt64("order")
 		if run_integration_test_suite_build_step_id_order_errors != nil {
 			errors = append(errors, run_integration_test_suite_build_step_id_order_errors...)
@@ -180,7 +187,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		///
-		read_records_build_step_sync_request_select_fields := []string{"build_step_id"}
+		read_records_build_step_sync_request_select_fields := []string{"build_step_id", "build_step_group_id"}
 		read_records_build_step_sync_request_select_fields_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_sync_request_select_fields))
 		read_records_build_step_sync_request_where_fields := map[string]interface{}{"name":"Run_Sync"}
 		read_records_build_step_sync_request_where_fields_map := json.NewMapOfValues(&read_records_build_step_sync_request_where_fields)
@@ -243,6 +250,13 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			errors = append(errors, fmt.Errorf("sync_build_step_id is nil"))
 		}
 
+		sync_build_step_group_id, sync_build_step_group_id_errors := sync_build_step.GetUInt64("build_step_group_id")
+		if sync_build_step_group_id_errors != nil {
+			errors = append(errors, sync_build_step_group_id_errors...)
+		} else if common.IsNil(sync_build_step_group_id) {
+			errors = append(errors, fmt.Errorf("sync_build_step_group_id is nil"))
+		}
+
 		if len(errors) > 0 {
 			trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 			if trigger_next_run_command_errors != nil {
@@ -264,7 +278,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 				continue
 			}
 
-			build_branch_instance_step := map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*run_integration_test_suite_build_step_id, "order":*run_integration_test_suite_build_step_id_order, "parameters":parameters_builder.String()}
+			build_branch_instance_step := map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*run_integration_test_suite_build_step_id, "build_step_group_id":*run_integration_test_suite_build_step_group_id, "order":*run_integration_test_suite_build_step_id_order, "parameters":parameters_builder.String()}
 			build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
 		}
 
@@ -277,7 +291,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		}
 
 		if build_branch_instance_steps.Len() > 0 {
-			build_branch_instance_step := map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*sync_build_step_id, "order":(*run_integration_test_suite_build_step_id_order+1)}
+			build_branch_instance_step := map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*sync_build_step_id, "build_step_group_id":*sync_build_step_group_id, "order":(*run_integration_test_suite_build_step_id_order+1)}
 			build_branch_instance_steps.AppendMap(json.NewMapOfValues(&build_branch_instance_step))
 
 

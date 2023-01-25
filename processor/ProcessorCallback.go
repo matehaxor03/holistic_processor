@@ -297,8 +297,9 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 						} else if len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "You have an error in your SQL syntax") {
 							fmt.Println("Syntax error found")
 							fmt.Println(response_errors)
-						} else if len(response_errors) == 1 && strings.Contains(fmt.Sprintf("%s", response_errors[0]), "connect: connection reset by peer") ||
-															   strings.Contains(fmt.Sprintf("%s", response_errors[0]), "connect: connection refused") {
+						} else if len(response_errors) == 1 && 
+							(strings.Contains(fmt.Sprintf("%s", response_errors[0]), "connect: connection reset by peer") ||
+							 strings.Contains(fmt.Sprintf("%s", response_errors[0]), "connect: connection refused")) {
 							fmt.Println("retry error detected")
 							fmt.Println(fmt.Sprintf("%s", response_errors))
 							pushFront(result)

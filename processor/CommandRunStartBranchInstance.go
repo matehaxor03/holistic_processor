@@ -105,6 +105,17 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 			return errors
 		}
 
+		build_step_group_id, build_step_group_id_errors := current_build_step.GetUInt64("build_step_group_id")
+		if build_step_group_id_errors != nil {
+			errors = append(errors, build_step_group_id_errors...)
+		} else if common.IsNil(build_step_group_id) {
+			errors = append(errors, fmt.Errorf("build_step_group_id attribute is nil"))
+		}
+
+		if len(errors) > 0 {
+			return errors
+		}
+
 		order, order_errors := current_build_step.GetInt64("order")
 		if order_errors != nil {
 			errors = append(errors, order_errors...)
@@ -133,7 +144,7 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 			continue
 		}
 
-		branch_instance_step :=  map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*build_step_id, "order":*order}
+		branch_instance_step :=  map[string]interface{}{"branch_instance_id":*branch_instance_id, "build_step_id":*build_step_id, "build_step_group_id":*build_step_group_id, "order":*order}
 		branch_instance_steps.AppendMap(json.NewMapOfValues(&branch_instance_step))
 	}
 	
