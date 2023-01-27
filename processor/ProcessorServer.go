@@ -18,6 +18,8 @@ type ProcessorServer struct {
 	GetQueueCompleteFunction func(queue string) (*func(json.Map) []error)
 	SetQueuePushBackFunctions func(map[string](*func(json.Map) (*json.Map, []error)))
 	GetQueuePushBackFunction func(queue string) (*func(json.Map) (*json.Map, []error))
+	SetQueuePushFrontFunctions func(map[string](*func(json.Map) (*json.Map, []error)))
+	GetQueuePushFrontFunction func(queue string) (*func(json.Map) (*json.Map, []error))
 	SetQueueGetNextMessageFunctions func(map[string](*func(string) (json.Map, []error)))
 	GetQueueGetNextMessageFunction func(queue string) (*func(string) (json.Map, []error))
 	GetControllers func() (map[string](*ProcessorController))
@@ -33,10 +35,12 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 	
 	get_queue_complete_lock := &sync.RWMutex{}
 	get_queue_push_back_lock := &sync.RWMutex{}
+	get_queue_push_front_lock := &sync.RWMutex{}
 	get_queue_get_next_message_lock := &sync.RWMutex{}
 
 	var queue_complete_functions map[string](*func(json.Map) []error)
 	var queue_push_back_functions map[string](*func(json.Map) (*json.Map, []error))
+	var queue_push_front_functions map[string](*func(json.Map) (*json.Map, []error))
 	var queue_get_next_message_functions map[string](*func(string) (json.Map, []error))
 
 	set_queue_complete_functions := func(functions map[string](*func(json.Map) []error)) {
@@ -53,6 +57,14 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 
 	get_queue_push_back_functions := func() map[string](*func(json.Map) (*json.Map, []error)) {
 		return queue_push_back_functions
+	}
+
+	set_queue_push_front_functions := func(functions map[string](*func(json.Map) (*json.Map, []error))) {
+		queue_push_front_functions = functions
+	}
+
+	get_queue_push_front_functions := func() map[string](*func(json.Map) (*json.Map, []error)) {
+		return queue_push_front_functions
 	}
 
 	set_queue_get_next_message_functions := func(functions map[string](*func(string) (json.Map, []error))) {
@@ -270,6 +282,23 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			defer get_queue_push_back_lock.Unlock()
 
 			functions := get_queue_push_back_functions()
+			if functions == nil {
+				return nil
+			}
+			function, found := functions[queue_name]
+			if !found {
+				return nil
+			}
+			return function
+		},
+		SetQueuePushFrontFunctions: func(functions map[string](*func(json.Map) (*json.Map, []error))) {
+			set_queue_push_front_functions(functions)
+		},
+		GetQueuePushFrontFunction: func(queue_name string) (*func(json.Map) (*json.Map, []error)) {
+			get_queue_push_front_lock.Lock()
+			defer get_queue_push_front_lock.Unlock()
+
+			functions := get_queue_push_front_functions()
 			if functions == nil {
 				return nil
 			}

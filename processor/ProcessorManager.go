@@ -5,6 +5,7 @@ import (
 	"time"
 	"sync"
 	common "github.com/matehaxor03/holistic_common/common"
+	monitoring "github.com/matehaxor03/holistic_processor/monitoring"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
 	validate "github.com/matehaxor03/holistic_validator/validate"	
@@ -20,6 +21,8 @@ type ProcessorManager struct {
 	GetQueueGetNextFunction func() (*func(string, string) (json.Map, []error))
 	SetQueuePushBackFunction func(*func(string,*json.Map) (*json.Map, []error))
 	GetQueuePushBackFunction func() (*func(string,*json.Map) (*json.Map, []error))
+	SetQueuePushFrontFunction func(*func(string,*json.Map) (*json.Map, []error))
+	GetQueuePushFrontFunction func() (*func(string,*json.Map) (*json.Map, []error))
 	SetProcessorController func(*ProcessorController)
 	GetProcessorController func() *ProcessorController
 }
@@ -36,6 +39,8 @@ func NewProcessorManager(verify validate.Validator, client_manager *dao.ClientMa
 	var queue_complete_function (*func(json.Map) []error)
 	var queue_get_next_message_function (*func(string, string) (json.Map, []error))
 	var queue_push_back_function (*func(string,*json.Map) (*json.Map, []error))
+	var queue_push_front_function (*func(string,*json.Map) (*json.Map, []error))
+
 
 	getQueueName := func() string {
 		return queue_name
@@ -108,6 +113,12 @@ func NewProcessorManager(verify validate.Validator, client_manager *dao.ClientMa
 		GetQueuePushBackFunction: func() (*func(string,*json.Map) (*json.Map, []error)) {
 			return queue_push_back_function
 		},
+		SetQueuePushFrontFunction: func(function *func(string,*json.Map) (*json.Map, []error)) {
+			queue_push_front_function = function
+		},
+		GetQueuePushFrontFunction: func() (*func(string,*json.Map) (*json.Map, []error)) {
+			return queue_push_front_function
+		},
 		Start: func() {
 			go func(queue_url string, queue_name string) {
 				for {
@@ -137,7 +148,7 @@ func NewProcessorManager(verify validate.Validator, client_manager *dao.ClientMa
 					// check if number of items in queue is greater than 0
 
 					current_number_of_threads = len(threads)
-					if maximum_threads == -1 && current_number_of_threads < 10 {
+					if maximum_threads == -1 && current_number_of_threads < (monitoring.GetCPUVirtualCores()/2 - 1){
 						new_processor, new_processor_errors := NewProcessor(verify, getClientManager(), getProcessorManager(), getDomainName(), getQueuePort(), getQueueName())
 						if new_processor_errors != nil { 
 							fmt.Println(new_processor_errors)

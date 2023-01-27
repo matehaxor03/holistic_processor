@@ -37,7 +37,7 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 	domain_name_value := domain_name.GetDomainName()
 	cached_complete_functions := make(map[string](*func(json.Map) []error))
 	cached_push_back_functions := make(map[string](*func(json.Map) (*json.Map, []error)))
-
+	cached_push_front_functions := make(map[string](*func(json.Map) (*json.Map, []error)))
 
 	get_queue_port := func() string {
 		return queue_port
@@ -117,6 +117,14 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 			}
 		}
 
+		push_front_function, push_front_function_found := cached_push_front_functions[*queue_name]
+		if !push_front_function_found {
+			push_front_function = get_processor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueuePushFrontFunction(*queue_name)
+			if push_front_function != nil {
+				cached_push_front_functions[*queue_name] = push_front_function
+			}
+		}
+
 		queue_mode, queue_mode_errors := message.GetString("[queue_mode]")
 		if queue_mode_errors != nil {
 			errors = append(errors, queue_mode_errors...)
@@ -165,6 +173,8 @@ func NewProcessorCallback(domain_name dao.DomainName, queue_port string) (*Proce
 				}
 			} else if *queue_mode == "PushBack" {
 				return (*push_back_function)(*message)
+			} else if *queue_mode == "PushFront" {
+				return (*push_front_function)(*message)
 			} else {
 				errors = append(errors, fmt.Errorf("mode not supported %s", *queue_mode))
 				return nil, errors

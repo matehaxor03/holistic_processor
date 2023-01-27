@@ -7,6 +7,7 @@ import (
 	"os"
 	"fmt"
 	"strings"
+	"sort"
 )
 
 func commandRunIntegrationTests(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -264,6 +265,8 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 			}
 			return errors
 		}
+
+		sort.Strings(suite_names)
 
 		build_branch_instance_steps := json.NewArray()
 		for _, suite_name := range suite_names {
