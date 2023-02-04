@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, branch_instance_step_id uint64, branch_id uint64, label string) (*func(message string)) {
+func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, branch_instance_id uint64, branch_instance_step_id uint64, branch_id uint64, label string) (*func(message string)) {
 	this_processor := processor
 	this_command_name := command_name
 	this_branch_instance_step_id := branch_instance_step_id
@@ -15,7 +15,7 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	this_label := label
 	
 	function := func(message string) {
-		callback_payload_map_data :=  map[string]interface{}{"branch_instance_step_id":this_branch_instance_step_id,"log":message,"stdout":true}
+		callback_payload_map_data :=  map[string]interface{}{"branch_instance_id":branch_instance_id, "branch_instance_step_id":this_branch_instance_step_id,"log":message,"stdout":true}
 		callback_payload_data :=  json.NewMapOfValues(&callback_payload_map_data)
 
 		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}
@@ -351,13 +351,13 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 	return &function
 }
 
-func getStderrCallbackFunctionBranch(processor *Processor, command_name string, branch_instance_step_id uint64, branch_id uint64, label string) (*func(message error)) {
+func getStderrCallbackFunctionBranch(processor *Processor, command_name string, branch_instance_id uint64, branch_instance_step_id uint64, branch_id uint64, label string) (*func(message error)) {
 	this_processor := processor
 	this_branch_instance_step_id := branch_instance_step_id
 	
 	
 	function := func(message error) {
-		callback_payload_map_data :=  map[string]interface{}{"branch_instance_step_id":this_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false}
+		callback_payload_map_data :=  map[string]interface{}{"branch_instance_id":branch_instance_id, "branch_instance_step_id":this_branch_instance_step_id,"log":fmt.Sprintf("%s",message),"stdout":false}
 		callback_payload_data :=  json.NewMapOfValues(&callback_payload_map_data)
 
 		callback_payload_map := map[string]interface{}{"[queue]":"CreateRecord_BranchInstanceStepLog", "[queue_mode]":"PushBack", "[async]":true, "[trace_id]":this_processor.GenerateTraceId()}

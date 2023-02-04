@@ -53,8 +53,8 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		return errors
 	}
 
-	std_callback := getStdoutCallbackFunctionBranch(processor, *command_name, *branch_instance_step_id, *branch_id, *test_suite_name)
-	stderr_callback := getStderrCallbackFunctionBranch(processor, *command_name, *branch_instance_step_id, *branch_id, *test_suite_name)
+	std_callback := getStdoutCallbackFunctionBranch(processor, *command_name, *branch_instance_id, *branch_instance_step_id, *branch_id, *test_suite_name)
+	stderr_callback := getStderrCallbackFunctionBranch(processor, *command_name, *branch_instance_id, *branch_instance_step_id, *branch_id, *test_suite_name)
 
 	instance_folder_parts := common.GetDataDirectory()
 	instance_folder_parts = append(instance_folder_parts, "src")
