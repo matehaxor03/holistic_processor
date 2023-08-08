@@ -128,7 +128,15 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		limit_actual = limit_value
 	}
 
-	records, records_errors := table.ReadRecords(select_fields_actual, where_fields_actual, where_fields_logic_actual, group_by_actual, order_by_actual, limit_actual, nil)
+	var offset_actual *uint64
+	offset_value, offset_value_errors := request.GetUInt64("[offset]")
+	if offset_value_errors != nil {
+		return offset_value_errors
+	} else if !common.IsNil(offset_value) {
+		offset_actual = offset_value
+	}
+
+	records, records_errors := table.ReadRecords(select_fields_actual, where_fields_actual, where_fields_logic_actual, group_by_actual, order_by_actual, limit_actual, offset_actual)
 	if records_errors != nil {
 		return records_errors
 	} else if common.IsNil(records) {
