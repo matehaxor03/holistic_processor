@@ -104,6 +104,8 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		processor_function = commandGetTableNamesFunc()
 	} else if strings.HasPrefix(queue_name, "GetSchema_") {
 		processor_function = commandGetSchemaFunc()
+	} else if strings.HasPrefix(queue_name, "GetTableCount_") {
+		processor_function = commandGetTableCountFunc()
 	} else if strings.HasPrefix(queue_name, "ReadRecords_") {
 		processor_function = commandReadRecordsFunc()
 	} else if strings.HasPrefix(queue_name, "UpdateRecords_") {

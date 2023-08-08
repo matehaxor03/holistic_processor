@@ -131,6 +131,13 @@ func NewProcessorServer(port string, server_crt_path string, server_key_path str
 			controllers["CreateRecords_" + table_name] = create_processor
 		}
 
+		get_table_count_processor, get_table_count_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "GetTableCount_" + table_name, 1, -1)
+		if get_table_count_processor_errors != nil {
+			errors = append(errors, get_table_count_processor_errors...)
+		} else if get_table_count_processor != nil {
+			controllers["GetTableCount_" + table_name] = get_table_count_processor
+		}
+
 		create_record_processor, create_record_processor_errors := NewProcessorController(*verify, client_manager, *domain_name, queue_port, "CreateRecord_" + table_name, 1, -1)
 		if create_record_processor_errors != nil {
 			errors = append(errors, create_record_processor_errors...)
