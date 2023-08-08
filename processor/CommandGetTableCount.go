@@ -108,15 +108,12 @@ func commandGetTableCount(processor *Processor, request *json.Map, response_queu
 		errors = append(errors, fmt.Errorf("count for table %s is nil", unsafe_table_name))
 		return errors
 	}
-	
-	array := json.NewArray()
-	array.AppendUInt64(count)
 
 	if len(errors) > 0 {
 		return errors
 	} 
 	
-	response_queue_result.SetArray("data", array)	
+	response_queue_result.SetUInt64("data", count)	
 	
 	if include_schema_actual {
 		response_queue_result.SetMap("schema", table_schema_actual)
