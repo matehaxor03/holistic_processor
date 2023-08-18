@@ -35,20 +35,12 @@ func commandGetTableCount(processor *Processor, request *json.Map, response_queu
 		return errors
 	}
 
-	where_fields_actual := json.NewMap()
-	where_fields, where_fields_errors := request.GetMap("[where_fields]")
+	where_fields_actual := json.NewArray()
+	where_fields, where_fields_errors := request.GetArray("[where_fields]")
 	if where_fields_errors != nil {
 		return where_fields_errors
 	} else if !common.IsNil(where_fields) {
 		where_fields_actual = where_fields
-	}
-
-	where_fields_logic_actual := json.NewMap()
-	where_fields_logic, where_fields_logic_errors := request.GetMap("[where_fields_logic]")
-	if where_fields_logic_errors != nil {
-		return where_fields_logic_errors
-	} else if !common.IsNil(where_fields_logic) {
-		where_fields_logic_actual = where_fields_logic
 	}
 
 	include_schema_actual := false
@@ -101,7 +93,7 @@ func commandGetTableCount(processor *Processor, request *json.Map, response_queu
 		offset_actual = offset_value
 	}
 
-	count, count_errors := table.Count(where_fields_actual, where_fields_logic_actual, group_by_actual, order_by_actual, limit_actual, offset_actual)
+	count, count_errors := table.Count(where_fields_actual, group_by_actual, order_by_actual, limit_actual, offset_actual)
 	if count_errors != nil {
 		return count_errors
 	} else if common.IsNil(count) {
