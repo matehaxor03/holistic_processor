@@ -115,9 +115,16 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
+	where_query_build_step_status_not_started_array := json.NewArray()
+
 	where_query_build_step_status_not_started := json.NewMap()
-	where_query_build_step_status_not_started.SetStringValue("name", "Not Started")
-	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started, nil, nil, nil, nil, nil)
+	where_query_build_step_status_not_started.SetStringValue("column", "name")
+	where_query_build_step_status_not_started.SetStringValue("value", "Not Started")
+	where_query_build_step_status_not_started.SetStringValue("logic", "=")
+
+	where_query_build_step_status_not_started_array.AppendMap(where_query_build_step_status_not_started)
+
+	records_not_started_step_status, records_not_started_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_not_started_array, nil, nil, nil, nil)
 	if records_not_started_step_status_errors != nil {
 		errors = append(errors, records_not_started_step_status_errors...)
 	} else if len(*records_not_started_step_status) == 0 {
@@ -139,9 +146,16 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
+	where_query_build_step_status_running_array := json.NewArray()
+
 	where_query_build_step_status_running := json.NewMap()
-	where_query_build_step_status_running.SetStringValue("name", "Running")
-	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil, nil)
+	where_query_build_step_status_running.SetStringValue("column", "name")
+	where_query_build_step_status_running.SetStringValue("value", "Running")
+	where_query_build_step_status_running.SetStringValue("logic", "=")
+
+	where_query_build_step_status_running_array.AppendMap(where_query_build_step_status_running)
+
+	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running_array, nil, nil, nil, nil)
 	if records_running_step_status_errors != nil {
 		errors = append(errors, records_running_step_status_errors...)
 	} else if len(*records_running_step_status) == 0 {
