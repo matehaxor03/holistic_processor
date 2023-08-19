@@ -34,9 +34,16 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 		return errors
 	} 
 
+	where_query_build_step_status_running_array := json.NewArray()
+
 	where_query_build_step_status_running := json.NewMap()
-	where_query_build_step_status_running.SetStringValue("name", "Running")
-	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running, nil, nil, nil, nil, nil)
+	where_query_build_step_status_running.SetStringValue("column", "name")
+	where_query_build_step_status_running.SetStringValue("value", "Running")
+	where_query_build_step_status_running.SetStringValue("logic", "=")
+
+	where_query_build_step_status_running_array.AppendMap(where_query_build_step_status_running)
+
+	records_running_step_status, records_running_step_status_errors := table_BuildStepStatus.ReadRecords(nil, where_query_build_step_status_running_array, nil, nil, nil, nil)
 	if records_running_step_status_errors != nil {
 		errors = append(errors, records_running_step_status_errors...)
 	} else if len(*records_running_step_status) == 0 {
@@ -73,10 +80,17 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 
 	update_records_branch_instance_select := []string{"branch_instance_id", "build_step_status_id"}
 	update_records_branch_instance_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&update_records_branch_instance_select))
-	update_records_branch_instance_where :=  map[string]interface{}{"branch_instance_id":*branch_instance_id}
-	update_records_branch_instance_where_map :=  json.NewMapOfValues(&update_records_branch_instance_where)
+	
+	update_records_branch_instance_where_array := json.NewArray()
 
-	update_records, update_records_errors := table_BranchInstance.ReadRecords(update_records_branch_instance_select_array, update_records_branch_instance_where_map, nil, nil, nil, &one_record, nil)
+	update_records_branch_instance_where_map := json.NewMap()
+	update_records_branch_instance_where_map.SetStringValue("column", "branch_instance_id")
+	update_records_branch_instance_where_map.SetUInt64Value("value", *branch_instance_id)
+	update_records_branch_instance_where_map.SetStringValue("logic", "=")
+
+	update_records_branch_instance_where_array.AppendMap(update_records_branch_instance_where_map)
+
+	update_records, update_records_errors := table_BranchInstance.ReadRecords(update_records_branch_instance_select_array, update_records_branch_instance_where_array, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 	} else if common.IsNil(update_records) {

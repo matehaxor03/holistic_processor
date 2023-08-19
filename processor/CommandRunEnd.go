@@ -44,10 +44,15 @@ func commandRunEnd(processor *Processor, request *json.Map, response_queue_resul
 	build_step_status_select := []string{"build_step_status_id"}
 	build_step_status_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&build_step_status_select))
 
-	build_step_status_where := map[string]interface{}{"name":lookup_name}
-	build_step_status_where_map := json.NewMapOfValues(&build_step_status_where)
+	build_step_status_where_name := json.NewMap()
+	build_step_status_where_name.SetStringValue("column", "name")
+	build_step_status_where_name.SetStringValue("value", lookup_name)
+	build_step_status_where_name.SetStringValue("logic", "=")
 
-	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_map, nil, nil, nil, &one_record, nil)
+	build_step_status_where_array := json.NewArray()
+	build_step_status_where_array.AppendMap(build_step_status_where_name)
+
+	lookup_buildstep_records, lookup_buildstep_records_errors := table_BuildStepStatus.ReadRecords(build_step_status_select_array, build_step_status_where_array, nil, nil, &one_record, nil)
 	if lookup_buildstep_records_errors != nil {
 		errors = append(errors, lookup_buildstep_records_errors...)
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
@@ -108,10 +113,16 @@ func commandRunEnd(processor *Processor, request *json.Map, response_queue_resul
 
 	update_records_branch_instance_select := []string{"branch_instance_id", "build_step_status_id"}
 	update_records_branch_instance_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&update_records_branch_instance_select))
-	update_records_branch_instance_where :=  map[string]interface{}{"branch_instance_id":*branch_instance_id}
-	update_records_branch_instance_where_map :=  json.NewMapOfValues(&update_records_branch_instance_where)
+	update_records_branch_instance_where_array := json.NewArray()
 
-	update_records, update_records_errors := table_BranchInstance.ReadRecords(update_records_branch_instance_select_array, update_records_branch_instance_where_map, nil, nil, nil, &one_record, nil)
+	update_records_branch_instance_where_branch_instance_id := json.NewMap()
+	update_records_branch_instance_where_branch_instance_id.SetStringValue("column", "branch_instance_id")
+	update_records_branch_instance_where_branch_instance_id.SetUInt64Value("value", *branch_instance_id)
+	update_records_branch_instance_where_branch_instance_id.SetStringValue("logic", "=")
+
+	update_records_branch_instance_where_array.AppendMap(update_records_branch_instance_where_branch_instance_id)
+
+	update_records, update_records_errors := table_BranchInstance.ReadRecords(update_records_branch_instance_select_array, update_records_branch_instance_where_array, nil, nil, &one_record, nil)
 	if update_records_errors != nil {
 		errors = append(errors, update_records_errors...)
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
