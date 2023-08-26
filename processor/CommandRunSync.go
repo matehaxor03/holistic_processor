@@ -177,11 +177,16 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	previous_read_record_build_branch_instance_step_select := []string{"branch_instance_step_id", "build_step_status_id", "order"}
 	previous_read_record_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&previous_read_record_build_branch_instance_step_select))
 
-	previous_read_record_build_branch_instance_step_where := map[string]interface{}{"branch_instance_id":*branch_instance_id, "order":*order}
-	previous_read_record_build_branch_instance_step_where_map := json.NewMapOfValues(&previous_read_record_build_branch_instance_step_where)
+	previous_read_record_build_branch_instance_step_where_array := json.NewArray()
 
-	previous_read_record_build_branch_instance_step_where_logic := map[string]interface{}{"order":"<"}
-	previous_read_record_build_branch_instance_step_where_logic_map := json.NewMapOfValues(&previous_read_record_build_branch_instance_step_where_logic)
+	previous_read_record_build_branch_instance_step_where_branch_instance_id := map[string]interface{}{"column":"branch_instance_id","value":*branch_instance_id,"logic":"="}
+	previous_read_record_build_branch_instance_step_where_map_branch_instance_id := json.NewMapOfValues(&previous_read_record_build_branch_instance_step_where_branch_instance_id)
+
+	previous_read_record_build_branch_instance_step_where_order := map[string]interface{}{"column":"order","value":*order,"logic":"<"}
+	previous_read_record_build_branch_instance_step_where_map_order := json.NewMapOfValues(&previous_read_record_build_branch_instance_step_where_order)
+
+	previous_read_record_build_branch_instance_step_where_array.AppendMap(previous_read_record_build_branch_instance_step_where_map_branch_instance_id)
+	previous_read_record_build_branch_instance_step_where_array.AppendMap(previous_read_record_build_branch_instance_step_where_map_order)
 
 	previous_read_record_build_branch_instance_step_order_by :=  map[string]interface{}{"order":"decending"}
 	previous_read_record_build_branch_instance_step_order_by_map := json.NewMapOfValues(&previous_read_record_build_branch_instance_step_order_by)
@@ -191,8 +196,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	previous_read_record_build_branch_instance_step_request := map[string]interface{}{"[queue]":"ReadRecords_BranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 	previous_read_record_build_branch_instance_step_request_map := json.NewMapOfValues(&previous_read_record_build_branch_instance_step_request)
 	previous_read_record_build_branch_instance_step_request_map.SetArray("[select_fields]", previous_read_record_build_branch_instance_step_select_array)
-	previous_read_record_build_branch_instance_step_request_map.SetMap("[where_fields]", previous_read_record_build_branch_instance_step_where_map)
-	previous_read_record_build_branch_instance_step_request_map.SetMap("[where_fields_logic]", previous_read_record_build_branch_instance_step_where_logic_map)
+	previous_read_record_build_branch_instance_step_request_map.SetArray("[where_fields]", previous_read_record_build_branch_instance_step_where_array)
 	previous_read_record_build_branch_instance_step_request_map.SetArray("[order_by]", previous_read_record_build_branch_instance_step_order_by_array)
 
 	previous_read_record_build_branch_instance_step_response, previous_read_record_build_branch_instance_step_response_errors := processor.SendMessageToQueue(previous_read_record_build_branch_instance_step_request_map)
@@ -250,11 +254,16 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	previous_instance_steps_select := []string{"branch_instance_step_id", "build_step_status_id"}
 	previous_instance_steps_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&previous_instance_steps_select))
 
-	previous_instance_steps_where := map[string]interface{}{"branch_instance_id":*branch_instance_id, "order":*previous_order}
-	previous_instance_steps_where_map := json.NewMapOfValues(&previous_instance_steps_where)
+	previous_instance_steps_where_array := json.NewArray()
+	
+	previous_instance_steps_where_branch_instance_id := map[string]interface{}{"column":"branch_instance_id","value":*branch_instance_id,"logic":"="} 
+	previous_instance_steps_where_map_branch_instance_id := json.NewMapOfValues(&previous_instance_steps_where_branch_instance_id)
 
-	previous_instance_steps_where_logic := map[string]interface{}{"order":"="}
-	previous_instance_steps_where_logic_map := json.NewMapOfValues(&previous_instance_steps_where_logic)
+	previous_instance_steps_where_order := map[string]interface{}{"column":"order","value":*previous_order,"logic":"="}
+	previous_instance_steps_where_map_order := json.NewMapOfValues(&previous_instance_steps_where_order)
+
+	previous_instance_steps_where_array.AppendMap(previous_instance_steps_where_map_branch_instance_id)
+	previous_instance_steps_where_array.AppendMap(previous_instance_steps_where_map_order)
 
 	previous_instance_steps_order_by :=  map[string]interface{}{"order":"decending"}
 	previous_instance_steps_order_by_map := json.NewMapOfValues(&previous_instance_steps_order_by)
@@ -264,8 +273,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	previous_instance_steps_request := map[string]interface{}{"[queue]":"ReadRecords_BranchInstanceStep", "[trace_id]":processor.GenerateTraceId()}
 	previous_instance_steps_request_map := json.NewMapOfValues(&previous_instance_steps_request)
 	previous_instance_steps_request_map.SetArray("[select_fields]", previous_instance_steps_select_array)
-	previous_instance_steps_request_map.SetMap("[where_fields]", previous_instance_steps_where_map)
-	previous_instance_steps_request_map.SetMap("[where_fields_logic]", previous_instance_steps_where_logic_map)
+	previous_instance_steps_request_map.SetArray("[where_fields]", previous_instance_steps_where_array)
 	previous_instance_steps_request_map.SetArray("[order_by]", previous_instance_steps_order_by_array)
 
 	previous_read_records_build_branch_instance_step_response, previous_read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(previous_instance_steps_request_map)

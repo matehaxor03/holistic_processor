@@ -104,11 +104,15 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 
 		read_records_build_step_request_select_fields := []string{"build_step_id", "build_step_group_id", "order"}
 		read_records_build_step_request_select_fields_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_request_select_fields))
-		read_records_build_step_request_where_fields := map[string]interface{}{"name":"Run_IntegrationTestSuite"}
+		
+		read_records_build_step_request_where_fields := map[string]interface{}{"column":"name","value":"Run_IntegrationTestSuite","logic":"="}
+		read_records_build_step_request_where_fields_array := json.NewArray()
 		read_records_build_step_request_where_fields_map := json.NewMapOfValues(&read_records_build_step_request_where_fields)
+		read_records_build_step_request_where_fields_array.AppendMap(read_records_build_step_request_where_fields_map)
+
 		read_records_build_step_request_map := map[string]interface{}{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 		read_records_build_step_request := json.NewMapOfValues(&read_records_build_step_request_map)
-		read_records_build_step_request.SetMap("[where_fields]", read_records_build_step_request_where_fields_map)
+		read_records_build_step_request.SetArray("[where_fields]", read_records_build_step_request_where_fields_array)
 		read_records_build_step_request.SetArray("[select_fields]", read_records_build_step_request_select_fields_array)
 
 		read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(read_records_build_step_request)
@@ -190,11 +194,15 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		///
 		read_records_build_step_sync_request_select_fields := []string{"build_step_id", "build_step_group_id"}
 		read_records_build_step_sync_request_select_fields_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_sync_request_select_fields))
-		read_records_build_step_sync_request_where_fields := map[string]interface{}{"name":"Run_Sync"}
+		
+		read_records_build_step_sync_request_where_fields := map[string]interface{}{"column":"name","value":"Run_Sync","logic":"="}
+		read_records_build_step_sync_request_where_fields_array := json.NewArray()
 		read_records_build_step_sync_request_where_fields_map := json.NewMapOfValues(&read_records_build_step_sync_request_where_fields)
+		read_records_build_step_sync_request_where_fields_array.AppendMap(read_records_build_step_sync_request_where_fields_map)
+
 		read_records_build_step_sync_request_map := map[string]interface{}{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 		read_records_build_step_sync_request := json.NewMapOfValues(&read_records_build_step_sync_request_map)
-		read_records_build_step_sync_request.SetMap("[where_fields]", read_records_build_step_sync_request_where_fields_map)
+		read_records_build_step_sync_request.SetArray("[where_fields]", read_records_build_step_sync_request_where_fields_array)
 		read_records_build_step_sync_request.SetArray("[select_fields]", read_records_build_step_sync_request_select_fields_array)
 
 		read_records_build_step_sync_response, read_records_build_step_sync_response_errors := processor.SendMessageToQueue(read_records_build_step_sync_request)

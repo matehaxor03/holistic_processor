@@ -80,12 +80,20 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			return
 		}
 
-		read_records_test_suite_where := map[string]interface{}{"branch_id":this_branch_id,"name":this_label}
-		read_records_test_suite_where_map := json.NewMapOfValues(&read_records_test_suite_where)
+		read_records_test_suite_where_array := json.NewArray()
+		
+		read_records_test_suite_where_branch_id := map[string]interface{}{"column":"branch_id","value":this_branch_id,"logic":"="}
+		read_records_test_suite_where_map_branch_id := json.NewMapOfValues(&read_records_test_suite_where_branch_id)
+		
+		read_records_test_suite_where_name := map[string]interface{}{"column":"name","value":this_label,"logic":"="}
+		read_records_test_suite_where_map_name := json.NewMapOfValues(&read_records_test_suite_where_name)
+
+		read_records_test_suite_where_array.AppendMap(read_records_test_suite_where_map_branch_id)
+		read_records_test_suite_where_array.AppendMap(read_records_test_suite_where_map_name)
 
 		read_records_test_suite_request := map[string]interface{}{"[queue]":"ReadRecords_TestSuiteBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false,"[trace_id]":this_processor.GenerateTraceId()}
 		read_records_test_suite_request_map := json.NewMapOfValues(&read_records_test_suite_request)
-		read_records_test_suite_request_map.SetMap("[where_fields]", read_records_test_suite_where_map)
+		read_records_test_suite_request_map.SetArray("[where_fields]", read_records_test_suite_where_array)
 
 		test_suite_response, test_suite_response_errors := this_processor.SendMessageToQueue(read_records_test_suite_request_map)
 		if test_suite_response_errors != nil {
@@ -185,12 +193,20 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 			return
 		}
 
-		read_records_test_where := map[string]interface{}{"test_suite_branch_id":*test_suite_branch_id,"name":*test_value}
-		read_records_test_where_map := json.NewMapOfValues(&read_records_test_where)
+		read_records_test_where_array := json.NewArray()
+		
+		read_records_test_where_test_suite_branch_id := map[string]interface{}{"column":"test_suite_branch_id","value":*test_suite_branch_id,"logic":"="}
+		read_records_test_where_map_test_suite_branch_id := json.NewMapOfValues(&read_records_test_where_test_suite_branch_id)
+
+		read_records_test_where_name := map[string]interface{}{"column":"name","value":*test_value, "logic":"="}
+		read_records_test_where_map_name := json.NewMapOfValues(&read_records_test_where_name)
+
+		read_records_test_where_array.AppendMap(read_records_test_where_map_test_suite_branch_id)
+		read_records_test_where_array.AppendMap(read_records_test_where_map_name)
 
 		read_records_test_request := map[string]interface{}{"[queue]":"ReadRecords_TestBranch", "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 		read_records_test_request_map := json.NewMapOfValues(&read_records_test_request)
-		read_records_test_request_map.SetMap("[where_fields]", read_records_test_where_map)
+		read_records_test_request_map.SetArray("[where_fields]", read_records_test_where_array)
 
 		test_response, test_response_errors := this_processor.SendMessageToQueue(read_records_test_request_map)
 		if test_response_errors != nil {
@@ -286,13 +302,16 @@ func getStdoutCallbackFunctionBranch(processor *Processor, command_name string, 
 		fmt.Println("test_branch_id is nil")
 		return
 	}
-
-	select_test_result_where := map[string]interface{}{"name":*test_result_value}
+	
+	select_test_result_where_array := json.NewArray()
+	
+	select_test_result_where := map[string]interface{}{"column":"name", "value":*test_result_value, "logic":"="}
 	select_test_result_where_map := json.NewMapOfValues(&select_test_result_where)
+	select_test_result_where_array.AppendMap(select_test_result_where_map)
 
 	select_test_result_request := map[string]interface{}{"[queue]":"ReadRecords_TestResult", "[limit]":1,"[queue_mode]":"PushBack","[async]":false, "[trace_id]":this_processor.GenerateTraceId()}
 	select_test_result_request_map := json.NewMapOfValues(&select_test_result_request)
-	select_test_result_request_map.SetMap("[where_fields]", select_test_result_where_map)
+	select_test_result_request_map.SetArray("[where_fields]", select_test_result_where_array)
 
 	test_result_response, test_result_response_errors := this_processor.SendMessageToQueue(select_test_result_request_map)
 	if test_result_response_errors != nil {
