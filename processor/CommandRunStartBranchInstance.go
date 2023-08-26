@@ -167,8 +167,10 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	read_records_build_branch_instance_step_select := []string{"branch_instance_step_id", "branch_instance_id", "build_step_id", "order"}
 	read_records_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_branch_instance_step_select))
 
-	read_records_build_branch_instance_step_where := map[string]interface{}{"branch_instance_id":*branch_instance_id}
+	read_records_build_branch_instance_step_where := map[string]interface{}{"column":"branch_instance_id","value":*branch_instance_id, "logic":"="}
+	read_records_build_branch_instance_step_where_map_array := json.NewArray()
 	read_records_build_branch_instance_step_where_map := json.NewMapOfValues(&read_records_build_branch_instance_step_where)
+	read_records_build_branch_instance_step_where_map_array.AppendMap(read_records_build_branch_instance_step_where_map)
 
 	read_records_build_branch_instance_step_where_order_by :=  map[string]interface{}{"order":"ascending"}
 	read_records_build_branch_instance_step_where_order_by_map := json.NewMapOfValues(&read_records_build_branch_instance_step_where_order_by)
@@ -178,7 +180,7 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	read_records_build_branch_instance_step_request := map[string]interface{}{"[queue]":"ReadRecords_BranchInstanceStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 	read_records_build_branch_instance_step_request_map := json.NewMapOfValues(&read_records_build_branch_instance_step_request)
 	read_records_build_branch_instance_step_request_map.SetArray("[select_fields]", read_records_build_branch_instance_step_select_array)
-	read_records_build_branch_instance_step_request_map.SetMap("[where_fields]", read_records_build_branch_instance_step_where_map)
+	read_records_build_branch_instance_step_request_map.SetArray("[where_fields]", read_records_build_branch_instance_step_where_map_array)
 	read_records_build_branch_instance_step_request_map.SetArray("[order_by]", read_records_build_branch_instance_step_where_order_by_array)
 
 	read_records_build_branch_instance_step_response, read_records_build_branch_instance_step_response_errors := processor.SendMessageToQueue(read_records_build_branch_instance_step_request_map)
@@ -231,13 +233,15 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	read_records_build_step_select := []string{"name"}
 	read_records_build_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_build_step_select))
 
-	read_records_build_step_where := map[string]interface{}{"build_step_id":*desired_build_step_id}
+	read_records_build_step_where := map[string]interface{}{"column":"build_step_id", "value":*desired_build_step_id, "logic":"="}
+	read_records_build_step_where_map_array := json.NewArray()
 	read_records_build_step_where_map := json.NewMapOfValues(&read_records_build_step_where)
+	read_records_build_step_where_map_array.AppendMap(read_records_build_step_where_map)
 
 	read_records_build_step_request := map[string]interface{}{"[queue]":"ReadRecords_BuildStep", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 	read_records_build_step_request_map := json.NewMapOfValues(&read_records_build_step_request)
 	read_records_build_step_request_map.SetArray("[select_fields]", read_records_build_step_select_array)
-	read_records_build_step_request_map.SetMap("[where_fields]", read_records_build_step_where_map)
+	read_records_build_step_request_map.SetArray("[where_fields]", read_records_build_step_where_map_array)
 
 	read_records_build_step_response, read_records_build_step_response_errors := processor.SendMessageToQueue(read_records_build_step_request_map)
 	if read_records_build_step_response_errors != nil {
@@ -288,13 +292,15 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	read_records_branch_select := []string{"name", "repository_id"}
 	read_records_branch_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_branch_select))
 
-	read_records_branch_where := map[string]interface{}{"branch_id":*branch_id}
+	read_records_branch_where := map[string]interface{}{"column":"branch_id","value":*branch_id,"logic":"="}
+	read_records_branch_where_map_array := json.NewArray()
 	read_records_branch_where_map := json.NewMapOfValues(&read_records_branch_where)
+	read_records_branch_where_map_array.AppendMap(read_records_branch_where_map)
 
 	read_records_branch_request := map[string]interface{}{"[queue]":"ReadRecords_Branch", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 	read_records_branch_request_map := json.NewMapOfValues(&read_records_branch_request)
 	read_records_branch_request_map.SetArray("[select_fields]", read_records_branch_array)
-	read_records_branch_request_map.SetMap("[where_fields]",read_records_branch_where_map)
+	read_records_branch_request_map.SetArray("[where_fields]",read_records_branch_where_map_array)
 
 	read_records_branch_response, read_records_branch_response_errors := processor.SendMessageToQueue(read_records_branch_request_map)
 	if read_records_branch_response_errors != nil {
@@ -352,14 +358,16 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	read_records_repository_select := []string{"repository_account_id", "name"}
 	read_records_repository_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_repository_select))
 
-	read_records_repository_where := map[string]interface{}{"repository_id":*repository_id}
+	read_records_repository_where := map[string]interface{}{"column":"repository_id","value":*repository_id,"logic":"="}
+	read_records_repository_where_array := json.NewArray()
 	read_records_repository_where_map := json.NewMapOfValues(&read_records_repository_where)
+	read_records_repository_where_array.AppendMap(read_records_repository_where_map)
 
 	read_records_repository_request := map[string]interface{}{"[queue]":"ReadRecords_Repository", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 	read_records_repository_request_map := json.NewMapOfValues(&read_records_repository_request)
 	
 	read_records_repository_request_map.SetArray("[select_fields]", read_records_repository_array)
-	read_records_repository_request_map.SetMap("[where_fields]",read_records_repository_where_map)
+	read_records_repository_request_map.SetArray("[where_fields]",read_records_repository_where_array)
 
 	read_records_repository_response, read_records_repository_response_errors := processor.SendMessageToQueue(read_records_repository_request_map)
 	if read_records_repository_response_errors != nil {
@@ -417,14 +425,16 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	read_records_repository_account_select := []string{"domain_name_id", "name"}
 	read_records_repository_account_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_repository_account_select))
 
-	read_records_repository_account_where := map[string]interface{}{"repository_account_id":*repository_account_id}
+	read_records_repository_account_where := map[string]interface{}{"column":"repository_account_id","value":*repository_account_id,"logic":"="}
+	read_records_repository_account_where_array := json.NewArray()
 	read_records_repository_account_where_map := json.NewMapOfValues(&read_records_repository_account_where)
+	read_records_repository_account_where_array.AppendMap(read_records_repository_account_where_map)
 
 	read_records_repository_account_request := map[string]interface{}{"[queue]":"ReadRecords_RepositoryAccount", "[trace_id]":processor.GenerateTraceId(), "[limit]":1}
 	read_records_repository_account_request_map := json.NewMapOfValues(&read_records_repository_account_request)
 	
 	read_records_repository_account_request_map.SetArray("[select_fields]", read_records_repository_account_array)
-	read_records_repository_account_request_map.SetMap("[where_fields]", read_records_repository_account_where_map)
+	read_records_repository_account_request_map.SetArray("[where_fields]", read_records_repository_account_where_array)
 
 	read_records_repository_account_response, read_records_repository_account_response_errors := processor.SendMessageToQueue(read_records_repository_account_request_map)
 	if read_records_repository_account_response_errors != nil {
@@ -483,13 +493,15 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	read_records_domain_name_select := []string{"name"}
 	read_records_domain_name_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&read_records_domain_name_select))
 
-	read_records_domain_name_where := map[string]interface{}{"domain_name_id":*domain_name_id}
+	read_records_domain_name_where := map[string]interface{}{"column":"domain_name_id","value":*domain_name_id,"logic":"="}
+	read_records_domain_name_where_array := json.NewArray()
 	read_records_domain_name_where_map := json.NewMapOfValues(&read_records_domain_name_where)
+	read_records_domain_name_where_array.AppendMap(read_records_domain_name_where_map)
 
 	read_records_domain_name_request := map[string]interface{}{"[queue]":"ReadRecords_DomainName", "[trace_id]":processor.GenerateTraceId(),"[limit]":1}
 	read_records_domain_name_request_map := json.NewMapOfValues(&read_records_domain_name_request)
 	read_records_domain_name_request_map.SetArray("[select_fields]", read_records_domain_name_array)
-	read_records_domain_name_request_map.SetMap("[where_fields]",read_records_domain_name_where_map)
+	read_records_domain_name_request_map.SetArray("[where_fields]",read_records_domain_name_where_array)
 
 	read_records_domain_name_response, read_records_domain_name_response_errors := processor.SendMessageToQueue(read_records_domain_name_request_map)
 	if read_records_domain_name_response_errors != nil {
