@@ -188,7 +188,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	previous_read_record_build_branch_instance_step_where_array.AppendMap(previous_read_record_build_branch_instance_step_where_map_branch_instance_id)
 	previous_read_record_build_branch_instance_step_where_array.AppendMap(previous_read_record_build_branch_instance_step_where_map_order)
 
-	previous_read_record_build_branch_instance_step_order_by :=  map[string]interface{}{"order":"decending"}
+	previous_read_record_build_branch_instance_step_order_by :=  map[string]interface{}{"order":"descending"}
 	previous_read_record_build_branch_instance_step_order_by_map := json.NewMapOfValues(&previous_read_record_build_branch_instance_step_order_by)
 	previous_read_record_build_branch_instance_step_order_by_array := json.NewArray()
 	previous_read_record_build_branch_instance_step_order_by_array.AppendMap(previous_read_record_build_branch_instance_step_order_by_map)
@@ -265,7 +265,7 @@ func commandRunSync(processor *Processor, request *json.Map, response_queue_resu
 	previous_instance_steps_where_array.AppendMap(previous_instance_steps_where_map_branch_instance_id)
 	previous_instance_steps_where_array.AppendMap(previous_instance_steps_where_map_order)
 
-	previous_instance_steps_order_by :=  map[string]interface{}{"order":"decending"}
+	previous_instance_steps_order_by :=  map[string]interface{}{"order":"descending"}
 	previous_instance_steps_order_by_map := json.NewMapOfValues(&previous_instance_steps_order_by)
 	previous_instance_steps_order_by_array := json.NewArray()
 	previous_instance_steps_order_by_array.AppendMap(previous_instance_steps_order_by_map)
