@@ -135,6 +135,14 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 		errors = append(errors, fmt.Errorf("records for table %s is nil", unsafe_table_name))
 		return errors
 	}
+
+	include_count_actual := false
+	include_count, include_count_errors := request.GetBool("[include_count]")
+	if include_count_errors != nil {
+		return include_count_errors
+	} else if !common.IsNil(include_count) {
+		include_count_actual = *include_count
+	}
 	
 	array := json.NewArray()
 	for index, record := range *records {
@@ -157,6 +165,18 @@ func commandReadRecords(processor *Processor, request *json.Map, response_queue_
 	if include_schema_actual {
 		response_queue_result.SetMap("schema", table_schema_actual)
 	}	
+
+	if include_count_actual {
+		count, count_errors := table.Count(where_fields_actual, group_by_actual, nil, nil, nil)
+		if count_errors != nil {
+			return count_errors
+		} else if common.IsNil(count) {
+			errors = append(errors, fmt.Errorf("count for table %s is nil", unsafe_table_name))
+			return errors
+		} else {
+			response_queue_result.SetUInt64("count", count)
+		}
+	}
 
 	return nil
 }
