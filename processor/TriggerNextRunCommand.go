@@ -4,9 +4,10 @@ import (
 	json "github.com/matehaxor03/holistic_json/json"
 	common "github.com/matehaxor03/holistic_common/common"
 	"fmt"
+	"time"
 )
 
-func triggerNextRunCommand(processor *Processor, command_name *string, branch_instance_step_id *uint64, branch_instance_id *uint64, branch_id *uint64, build_step_id *uint64, order *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, parameters *string, errors []error, request *json.Map) ([]error) {
+func triggerNextRunCommand(processor *Processor, command_name *string, branch_instance_step_id *uint64, branch_instance_id *uint64, branch_id *uint64, build_step_id *uint64, order *int64, domain_name *string, repository_account_name *string, repository_name *string, branch_name *string, parameters *string, created_date *time.Time, errors []error, request *json.Map) ([]error) {
 	if command_name == nil {
 		errors = append(errors, fmt.Errorf("current command_name is nil"))
 	} 
@@ -311,6 +312,7 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 		next_build_step_map.SetString("branch_name", branch_name)
 		next_build_step_map.SetString("command_name", name_of_next_step)
 		next_build_step_map.SetUInt64("branch_id", branch_id)
+		next_build_step_map.SetTime("created_date", created_date)
 
 		next_command := map[string]interface{}{"[queue]":*name_of_next_step,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
 		next_command_map := json.NewMapOfValues(&next_command)

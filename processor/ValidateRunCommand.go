@@ -4,9 +4,10 @@ import (
 	json "github.com/matehaxor03/holistic_json/json"
 	common "github.com/matehaxor03/holistic_common/common"
 	"fmt"
+	"time"
 )
 
-func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string, *uint64, *uint64, *uint64, *uint64, *int64, *string, *string, *string, *string, *string, []error) {
+func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string, *uint64, *uint64, *uint64, *uint64, *int64, *string, *string, *string, *string, *string, *time.Time, []error) {
 	var errors []error
 	one_record := uint64(1)
 	write_client := processor.GetClientWrite()
@@ -20,7 +21,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	command_name, command_name_errors := request_data.GetString("command_name")
@@ -93,6 +94,13 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 		errors = append(errors, fmt.Errorf("branch_name is nil"))
 	}	
 
+	created_date, created_date_errors := request_data.GetTime("created_date")
+	if created_date_errors != nil {
+		errors = append(errors, created_date_errors...) 
+	} else if common.IsNil(created_date) {
+		errors = append(errors, fmt.Errorf("created_date is nil"))
+	}	
+
 	parameters, parameters_errors := request_data.GetString("parameters")
 	if parameters_errors != nil {
 		errors = append(errors, parameters_errors...) 
@@ -101,7 +109,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}	
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	table_BuildStepStatus, table_BuildStepStatus_errors := database.GetTable("BuildStepStatus")
@@ -112,7 +120,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	where_query_build_step_status_not_started_array := json.NewArray()
@@ -134,7 +142,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	not_started_build_step_status_id, not_started_build_step_status_id_errors := ((*records_not_started_step_status)[0]).GetUInt64("build_step_status_id")
@@ -143,7 +151,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil,  errors
 	} 
 
 	where_query_build_step_status_running_array := json.NewArray()
@@ -165,7 +173,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	running_build_step_status_id, running_build_step_status_id_errors := ((*records_running_step_status)[0]).GetUInt64("build_step_status_id")
@@ -176,7 +184,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	table_BranchInstanceStep, table_BranchInstanceStep_errors := database.GetTable("BranchInstanceStep")
@@ -187,7 +195,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	update_records_branch_instance_step_select := []string{"branch_instance_step_id", "build_step_status_id"}
@@ -212,7 +220,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	update_record := (*update_records)[0]
@@ -224,7 +232,7 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
 	if *update_record_build_step_status_id == *not_started_build_step_status_id {
@@ -236,8 +244,8 @@ func validateRunCommandHeaders(processor *Processor, request *json.Map) (*string
 	}
 
 	if len(errors) > 0 {
-		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
+		return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, errors
 	} 
 
-	return command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, nil
+	return command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, nil
 }

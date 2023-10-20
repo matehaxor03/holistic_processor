@@ -34,6 +34,13 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 		errors = append(errors, fmt.Errorf("branch_id is nil"))
 	}
 
+	created_date, created_date_errors := request_data.GetTime("created_date")
+	if created_date_errors != nil {
+		errors = append(errors, created_date_errors...) 
+	} else if common.IsNil(created_date) {
+		errors = append(errors, fmt.Errorf("created_date is nil"))
+	}
+
 	if len(errors) > 0 {
 		return errors
 	} 
@@ -555,6 +562,7 @@ func commandRunStartBranchInstance(processor *Processor, request *json.Map, resp
 	first_build_step.SetString("branch_name", branch_name)
 	first_build_step.SetUInt64("branch_id", branch_id)
 	first_build_step.SetString("command_name", name_of_next_step)
+	first_build_step.SetTime("created_date", created_date)
 	first_build_step.SetStringValue("parameters", "{}")
 
 

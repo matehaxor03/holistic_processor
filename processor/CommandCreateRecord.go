@@ -67,6 +67,12 @@ func commandCreateRecord(processor *Processor, request *json.Map, response_queue
 				response_queue_result.SetMap("data", new_record_fields)	
 
 				if *queue_name == "CreateRecord_BranchInstance" {
+					//todo: move to dbclient maybe?? and remove default time values from sql schema
+					time_now, time_now_errors := common.GetTime("now")
+					if time_now_errors != nil {
+						return time_now_errors
+					}
+					new_record_fields.SetTime("created_date", time_now)
 					callback_payload_map := map[string]interface{}{"[queue]":"Run_StartBranchInstance", "data":new_record_fields,"[queue_mode]":"PushBack","[async]":true, "[trace_id]":processor.GenerateTraceId()}
 					go processor.SendMessageToQueueFireAndForget(json.NewMapOfValues(&callback_payload_map))
 				}
