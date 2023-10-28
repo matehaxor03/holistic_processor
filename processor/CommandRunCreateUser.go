@@ -28,7 +28,7 @@ func commandRunCreateUser(processor *Processor, request *json.Map, response_queu
 		branch_instance_id_string = branch_instance_id_string[len(branch_instance_id_string)-10:]
 	}
 	
-	shell_command := "dscl . -create /Users/holistic_b" + created_date.Format(time_format) + branch_instance_id_string
+	shell_command := "dscl . -create /Users/holisticxyz_b" + created_date.Format(time_format) + branch_instance_id_string
 	(*std_callback)(shell_command)
 	bashCommand := common.NewBashCommand()
 
