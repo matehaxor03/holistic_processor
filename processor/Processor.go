@@ -31,6 +31,7 @@ type Processor struct {
 	GetValidator func() validate.Validator
 	GetHostUser func() *host_client.User
 	CalculateDesintationHostUserName func(branch_instance_id uint64) string
+	GetHostClient func() *host_client.HostClient
 }
 
 func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, processor_manager *ProcessorManager, queue_domain_name dao.DomainName, queue_port string, queue_name string) (*Processor, []error) {
@@ -350,6 +351,9 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		},
 		GetHostUser: func() *host_client.User {
 			return getHostUser()
+		},
+		GetHostClient: func() *host_client.HostClient {
+			return host_client_instance
 		},
 		CalculateDesintationHostUserName: func(branch_instance_id uint64) string {
 			string_value := fmt.Sprintf("%d", branch_instance_id)

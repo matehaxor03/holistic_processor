@@ -21,7 +21,21 @@ func commandRunClean(processor *Processor, request *json.Map, response_queue_res
 		return errors
 	}
 
-	instance_folder_parts := common.GetDataDirectory()
+	host_user := processor.GetHostUser()
+	home_directory, home_directory_errors := host_user.GetHomeDirectoryAbsoluteDirectory()
+	if home_directory_errors != nil {
+		errors = append(errors, home_directory_errors...)
+	}
+
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
+	instance_folder_parts := home_directory.GetPath()
 	instance_folder_parts = append(instance_folder_parts, "src")
 	instance_folder_parts = append(instance_folder_parts, *domain_name)
 	instance_folder_parts = append(instance_folder_parts, *repository_account_name)
