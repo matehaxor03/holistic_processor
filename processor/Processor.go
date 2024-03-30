@@ -12,7 +12,8 @@ import (
 	common "github.com/matehaxor03/holistic_common/common"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
 	json "github.com/matehaxor03/holistic_json/json"
-	validate "github.com/matehaxor03/holistic_validator/validate"	
+	validate "github.com/matehaxor03/holistic_validator/validate"
+	host_client "github.com/matehaxor03/holistic_host_client/host_client"
 )
 
 
@@ -28,6 +29,8 @@ type Processor struct {
 	GenerateTraceId func() string
 	WakeUp func()
 	GetValidator func() validate.Validator
+	GetHostUser func() *host_client.User
+	CalculateDesintationHostUserName func(branch_instance_id uint64) string
 }
 
 func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, processor_manager *ProcessorManager, queue_domain_name dao.DomainName, queue_port string, queue_name string) (*Processor, []error) {
@@ -39,19 +42,37 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 	var queue_get_next_message_function (*func(string) (json.Map, []error))
 
 	var this_processor *Processor
+	var this_host_user *host_client.User
 	var errors []error
 	var messageCountLock sync.Mutex
 	var callbackLock sync.Mutex
 	var messageCount uint64
 	var processor_function *func(processor *Processor, request *json.Map, response *json.Map) []error
 	
-	
+	host_client_instance, host_client_errors := host_client.NewHostClient()
+	if host_client_errors != nil {
+		return nil, host_client_errors
+	}
+
+	host_user, host_user_errors := host_client_instance.Whoami()
+	if host_user_errors != nil {
+		return nil, host_user_errors
+	}
+
 	setProcessor := func(processor *Processor) {
 		this_processor = processor
 	}
 
 	getProcessor := func() *Processor {
 		return this_processor
+	}
+
+	setHostUser := func(u *host_client.User) {
+		this_host_user = u
+	}
+
+	getHostUser := func() *host_client.User {
+		return this_host_user
 	}
 
 	getProcessorManager := func() *ProcessorManager {
@@ -327,6 +348,16 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		GetValidator: func() validate.Validator {
 			return verify
 		},
+		GetHostUser: func() *host_client.User {
+			return getHostUser()
+		},
+		CalculateDesintationHostUserName: func(branch_instance_id uint64) string {
+			string_value := fmt.Sprintf("%d", branch_instance_id)
+			if len(string_value) > 4 {
+				string_value = string_value[len(string_value)-4:]
+			}
+			return "holisticxyz_b" + string_value + "_@127.0.0.1"
+		},
 		Start: func() {
 			get_processor_callback().SetProcessor(getProcessor())
 			queue_get_next_message_function = getProcessor().GetProcessorManager().GetProcessorController().GetProcessorServer().GetQueueGetNextMessageFunction(getQueueName())
@@ -411,6 +442,7 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		},
 	}
 	setProcessor(&x)
+	setHostUser(host_user)
 	
 
 	if len(errors) > 0 {
