@@ -170,14 +170,6 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		processor_function = commandRunCopyToInstanceFolderFunc()
 	} else if queue_name == "Run_CreateInstanceFolder" {
 		processor_function = commandRunCreateInstanceFolderFunc()
-	} else if queue_name == "Run_CreateGroup" {
-		processor_function = commandRunCreateGroupFunc()
-	} else if queue_name == "Run_CreateUser" {
-		processor_function = commandRunCreateUserFunc()
-	} else if queue_name == "Run_DeleteUser" {
-		processor_function = commandRunCreateUserFunc()
-	}  else if queue_name == "Run_DeleteGroup" {
-		processor_function = commandRunDeleteGroupFunc()
 	} else if queue_name == "Run_DeleteInstanceFolder" {
 		processor_function = commandRunDeleteInstanceFolderFunc()
 	} else if queue_name == "Run_End" {
@@ -186,10 +178,6 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		processor_function = commandRunCleanFunc()
 	} else if queue_name == "Run_Lint" {
 		processor_function = commandRunLintFunc()
-	} else if queue_name == "Run_RemoveGroupFromInstanceFolder" {
-		processor_function = commandRunRemoveGroupFromInstanceFolderFunc()
-	} else if queue_name == "Run_RemoveGroupFromUser" {
-		processor_function = commandRunRemoveGroupFromUserFunc()
 	} else if queue_name == "Run_UnitTests" {
 		processor_function = commandRunUnitTestsFunc()
 	} else if queue_name == "Run_IntegrationTests" {
@@ -198,10 +186,6 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		processor_function = commandRunIntegrationTestSuiteFunc()
 	} else if queue_name == "Run_Build" {
 		processor_function = commandRunBuildFunc()
-	} else if queue_name == "Run_AssignGroupToUser" {
-		processor_function = commandRunAssignGroupToUserFunc()
-	} else if queue_name == "Run_AssignGroupToInstanceFolder" {
-		processor_function = commandRunAssignGroupToInstanceFolderFunc()
 	} else if queue_name == "Run_Sync" {
 		processor_function = commandRunSyncFunc()
 	} else {
