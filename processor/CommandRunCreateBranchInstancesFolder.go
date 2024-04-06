@@ -2,8 +2,6 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
-	"os"
-    "path/filepath"
 )
 
 func commandRunCreateBranchInstancesFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -20,9 +18,17 @@ func commandRunCreateBranchInstancesFolder(processor *Processor, request *json.M
 	}
 	
 	host_user := processor.GetHostUser()
-	home_directory, home_directory_errors := host_user.GetHomeDirectoryAbsoluteDirectory()
-	if home_directory_errors != nil {
-		errors = append(errors, home_directory_errors...)
+	host_client := processor.GetHostClient()
+	destination_host_username := processor.CalculateDesintationHostUserName(*branch_instance_id)
+
+	destination_host, destination_host_errors := host_client.Host("127.0.0.1")
+	if destination_host_errors != nil {
+		errors = append(errors, destination_host_errors...)
+	}
+
+	destination_user, destination_user_errors := host_client.User(destination_host_username)
+	if destination_user_errors != nil {
+		errors = append(errors, destination_user_errors...)
 	}
 
 	if len(errors) > 0 {
@@ -33,26 +39,41 @@ func commandRunCreateBranchInstancesFolder(processor *Processor, request *json.M
 		return errors
 	}
 
-	// todo: validate directory names
-	directory_parts := home_directory.GetPath()
-	directory_parts = append(directory_parts, "src")
-	directory_parts = append(directory_parts, *domain_name)
-	directory_parts = append(directory_parts, *repository_account_name)
-	directory_parts = append(directory_parts, *repository_name)
-	directory_parts = append(directory_parts, "branch_instances")
-	full_path_of_directory := "/" + filepath.Join(directory_parts...)
+	destination_host_user := host_client.HostUser(*destination_host, *destination_user)
 
-	if _, stat_error := os.Stat(full_path_of_directory); os.IsNotExist(stat_error) {
-		permissions := int(0700)
-		create_directory_error := os.MkdirAll(full_path_of_directory, os.FileMode(permissions))
-		if create_directory_error != nil {
-			errors = append(errors, create_directory_error)
-		}
+	destination_host_home_directory, destination_host_home_directory_errors := destination_user.GetHomeDirectoryAbsoluteDirectory()
+	if destination_host_home_directory_errors != nil {
+		errors = append(errors, destination_host_home_directory_errors...)
 	}
 
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
+	directory_parts := destination_host_home_directory.GetPath()
+	directory_parts = append(directory_parts, "branch_instances")
 	
+	remote_absolute_directory, remote_absolute_directory_errors := host_user.RemoteAbsoluteDirectory(destination_host_user, directory_parts)
+	if remote_absolute_directory_errors != nil {
+		errors = append(errors, remote_absolute_directory_errors...)
+	}
 
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
 
+	create_errors := remote_absolute_directory.CreateIfDoesNotExist()
+	if create_errors != nil {
+		errors = append(errors, create_errors...) 
+	}
 
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
 	if trigger_next_run_command_errors != nil {
