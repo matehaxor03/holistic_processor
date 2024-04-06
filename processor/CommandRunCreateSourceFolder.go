@@ -2,8 +2,6 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
-	"os"
-    "path/filepath"
 )
 
 func commandRunCreateSourceFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -33,22 +31,20 @@ func commandRunCreateSourceFolder(processor *Processor, request *json.Map, respo
 		return errors
 	}
 
-	// todo: validate directory names
 	directory_parts := home_directory.GetPath()
 	directory_parts = append(directory_parts, "src")
-	full_path_of_directory := "/" + filepath.Join(directory_parts...)
 
-	if _, stat_error := os.Stat(full_path_of_directory); os.IsNotExist(stat_error) {
-		permissions := int(0700)
-		create_directory_error := os.MkdirAll(full_path_of_directory, os.FileMode(permissions))
-		if create_directory_error != nil {
-			errors = append(errors, create_directory_error)
+	host_client := processor.GetHostClient()
+	sources_folder, sources_folder_errors := host_client.AbsoluteDirectory(directory_parts)
+
+	if sources_folder_errors != nil {
+		errors = append(errors, sources_folder_errors...)
+	} else {
+		create_if_does_not_exist_errors := sources_folder.CreateIfDoesNotExist()
+		if create_if_does_not_exist_errors != nil {
+			errors = append(errors, create_if_does_not_exist_errors...)
 		}
 	}
-
-	
-
-	// do something
 
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
 	if trigger_next_run_command_errors != nil {
