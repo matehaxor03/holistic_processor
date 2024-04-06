@@ -2,9 +2,6 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
-	"os"
-    "path/filepath"
-	"fmt"
 )
 
 func commandRunCreateBranchOrTagFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -34,7 +31,6 @@ func commandRunCreateBranchOrTagFolder(processor *Processor, request *json.Map, 
 		return errors
 	}
 
-	// todo: validate directory names
 	directory_parts := home_directory.GetPath()
 	directory_parts = append(directory_parts, "src")
 	directory_parts = append(directory_parts, *domain_name)
@@ -43,16 +39,18 @@ func commandRunCreateBranchOrTagFolder(processor *Processor, request *json.Map, 
 	directory_parts = append(directory_parts, "branches")
 	// todo check if using branch or tag
 	directory_parts = append(directory_parts, *branch_name)
-	full_path_of_directory := "/" + filepath.Join(directory_parts...)
+	
 
-	if _, stat_error := os.Stat(full_path_of_directory); os.IsNotExist(stat_error) {
-		permissions := int(0700)
-		create_directory_error := os.MkdirAll(full_path_of_directory, os.FileMode(permissions))
-		if create_directory_error != nil {
-			errors = append(errors, create_directory_error)
-		}
+	host_client := processor.GetHostClient()
+	branches_folder, branches_folder_errors := host_client.AbsoluteDirectory(directory_parts)
+
+	if branches_folder_errors != nil {
+		errors = append(errors, branches_folder_errors...)
 	} else {
-		fmt.Println("already exists " + full_path_of_directory)
+		create_if_does_not_exist_errors := branches_folder.CreateIfDoesNotExist()
+		if create_if_does_not_exist_errors != nil {
+			errors = append(errors, create_if_does_not_exist_errors...)
+		}
 	}
 
 

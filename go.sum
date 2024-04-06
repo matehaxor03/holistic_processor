@@ -2,8 +2,8 @@ github.com/matehaxor03/holistic_common v0.0.72 h1:kvUpzowj7CLZuuQhefYfLzF/d68gpw
 github.com/matehaxor03/holistic_common v0.0.72/go.mod h1:Fduzjeq/XqKGCdJsBedOS7DzfwQOqTGJtS8T2zQjeCY=
 github.com/matehaxor03/holistic_db_client v0.0.559 h1:qyN2EiCLQtdw8Cse7IcaaFcqjCru9YFdcWFvv2E/t7c=
 github.com/matehaxor03/holistic_db_client v0.0.559/go.mod h1:B+EdCkZ40n45T9C0eyu6YruHV2GKr3add2PESyfkgzU=
-github.com/matehaxor03/holistic_host_client v0.0.77 h1:ocX488XvVpGMuncb0zkGdpnrhfZEKITYtgwusKvUDZM=
-github.com/matehaxor03/holistic_host_client v0.0.77/go.mod h1:UC5JUONGzYFZq3eBPxeqy6gDEnKLuX8Azg4GRov8G4s=
+github.com/matehaxor03/holistic_host_client v0.0.78 h1:/lCCD1wi3yoZZd5GL0otT6zzqDbVZf9gEiPqyDcDmwo=
+github.com/matehaxor03/holistic_host_client v0.0.78/go.mod h1:UC5JUONGzYFZq3eBPxeqy6gDEnKLuX8Azg4GRov8G4s=
 github.com/matehaxor03/holistic_http v0.0.17 h1:P0NnoOZ9j4R7Ymci3v285zmgvvo5kSI1+EPoHknGQzw=
 github.com/matehaxor03/holistic_http v0.0.17/go.mod h1:SHKP2NLO+yzic94PBwlDjLp2/B4g3QyuF9U5OrELFV8=
 github.com/matehaxor03/holistic_json v0.0.93 h1:HImmWiFBYGKSrsVYXKMnj8+bt0xNFmi4iPMlvka9mMQ=
