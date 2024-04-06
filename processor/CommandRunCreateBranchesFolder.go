@@ -2,9 +2,6 @@ package processor
 
 import (
 	json "github.com/matehaxor03/holistic_json/json"
-	"os"
-    "path/filepath"
-	"fmt"
 )
 
 func commandRunCreateBranchesFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
@@ -41,17 +38,17 @@ func commandRunCreateBranchesFolder(processor *Processor, request *json.Map, res
 	directory_parts = append(directory_parts, *repository_account_name)
 	directory_parts = append(directory_parts, *repository_name)
 	directory_parts = append(directory_parts, "branches")
-	full_path_of_directory := "/" + filepath.Join(directory_parts...)
+	
+	host_client := processor.GetHostClient()
+	branches_folder, branches_folder_errors := host_client.AbsoluteDirectory(directory_parts)
 
-
-	if _, stat_error := os.Stat(full_path_of_directory); os.IsNotExist(stat_error) {
-		permissions := int(0700)
-		create_directory_error := os.MkdirAll(full_path_of_directory, os.FileMode(permissions))
-		if create_directory_error != nil {
-			errors = append(errors, create_directory_error)
-		}
+	if branches_folder_errors != nil {
+		errors = append(errors, branches_folder_errors...)
 	} else {
-		fmt.Println("already exists " + full_path_of_directory)
+		create_if_does_not_exist_errors := branches_folder.CreateIfDoesNotExist()
+		if create_if_does_not_exist_errors != nil {
+			errors = append(errors, create_if_does_not_exist_errors...)
+		}
 	}
 
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)

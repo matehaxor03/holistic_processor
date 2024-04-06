@@ -38,12 +38,12 @@ func commandRunCreateRepositoryFolder(processor *Processor, request *json.Map, r
 	directory_parts = append(directory_parts, *repository_name)
 	
 	host_client := processor.GetHostClient()
-	repository_account_folder, repository_account_folder_errors := host_client.AbsoluteDirectory(directory_parts)
+	repository_folder, repository_folder_errors := host_client.AbsoluteDirectory(directory_parts)
 
-	if repository_account_folder_errors != nil {
-		errors = append(errors, repository_account_folder_errors...)
+	if repository_folder_errors != nil {
+		errors = append(errors, repository_folder_errors...)
 	} else {
-		create_if_does_not_exist_errors := repository_account_folder.CreateIfDoesNotExist()
+		create_if_does_not_exist_errors := repository_folder.CreateIfDoesNotExist()
 		if create_if_does_not_exist_errors != nil {
 			errors = append(errors, create_if_does_not_exist_errors...)
 		}
