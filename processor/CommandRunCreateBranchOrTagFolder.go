@@ -5,12 +5,12 @@ import (
 )
 
 func commandRunCreateBranchOrTagFolder(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors := validateRunCommandHeaders(processor, request)
+	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors
 	} else if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -24,7 +24,7 @@ func commandRunCreateBranchOrTagFolder(processor *Processor, request *json.Map, 
 	}
 
 	if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -39,7 +39,6 @@ func commandRunCreateBranchOrTagFolder(processor *Processor, request *json.Map, 
 	directory_parts = append(directory_parts, "branches")
 	// todo check if using branch or tag
 	directory_parts = append(directory_parts, *branch_name)
-	
 
 	host_client := processor.GetHostClient()
 	branches_folder, branches_folder_errors := host_client.AbsoluteDirectory(directory_parts)
@@ -53,8 +52,7 @@ func commandRunCreateBranchOrTagFolder(processor *Processor, request *json.Map, 
 		}
 	}
 
-
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}

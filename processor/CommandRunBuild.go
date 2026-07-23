@@ -1,20 +1,21 @@
 package processor
 
 import (
-	json "github.com/matehaxor03/holistic_json/json"
-	common "github.com/matehaxor03/holistic_common/common"
-    "path/filepath"
 	"fmt"
 	"os"
+	"path/filepath"
+
+	common "github.com/matehaxor03/holistic_common/common"
+	json "github.com/matehaxor03/holistic_json/json"
 )
 
 func commandRunBuild(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors := validateRunCommandHeaders(processor, request)
+	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors
 	} else if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -28,7 +29,7 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 	}
 
 	if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -44,7 +45,7 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *branch_instance_id))
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
-	
+
 	test_integration_parts := []string{}
 	test_integration_parts = append(test_integration_parts, "tests")
 	test_integration_parts = append(test_integration_parts, "integration")
@@ -58,18 +59,18 @@ func commandRunBuild(processor *Processor, request *json.Map, response_queue_res
 		_, build_bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(build_command)
 		if build_bash_command_errors != nil {
 			errors = append(errors, build_bash_command_errors...)
-		} 
-	} 
+		}
+	}
 
 	if _, stat_error := os.Stat(full_path_of_integration_tests_folder); !os.IsNotExist(stat_error) {
 		build_tests_command := fmt.Sprintf("cd %s && go clean -testcache | go test -c -outputdir= .%s", full_path_of_instance_directory, test_integration_relative_path)
 		_, build_tests_bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(build_tests_command)
 		if build_tests_bash_command_errors != nil {
 			errors = append(errors, build_tests_bash_command_errors...)
-		} 
-	} 
+		}
+	}
 
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}

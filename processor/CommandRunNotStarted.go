@@ -1,24 +1,25 @@
 package processor
 
 import (
-	json "github.com/matehaxor03/holistic_json/json"
-	common "github.com/matehaxor03/holistic_common/common"
 	"fmt"
+
+	common "github.com/matehaxor03/holistic_common/common"
+	json "github.com/matehaxor03/holistic_json/json"
 )
 
 func commandRunNotStarted(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
-	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors := validateRunCommandHeaders(processor, request)
+	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors
 	} else if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
 		return errors
 	}
-	
+
 	one_record := uint64(1)
 	write_client := processor.GetClientWrite()
 	database := write_client.GetDatabase()
@@ -32,7 +33,7 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 
 	if len(errors) > 0 {
 		return errors
-	} 
+	}
 
 	where_query_build_step_status_running_array := json.NewArray()
 
@@ -48,13 +49,13 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 		errors = append(errors, records_running_step_status_errors...)
 	} else if len(*records_running_step_status) == 0 {
 		errors = append(errors, fmt.Errorf("validate run command: did not find record for Running BuildStepStatus"))
-	}  else if len(*records_running_step_status) > 1 {
+	} else if len(*records_running_step_status) > 1 {
 		errors = append(errors, fmt.Errorf("validate run command: found too many records for Running BuildStepStatus"))
 	}
 
 	if len(errors) > 0 {
 		return errors
-	} 
+	}
 
 	running_build_step_status_id, running_build_step_status_id_errors := ((*records_running_step_status)[0]).GetUInt64("build_step_status_id")
 	if running_build_step_status_id_errors != nil {
@@ -65,7 +66,7 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 
 	if len(errors) > 0 {
 		return errors
-	} 
+	}
 
 	table_BranchInstance, table_BranchInstance_errors := database.GetTable("BranchInstance")
 	if table_BranchInstance_errors != nil {
@@ -76,11 +77,11 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 
 	if len(errors) > 0 {
 		return errors
-	} 
+	}
 
 	update_records_branch_instance_select := []string{"branch_instance_id", "build_step_status_id"}
 	update_records_branch_instance_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&update_records_branch_instance_select))
-	
+
 	update_records_branch_instance_where_array := json.NewArray()
 
 	update_records_branch_instance_where_map := json.NewMap()
@@ -101,7 +102,7 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 
 	if len(errors) > 0 {
 		return errors
-	} 
+	}
 
 	update_record := (*update_records)[0]
 	update_record.SetUInt64Value("build_step_status_id", *running_build_step_status_id)
@@ -112,9 +113,9 @@ func commandRunNotStarted(processor *Processor, request *json.Map, response_queu
 
 	if len(errors) > 0 {
 		return errors
-	} 
+	}
 
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}

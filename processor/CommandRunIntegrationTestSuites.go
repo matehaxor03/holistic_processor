@@ -1,22 +1,23 @@
 package processor
 
 import (
-	json "github.com/matehaxor03/holistic_json/json"
-	common "github.com/matehaxor03/holistic_common/common"
-    "path/filepath"
-	"os"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+
+	common "github.com/matehaxor03/holistic_common/common"
+	json "github.com/matehaxor03/holistic_json/json"
 )
 
 func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, response_queue_result *json.Map) []error {
 	verify := processor.GetValidator()
-	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors := validateRunCommandHeaders(processor, request)
+	command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors := validateRunCommandHeaders(processor, request)
 	if errors == nil {
 		var new_errors []error
 		errors = new_errors
 	} else if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -31,7 +32,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	}
 
 	if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -46,7 +47,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	}
 
 	if len(errors) > 0 {
-		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
 			errors = append(errors, trigger_next_run_command_errors...)
 		}
@@ -76,13 +77,13 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 				continue
 			}
 
-			if index == len(parts) - 1 {
-				file_name_errors := verify.ValidateFileName(part) 
+			if index == len(parts)-1 {
+				file_name_errors := verify.ValidateFileName(part)
 				if file_name_errors != nil {
 					part_errors = append(part_errors, file_name_errors...)
-				} 
+				}
 			} else {
-				directory_name_errors := verify.ValidateDirectoryName(part) 
+				directory_name_errors := verify.ValidateDirectoryName(part)
 				if directory_name_errors != nil {
 					part_errors = append(part_errors, directory_name_errors...)
 				}
@@ -105,16 +106,16 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 			}
 		} else {
 			fmt.Println("running " + *test_suite_name + " pass")
-		} 
-		
+		}
+
 		for _, stdout_line := range stdout_lines {
 			(*std_callback)(stdout_line)
 		}
 	} else {
-		errors = append(errors, fmt.Errorf("not found file " + *test_suite_name))
+		errors = append(errors, fmt.Errorf("not found file "+*test_suite_name))
 	}
 
-	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, created_date, errors, request)
+	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 	if trigger_next_run_command_errors != nil {
 		return trigger_next_run_command_errors
 	}
