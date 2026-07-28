@@ -20,17 +20,10 @@ func commandRunCreateInstanceFolder(processor *Processor, request *json.Map, res
 	}
 
 	host_user := processor.GetHostUser()
-	host_client := processor.GetHostClient()
-	destination_host_username := processor.CalculateDesintationHostUserName(*branch_instance_id)
+	destination_host_user, destination_host_user_errors := processor.CalculateDesintationHostUserName(*branch_instance_id)
 
-	destination_host, destination_host_errors := host_client.Host("127.0.0.1")
-	if destination_host_errors != nil {
-		errors = append(errors, destination_host_errors...)
-	}
-
-	destination_user, destination_user_errors := host_client.User(destination_host_username)
-	if destination_user_errors != nil {
-		errors = append(errors, destination_user_errors...)
+	if destination_host_user_errors != nil {
+		errors = append(errors, destination_host_user_errors...)
 	}
 
 	if len(errors) > 0 {
@@ -41,9 +34,7 @@ func commandRunCreateInstanceFolder(processor *Processor, request *json.Map, res
 		return errors
 	}
 
-	destination_host_user := host_client.HostUser(*destination_host, *destination_user)
-
-	destination_host_home_directory, destination_host_home_directory_errors := destination_user.GetHomeDirectoryAbsoluteDirectory()
+	destination_host_home_directory, destination_host_home_directory_errors := destination_host_user.GetUser().GetHomeDirectoryAbsoluteDirectory()
 	if destination_host_home_directory_errors != nil {
 		errors = append(errors, destination_host_home_directory_errors...)
 	}
@@ -60,7 +51,7 @@ func commandRunCreateInstanceFolder(processor *Processor, request *json.Map, res
 	directory_parts = append(directory_parts, "branch_instances")
 	directory_parts = append(directory_parts, fmt.Sprintf("%d", *branch_instance_id))
 
-	remote_absolute_directory, remote_absolute_directory_errors := host_user.RemoteAbsoluteDirectory(destination_host_user, directory_parts)
+	remote_absolute_directory, remote_absolute_directory_errors := host_user.RemoteAbsoluteDirectory(*destination_host_user, directory_parts)
 	if remote_absolute_directory_errors != nil {
 		errors = append(errors, remote_absolute_directory_errors...)
 	}

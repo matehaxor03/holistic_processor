@@ -1,37 +1,38 @@
 package processor
 
 import (
+	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"bytes"
-	"crypto/tls"
-	"time"
-	"sync"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
+
 	common "github.com/matehaxor03/holistic_common/common"
 	dao "github.com/matehaxor03/holistic_db_client/dao"
+	host_client "github.com/matehaxor03/holistic_host_client/host_client"
 	json "github.com/matehaxor03/holistic_json/json"
 	validate "github.com/matehaxor03/holistic_validator/validate"
-	host_client "github.com/matehaxor03/holistic_host_client/host_client"
 )
 
-
 type Processor struct {
-	Start func()
-	SendMessageToQueue func(message *json.Map) (*json.Map, []error)
-	SendMessageToQueueFireAndForget func(message *json.Map) 
-	GetProcessor func() *Processor
-	GetProcessorManager func() *ProcessorManager
-	GetClientRead func() *dao.Client
-	GetClientWrite func() *dao.Client
-	GetQueueName func() string
-	GenerateTraceId func() string
-	WakeUp func()
-	GetValidator func() validate.Validator
-	GetHostUser func() *host_client.User
-	CalculateDesintationHostUserName func(branch_instance_id uint64) string
-	GetHostClient func() *host_client.HostClient
+	Start                            func()
+	SendMessageToQueue               func(message *json.Map) (*json.Map, []error)
+	SendMessageToQueueFireAndForget  func(message *json.Map)
+	GetProcessor                     func() *Processor
+	GetProcessorManager              func() *ProcessorManager
+	GetClientRead                    func() *dao.Client
+	GetClientWrite                   func() *dao.Client
+	GetQueueName                     func() string
+	GenerateTraceId                  func() string
+	WakeUp                           func()
+	GetValidator                     func() validate.Validator
+	GetHostUser                      func() *host_client.User
+	CalculateDesintationHostUserName func(branch_instance_id uint64) (*host_client.HostUser, []error)
+	GetHostClient                    func() *host_client.HostClient
 }
 
 func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, processor_manager *ProcessorManager, queue_domain_name dao.DomainName, queue_port string, queue_name string) (*Processor, []error) {
@@ -49,7 +50,7 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 	var callbackLock sync.Mutex
 	var messageCount uint64
 	var processor_function *func(processor *Processor, request *json.Map, response *json.Map) []error
-	
+
 	host_client_instance, host_client_errors := host_client.NewHostClient()
 	if host_client_errors != nil {
 		return nil, host_client_errors
@@ -78,7 +79,7 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 
 	getProcessorManager := func() *ProcessorManager {
 		return processor_manager
-	}	
+	}
 
 	getQueueName := func() string {
 		return queue_name
@@ -102,13 +103,13 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 
 	domain_name_value := queue_domain_name.GetDomainName()
 
-	queue_url := fmt.Sprintf("https://%s:%s/queue_api/" + getQueueName(), domain_name_value, getQueuePort())
+	queue_url := fmt.Sprintf("https://%s:%s/queue_api/"+getQueueName(), domain_name_value, getQueuePort())
 	transport_config := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
 	http_client := http.Client{
-		Timeout: 120 * time.Second,
+		Timeout:   120 * time.Second,
 		Transport: transport_config,
 	}
 
@@ -215,7 +216,7 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		return common.GenerateTraceId(incrementMessageCount(), fmt.Sprintf("%s", getProcessor()))
 	}
 
-	sendMessageToQueueFireAndForget := func (message *json.Map) {
+	sendMessageToQueueFireAndForget := func(message *json.Map) {
 		callbackLock.Lock()
 		defer callbackLock.Unlock()
 		c := get_processor_callback()
@@ -256,13 +257,13 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 			return errors
 		}
 
-		request_json_payload.SetStringValue("[queue_mode]","complete")
+		request_json_payload.SetStringValue("[queue_mode]", "complete")
 		request_json_payload.SetStringValue("[trace_id]", *message_trace_id)
-		result_map := map[string]interface{}{"[queue]":*response_queue, "[trace_id]":*message_trace_id, "[queue_mode]":"complete", "[async]":*async}
+		result_map := map[string]interface{}{"[queue]": *response_queue, "[trace_id]": *message_trace_id, "[queue_mode]": "complete", "[async]": *async}
 		result := json.NewMapOfValues(&result_map)
 
 		if *response_queue == "empty" {
-			if  get_or_set_status("") == "running" {
+			if get_or_set_status("") == "running" {
 				wg.Add(1)
 				get_or_set_status("paused")
 				wg.Wait()
@@ -299,11 +300,11 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		WakeUp: func() {
 			wakeup_lock.Lock()
 			defer wakeup_lock.Unlock()
-			if get_or_set_status("")  == "paused" {
-				get_or_set_status("try again") 
+			if get_or_set_status("") == "paused" {
+				get_or_set_status("try again")
 				wg.Done()
 			} else {
-				get_or_set_status("try again") 
+				get_or_set_status("try again")
 			}
 		},
 		GetQueueName: func() string {
@@ -339,12 +340,67 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 		GetHostClient: func() *host_client.HostClient {
 			return host_client_instance
 		},
-		CalculateDesintationHostUserName: func(branch_instance_id uint64) string {
-			string_value := fmt.Sprintf("%d", branch_instance_id)
-			if len(string_value) > 4 {
-				string_value = string_value[len(string_value)-4:]
+		CalculateDesintationHostUserName: func(branch_instance_id uint64) (*host_client.HostUser, []error) {
+			var errors []error
+
+			number_of_users, number_of_users_errors := host_client_instance.GetEnviornmentVariable(common.ENV_HOLISTIC_HOST_NUMBER_OF_USERS())
+			if number_of_users_errors != nil {
+				errors = append(errors, number_of_users_errors...)
 			}
-			return "holisticxyz_b" + string_value + "_@127.0.0.1"
+
+			userid_offset, userid_offset_errors := host_client_instance.GetEnviornmentVariable(common.ENV_HOLISTIC_HOST_USERS_USERID_OFFSET())
+			if userid_offset_errors != nil {
+				errors = append(errors, userid_offset_errors...)
+			}
+
+			if len(errors) > 0 {
+				return nil, errors
+			}
+
+			branch_instance_id_string_value := fmt.Sprintf("%d", branch_instance_id)
+			if len(branch_instance_id_string_value) > (len(*number_of_users) - 1) {
+				branch_instance_id_string_value = branch_instance_id_string_value[len(branch_instance_id_string_value)-(len(*number_of_users)-1):]
+			}
+
+			branch_instance_id_string_value = strings.TrimLeft(branch_instance_id_string_value, "0")
+
+			if branch_instance_id_string_value == "" {
+				branch_instance_id_string_value = "0"
+			}
+
+			counter_value, counter_value_error := strconv.ParseUint(branch_instance_id_string_value, 10, 64)
+			if counter_value_error != nil {
+				errors = append(errors, counter_value_error)
+			}
+
+			userid_offset_value, userid_offset_value_error := strconv.ParseUint(*userid_offset, 10, 64)
+			if userid_offset_value_error != nil {
+				errors = append(errors, userid_offset_value_error)
+			}
+
+			if len(errors) > 0 {
+				return nil, errors
+			}
+
+			user_id_value := userid_offset_value + counter_value
+
+			destination_host, destination_host_errors := host_client_instance.Host("127.0.0.1")
+			if destination_host_errors != nil {
+				errors = append(errors, destination_host_errors...)
+			}
+
+			destination_user, destination_user_errors := host_client_instance.User("holisticxyz_b" + fmt.Sprintf("%d", user_id_value) + "_")
+			if destination_user_errors != nil {
+				errors = append(errors, destination_user_errors...)
+			}
+
+			if len(errors) > 0 {
+				return nil, errors
+			}
+
+			destination_host_user := host_client_instance.HostUser(*destination_host, *destination_user)
+
+			return &destination_host_user, nil
 		},
 		Start: func() {
 			get_processor_callback().SetProcessor(getProcessor())
@@ -355,83 +411,82 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 			go func(queue_url string, queue string) {
 				for {
 					get_or_set_status("running")
-					time.Sleep(1 * time.Nanosecond) 
+					time.Sleep(1 * time.Nanosecond)
 					trace_id := generate_trace_id()
 					if queue_get_next_message_function != nil {
 						next_message, next_message_errors := (*queue_get_next_message_function)(trace_id)
 						if next_message_errors != nil {
 							fmt.Println(next_message_errors)
-							time.Sleep(10 * time.Second) 
+							time.Sleep(10 * time.Second)
 							continue
 						} else if common.IsNil(next_message) {
 							fmt.Println("next message is nil")
-							time.Sleep(10 * time.Second) 
+							time.Sleep(10 * time.Second)
 							continue
 						} else {
 							process_messsage_errors := process_message(next_message)
 							if process_messsage_errors != nil {
 								fmt.Println(process_messsage_errors)
-								time.Sleep(10 * time.Second) 
+								time.Sleep(10 * time.Second)
 								continue
 							}
 						}
 					} else {
 
-					request_payload_map := map[string]interface{}{"[queue]":queue, "[trace_id]":trace_id, "[queue_mode]":"GetAndRemoveFront"}
-					request_payload := json.NewMapOfValues(&request_payload_map)
+						request_payload_map := map[string]interface{}{"[queue]": queue, "[trace_id]": trace_id, "[queue_mode]": "GetAndRemoveFront"}
+						request_payload := json.NewMapOfValues(&request_payload_map)
 
-					var json_payload_builder strings.Builder
-					request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
+						var json_payload_builder strings.Builder
+						request_payload_as_string_errors := request_payload.ToJSONString(&json_payload_builder)
 
-					if request_payload_as_string_errors != nil {
-						fmt.Println(request_payload_as_string_errors)
-						time.Sleep(10 * time.Second) 
-						continue
-					}
+						if request_payload_as_string_errors != nil {
+							fmt.Println(request_payload_as_string_errors)
+							time.Sleep(10 * time.Second)
+							continue
+						}
 
-					request_json_bytes := []byte(json_payload_builder.String())
-					request_json_reader := bytes.NewReader(request_json_bytes)
+						request_json_bytes := []byte(json_payload_builder.String())
+						request_json_reader := bytes.NewReader(request_json_bytes)
 
-					request, request_error := http.NewRequest(http.MethodPost, queue_url, request_json_reader)
-					if request_error != nil {
-						fmt.Println(request_error)
-						time.Sleep(10 * time.Second) 
-						continue
-					}
-					
-					request.Header.Set("Content-Type", "application/json")
-					http_response, http_response_error := http_client.Do(request)
-					if http_response_error != nil {
-						fmt.Println(http_response_error)
-						time.Sleep(10 * time.Second) 
-						continue
-					}
+						request, request_error := http.NewRequest(http.MethodPost, queue_url, request_json_reader)
+						if request_error != nil {
+							fmt.Println(request_error)
+							time.Sleep(10 * time.Second)
+							continue
+						}
 
-					response_body_payload, response_body_payload_error := ioutil.ReadAll(http_response.Body)
+						request.Header.Set("Content-Type", "application/json")
+						http_response, http_response_error := http_client.Do(request)
+						if http_response_error != nil {
+							fmt.Println(http_response_error)
+							time.Sleep(10 * time.Second)
+							continue
+						}
 
-					if response_body_payload_error != nil {
-						fmt.Println(response_body_payload_error)
-						time.Sleep(10 * time.Second) 
-						continue
-					}
+						response_body_payload, response_body_payload_error := ioutil.ReadAll(http_response.Body)
+
+						if response_body_payload_error != nil {
+							fmt.Println(response_body_payload_error)
+							time.Sleep(10 * time.Second)
+							continue
+						}
 
 						request_json_payload, request_json_payload_errors := json.Parse(string(response_body_payload))
 						if request_json_payload_errors != nil {
 							fmt.Println(request_json_payload_errors)
-							time.Sleep(10 * time.Second) 
+							time.Sleep(10 * time.Second)
 							continue
 						}
 
 						process_message(*request_json_payload)
 					}
 				}
-				
+
 			}(queue_url, queue_name)
 		},
 	}
 	setProcessor(&x)
 	setHostUser(host_user)
-	
 
 	if len(errors) > 0 {
 		return nil, errors

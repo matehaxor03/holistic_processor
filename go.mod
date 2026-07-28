@@ -12,5 +12,5 @@ require (
 	github.com/matehaxor03/holistic_host_client v0.0.80
 	github.com/matehaxor03/holistic_http v0.0.18
 	github.com/matehaxor03/holistic_thread_safe v0.0.1
-	github.com/matehaxor03/holistic_validator v0.0.95
+	github.com/matehaxor03/holistic_validator v0.0.96
 )

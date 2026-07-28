@@ -10,5 +10,5 @@ github.com/matehaxor03/holistic_json v0.0.94 h1:Yct/R0pCKgzyATpwaxZtiptX/ihYCxg9
 github.com/matehaxor03/holistic_json v0.0.94/go.mod h1:29BcA7omDCNWCYesnA8rNz25JHAc/1xCkLYB+/4k/GE=
 github.com/matehaxor03/holistic_thread_safe v0.0.1 h1:OdmyUHTaMuucdkTfnGLiKUGpa/rH3xuRhdD+wXQrtI4=
 github.com/matehaxor03/holistic_thread_safe v0.0.1/go.mod h1:KqLl68oFJVeyycjI6LRDPJltEZ4ViqjLEnLglt1RBLs=
-github.com/matehaxor03/holistic_validator v0.0.95 h1:NojMQ8o8tKo9F6Pvbujr09JfqA2Rn4A45mjOtRo3eoQ=
-github.com/matehaxor03/holistic_validator v0.0.95/go.mod h1:Ed+CWX4T77gWarvkM0JNvJXNmmL5wiDjMSFynyydMuk=
+github.com/matehaxor03/holistic_validator v0.0.96 h1:MlntZR8N/mPdBd3RmPdoFxHzwfckivPnHyc0fuNuOTU=
+github.com/matehaxor03/holistic_validator v0.0.96/go.mod h1:Ed+CWX4T77gWarvkM0JNvJXNmmL5wiDjMSFynyydMuk=

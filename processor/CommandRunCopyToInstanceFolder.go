@@ -63,12 +63,25 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "./" + filepath.Join(instance_folder_parts...)
 
-	destination_username := processor.CalculateDesintationHostUserName(*branch_instance_id)
-	ssh_identity_file := ssh_directory.GetPathAsString() + "/" + destination_username
+	destination_host_user, destination_host_user_errors := processor.CalculateDesintationHostUserName(*branch_instance_id)
+
+	if destination_host_user_errors != nil {
+		errors = append(errors, destination_host_user_errors...)
+	}
+
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
+	ssh_identity_file := ssh_directory.GetPathAsString() + "/" + destination_host_user.GetUser().GetUsername()
 
 	bashCommand := common.NewBashCommand()
 	if _, stat_error := os.Stat(full_path_of_directory); !os.IsNotExist(stat_error) {
-		copy_command := fmt.Sprintf("scp -i %s -r %s %s:%s", ssh_identity_file, full_path_of_directory, destination_username, full_path_of_instance_directory)
+		copy_command := fmt.Sprintf("scp -i %s -r %s %s:%s", ssh_identity_file, full_path_of_directory, destination_host_user.GetUser().GetUsername(), full_path_of_instance_directory)
 		_, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(copy_command)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
