@@ -389,7 +389,7 @@ func NewProcessor(verify validate.Validator, client_manager *dao.ClientManager, 
 				errors = append(errors, destination_host_errors...)
 			}
 
-			destination_user, destination_user_errors := host_client_instance.User("holisticxyz_b" + fmt.Sprintf("%d", user_id_value) + "_")
+			destination_user, destination_user_errors := host_client_instance.User("holisticb" + fmt.Sprintf("%d", user_id_value))
 			if destination_user_errors != nil {
 				errors = append(errors, destination_user_errors...)
 			}

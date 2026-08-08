@@ -9,7 +9,7 @@ require (
 
 require (
 	github.com/matehaxor03/holistic_common v0.0.73
-	github.com/matehaxor03/holistic_host_client v0.0.82
+	github.com/matehaxor03/holistic_host_client v0.0.83
 	github.com/matehaxor03/holistic_http v0.0.18
 	github.com/matehaxor03/holistic_thread_safe v0.0.1
 	github.com/matehaxor03/holistic_validator v0.0.96
