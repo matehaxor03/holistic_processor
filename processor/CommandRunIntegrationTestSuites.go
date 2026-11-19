@@ -57,7 +57,36 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	std_callback := getStdoutCallbackFunctionBranch(processor, *command_name, *branch_instance_id, *branch_instance_step_id, *branch_id, *test_suite_name)
 	stderr_callback := getStderrCallbackFunctionBranch(processor, *command_name, *branch_instance_id, *branch_instance_step_id, *branch_id, *test_suite_name)
 
-	instance_folder_parts := common.GetDataDirectory()
+	destination_host_user, destination_host_user_errors := processor.CalculateDesintationHostUserName(*branch_instance_id)
+
+	if destination_host_user_errors != nil {
+		errors = append(errors, destination_host_user_errors...)
+	}
+
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
+	destination_user := destination_host_user.GetUser()
+	destination_user_home_directory, destination_user_home_directory_errors := destination_user.GetHomeDirectoryAbsoluteDirectory()
+
+	if destination_user_home_directory_errors != nil {
+		errors = append(errors, destination_user_home_directory_errors...)
+	}
+
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
+	instance_folder_parts := destination_user_home_directory.GetPath()
 	instance_folder_parts = append(instance_folder_parts, "src")
 	instance_folder_parts = append(instance_folder_parts, *domain_name)
 	instance_folder_parts = append(instance_folder_parts, *repository_account_name)
@@ -95,9 +124,8 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		fmt.Println("running " + *test_suite_name)
-		bashCommand := common.NewBashCommand()
 		command := fmt.Sprintf("cd %s && go test -timeout 7200s -outputdir= -json .%s", full_path_of_instance_directory, *test_suite_name)
-		stdout_lines, stderr_lines := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(command)
+		stdout_lines, stderr_lines := processor.GetHostUser().ExecuteRemoteUnsafeCommandUsingFilesWithoutInputFile(*destination_host_user, command)
 		if stderr_lines != nil {
 			errors = append(errors, stderr_lines...)
 			fmt.Println("running " + *test_suite_name + " fail")
