@@ -25,7 +25,36 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		return errors
 	}
 
-	instance_folder_parts := common.GetDataDirectory()
+	destination_host_user, destination_host_user_errors := processor.CalculateDesintationHostUserName(*branch_instance_id)
+
+	if destination_host_user_errors != nil {
+		errors = append(errors, destination_host_user_errors...)
+	}
+
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
+	destination_user := destination_host_user.GetUser()
+	destination_user_home_directory, destination_user_home_directory_errors := destination_user.GetHomeDirectoryAbsoluteDirectory()
+
+	if destination_user_home_directory_errors != nil {
+		errors = append(errors, destination_user_home_directory_errors...)
+	}
+
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
+	instance_folder_parts := destination_user_home_directory.GetPath()
 	instance_folder_parts = append(instance_folder_parts, "src")
 	instance_folder_parts = append(instance_folder_parts, *domain_name)
 	instance_folder_parts = append(instance_folder_parts, *repository_account_name)
@@ -34,7 +63,6 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *branch_instance_id))
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "/" + filepath.Join(instance_folder_parts...)
-	//full_path_of_integration_tests_folder := full_path_of_instance_directory + "/tests/integration"
 	check_files := make([]string, 0)
 
 	file_error := filepath.Walk(full_path_of_instance_directory,

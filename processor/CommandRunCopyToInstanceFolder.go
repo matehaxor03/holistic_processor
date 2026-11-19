@@ -34,6 +34,20 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 		errors = append(errors, ssh_directory_errors...)
 	}
 
+	destination_host_user, destination_host_user_errors := processor.CalculateDesintationHostUserName(*branch_instance_id)
+
+	if destination_host_user_errors != nil {
+		errors = append(errors, destination_host_user_errors...)
+	}
+
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
 	if len(errors) > 0 {
 		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
 		if trigger_next_run_command_errors != nil {
@@ -62,8 +76,6 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *branch_instance_id))
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
 	full_path_of_instance_directory := "./" + filepath.Join(instance_folder_parts...)
-
-	destination_host_user, destination_host_user_errors := processor.CalculateDesintationHostUserName(*branch_instance_id)
 
 	if destination_host_user_errors != nil {
 		errors = append(errors, destination_host_user_errors...)
