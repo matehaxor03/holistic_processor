@@ -78,13 +78,9 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 	bashCommand := common.NewBashCommand()
 	copy_command := fmt.Sprintf("cd ~ && scp -o StrictHostKeyChecking=accept-new -i %s -r %s %s:%s", "~/.ssh/"+destination_host_user.GetFullyQualifiedUsername(), full_path_of_directory, destination_host_user.GetFullyQualifiedUsername(), full_path_of_instance_directory)
 	fmt.Println(copy_command)
-	copy_output_lines, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(copy_command)
+	bash_command_errors := bashCommand.ExecuteUnsafeCommandSimple(copy_command)
 	if bash_command_errors != nil {
 		errors = append(errors, bash_command_errors...)
-	}
-
-	for _, copy_output_line := range copy_output_lines {
-		fmt.Println(copy_output_line)
 	}
 
 	if len(errors) > 0 {
