@@ -94,6 +94,7 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 	bashCommand := common.NewBashCommand()
 	if _, stat_error := os.Stat(full_path_of_directory); !os.IsNotExist(stat_error) {
 		copy_command := fmt.Sprintf("scp -i %s -r %s %s:%s", ssh_identity_file, full_path_of_directory, destination_host_user.GetUser().GetUsername(), full_path_of_instance_directory)
+		fmt.Println(copy_command)
 		_, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(copy_command)
 		if bash_command_errors != nil {
 			errors = append(errors, bash_command_errors...)
