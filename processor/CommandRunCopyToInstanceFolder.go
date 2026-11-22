@@ -21,14 +21,6 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 		}
 		return errors
 	}
-	//depending if doing by branch or tag
-
-	host_user := processor.GetHostUser()
-	home_directory, home_directory_errors := host_user.GetHomeDirectoryAbsoluteDirectory()
-	if home_directory_errors != nil {
-		errors = append(errors, home_directory_errors...)
-	}
-
 	destination_host_user, destination_host_user_errors := processor.CalculateDesintationHostUserName(*branch_instance_id)
 
 	if destination_host_user_errors != nil {
@@ -52,7 +44,7 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 	}
 
 	// todo: validate directory names
-	directory_parts := home_directory.GetPath()
+	var directory_parts []string
 	directory_parts = append(directory_parts, "src")
 	directory_parts = append(directory_parts, *domain_name)
 	directory_parts = append(directory_parts, *repository_account_name)
@@ -60,7 +52,7 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 	directory_parts = append(directory_parts, "branches")
 	directory_parts = append(directory_parts, *branch_name)
 	directory_parts = append(directory_parts, *repository_name)
-	full_path_of_directory := "/" + filepath.Join(directory_parts...)
+	full_path_of_directory := "~/" + filepath.Join(directory_parts...)
 
 	var instance_folder_parts []string
 	instance_folder_parts = append(instance_folder_parts, "src")
