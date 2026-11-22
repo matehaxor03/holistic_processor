@@ -79,7 +79,7 @@ func commandRunIntegrationTests(processor *Processor, request *json.Map, respons
 		return errors
 	}
 
-	command := fmt.Sprintf("find %s -type f", full_path_of_instance_directory)
+	command := fmt.Sprintf("cd ~ && find %s -type f", full_path_of_instance_directory)
 	fmt.Println(command)
 	stdout_lines, stderr_lines := processor.GetHostUser().ExecuteRemoteUnsafeCommandUsingFilesWithoutInputFile(*destination_host_user, command)
 
