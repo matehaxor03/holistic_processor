@@ -2,7 +2,6 @@ package processor
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	common "github.com/matehaxor03/holistic_common/common"
@@ -76,27 +75,16 @@ func commandRunCopyToInstanceFolder(processor *Processor, request *json.Map, res
 		return errors
 	}
 
-	//ssh_identity_file := ssh_directory.GetPathAsString() + "/" + destination_host_user.GetUser().GetUsername()
-
 	bashCommand := common.NewBashCommand()
-	if _, stat_error := os.Stat(full_path_of_directory); !os.IsNotExist(stat_error) {
+	copy_command := fmt.Sprintf("cd ~ && scp -o StrictHostKeyChecking=accept-new -i %s -r %s %s:%s", "~/.ssh/"+destination_host_user.GetFullyQualifiedUsername(), full_path_of_directory, destination_host_user.GetFullyQualifiedUsername(), full_path_of_instance_directory)
+	fmt.Println(copy_command)
+	copy_output_lines, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(copy_command)
+	if bash_command_errors != nil {
+		errors = append(errors, bash_command_errors...)
+	}
 
-		// -o StrictHostKeyChecking=accept-new -i ~/.ssh/" + temp_host_user.GetFullyQualifiedUsername() + " " + host_user.GetFullyQualifiedUsername() + " '[ -d " + getPathAsString() + " ] && echo true || echo false;'"
-		// scp -r ~/Documents/MyFolder bob@localhost:~/Documents/
-		// scp -o StrictHostKeyChecking=accept-new -r ~/Documents/MyFolder bob@localhost:~/Documents/
-		copy_command := fmt.Sprintf("cd ~ && scp -o StrictHostKeyChecking=accept-new -i %s -r %s %s:%s", "~/.ssh/"+destination_host_user.GetFullyQualifiedUsername(), full_path_of_directory, destination_host_user.GetFullyQualifiedUsername(), full_path_of_instance_directory)
-		fmt.Println(copy_command)
-		copy_output_lines, bash_command_errors := bashCommand.ExecuteUnsafeCommandUsingFilesWithoutInputFile(copy_command)
-		if bash_command_errors != nil {
-			errors = append(errors, bash_command_errors...)
-		}
-
-		for _, copy_output_line := range copy_output_lines {
-			fmt.Println(copy_output_line)
-		}
-
-	} else {
-		fmt.Println("does not exist " + full_path_of_directory)
+	for _, copy_output_line := range copy_output_lines {
+		fmt.Println(copy_output_line)
 	}
 
 	if len(errors) > 0 {
