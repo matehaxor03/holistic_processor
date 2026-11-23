@@ -46,10 +46,10 @@ func commandRunCreateBranchInstancesFolder(processor *Processor, request *json.M
 	}
 
 	directory_parts := destination_host_home_directory.GetPath()
-	//directory_parts = append(directory_parts, "src")
-	//directory_parts = append(directory_parts, *domain_name)
-	//directory_parts = append(directory_parts, *repository_account_name)
-	//directory_parts = append(directory_parts, *repository_name)
+	directory_parts = append(directory_parts, "src")
+	directory_parts = append(directory_parts, *domain_name)
+	directory_parts = append(directory_parts, *repository_account_name)
+	directory_parts = append(directory_parts, *repository_name)
 	directory_parts = append(directory_parts, "branch_instances")
 
 	remote_absolute_directory, remote_absolute_directory_errors := host_user.RemoteAbsoluteDirectory(*destination_host_user, directory_parts)

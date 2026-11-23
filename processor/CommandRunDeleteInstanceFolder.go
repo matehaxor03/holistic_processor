@@ -48,10 +48,10 @@ func commandRunDeleteInstanceFolder(processor *Processor, request *json.Map, res
 	}
 
 	directory_parts := destination_host_home_directory.GetPath()
-	//directory_parts = append(directory_parts, "src")
-	//directory_parts = append(directory_parts, *domain_name)
-	//directory_parts = append(directory_parts, *repository_account_name)
-	//directory_parts = append(directory_parts, *repository_name)
+	directory_parts = append(directory_parts, "src")
+	directory_parts = append(directory_parts, *domain_name)
+	directory_parts = append(directory_parts, *repository_account_name)
+	directory_parts = append(directory_parts, *repository_name)
 	directory_parts = append(directory_parts, "branch_instances")
 	directory_parts = append(directory_parts, fmt.Sprintf("%d", *branch_instance_id))
 
