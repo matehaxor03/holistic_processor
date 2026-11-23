@@ -131,7 +131,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		fmt.Println("running " + *test_suite_name)
-		command := fmt.Sprintf("cd %s && /usr/local/go/bin/go test -timeout 7200s -outputdir= -json .%s", full_path_of_instance_directory, *test_suite_name)
+		command := fmt.Sprintf("cd %s && /usr/local/go/bin/go test -timeout 7200s -outputdir= -json %s", full_path_of_instance_directory, *test_suite_name)
 		fmt.Println(command)
 		stdout_lines, stderr_lines := processor.GetHostUser().ExecuteRemoteUnsafeCommandUsingFilesWithoutInputFile(*destination_host_user, command)
 		if stderr_lines != nil {
