@@ -87,10 +87,10 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 	}
 
 	instance_folder_parts := destination_user_home_directory.GetPath()
-	instance_folder_parts = append(instance_folder_parts, "src")
-	instance_folder_parts = append(instance_folder_parts, *domain_name)
-	instance_folder_parts = append(instance_folder_parts, *repository_account_name)
-	instance_folder_parts = append(instance_folder_parts, *repository_name)
+	//instance_folder_parts = append(instance_folder_parts, "src")
+	//instance_folder_parts = append(instance_folder_parts, *domain_name)
+	//instance_folder_parts = append(instance_folder_parts, *repository_account_name)
+	//instance_folder_parts = append(instance_folder_parts, *repository_name)
 	instance_folder_parts = append(instance_folder_parts, "branch_instances")
 	instance_folder_parts = append(instance_folder_parts, fmt.Sprintf("%d", *branch_instance_id))
 	instance_folder_parts = append(instance_folder_parts, *repository_name)
