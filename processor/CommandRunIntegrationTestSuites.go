@@ -100,7 +100,6 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 
 	if strings.HasSuffix(full_path_of_test_suite, "Integration_test.go") {
 		parts := strings.Split(full_path_of_test_suite, "/")
-		var part_errors []error
 		for index, part := range parts {
 			if index == 0 && part == "" {
 				continue
@@ -109,12 +108,12 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 			if index == len(parts)-1 {
 				file_name_errors := verify.ValidateFileName(part)
 				if file_name_errors != nil {
-					part_errors = append(part_errors, file_name_errors...)
+					errors = append(errors, file_name_errors...)
 				}
 			} else {
 				directory_name_errors := verify.ValidateDirectoryName(part)
 				if directory_name_errors != nil {
-					part_errors = append(part_errors, directory_name_errors...)
+					errors = append(errors, directory_name_errors...)
 				}
 			}
 		}
@@ -122,9 +121,18 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		errors = append(errors, fmt.Errorf("integration test file does not end with Integration_test.go"))
 	}
 
+	if len(errors) > 0 {
+		trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
+		if trigger_next_run_command_errors != nil {
+			errors = append(errors, trigger_next_run_command_errors...)
+		}
+		return errors
+	}
+
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		fmt.Println("running " + *test_suite_name)
 		command := fmt.Sprintf("cd %s && /usr/local/go/bin/go test -timeout 7200s -outputdir= -json .%s", full_path_of_instance_directory, *test_suite_name)
+		fmt.Println(command)
 		stdout_lines, stderr_lines := processor.GetHostUser().ExecuteRemoteUnsafeCommandUsingFilesWithoutInputFile(*destination_host_user, command)
 		if stderr_lines != nil {
 			errors = append(errors, stderr_lines...)
