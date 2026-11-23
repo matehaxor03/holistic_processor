@@ -210,13 +210,16 @@ func triggerNextRunCommand(processor *Processor, command_name *string, branch_in
 	new_order, new_order_errors := next_branch_instance_build_step.GetInt64("order")
 	if new_order_errors != nil {
 		errors = append(errors, new_order_errors...)
+		return errors
 	} else if common.IsNil(new_order) {
 		errors = append(errors, fmt.Errorf("new_order is nil"))
-	}
-
-	if len(errors) > 0 {
 		return errors
 	}
+
+	/*
+		if len(errors) > 0 {
+			return errors
+		}*/
 
 	next_build_branch_instance_step_select := []string{"branch_instance_step_id", "branch_instance_id", "build_step_id", "order", "parameters"}
 	next_build_branch_instance_step_select_array := json.NewArrayOfValues(common.MapPointerToStringArrayValueToInterface(&next_build_branch_instance_step_select))
