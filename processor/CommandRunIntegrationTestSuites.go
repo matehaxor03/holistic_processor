@@ -129,6 +129,7 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		return errors
 	}
 
+	testfailed := false
 	if _, stat_error := os.Stat(full_path_of_test_suite); !os.IsNotExist(stat_error) {
 		fmt.Println("running " + *test_suite_name)
 		command := fmt.Sprintf("cd %s && /usr/local/go/bin/go test -timeout 7200s -outputdir= -json %s", full_path_of_instance_directory, *test_suite_name)
@@ -145,10 +146,18 @@ func commandRunIntegrationTestSuite(processor *Processor, request *json.Map, res
 		}
 
 		for _, stdout_line := range stdout_lines {
+			//todo: make more reliable
+			if strings.Contains(stdout_line, "\"Action\":\"fail\",\"Package\"") {
+				testfailed = true
+			}
 			(*std_callback)(stdout_line)
 		}
 	} else {
 		errors = append(errors, fmt.Errorf("not found file "+*test_suite_name))
+	}
+
+	if testfailed {
+		errors = append(errors, fmt.Errorf("failures found in"+*test_suite_name))
 	}
 
 	trigger_next_run_command_errors := triggerNextRunCommand(processor, command_name, branch_instance_step_id, branch_instance_id, branch_id, build_step_id, order, domain_name, repository_account_name, repository_name, branch_name, parameters, errors, request)
